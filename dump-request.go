@@ -17,7 +17,7 @@ type Person struct {
 func DumpRequest(w http.ResponseWriter, req *http.Request) {
 	hit := "I'VE BEEN HIT"
 	fmt.Printf("%v", hit)
-
+	// TODO - declare a struct for taking in a Sentry Event
 	requestDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		fmt.Fprint(w, err.Error())
