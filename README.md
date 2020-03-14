@@ -50,6 +50,9 @@ go build middleware.go
 ## Run
 1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout`
 2. `python3 app.py`
+3. or
+5. `./dump-request`
+6. `python3 app.py --ignore`
 
 ^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")  
 ^ NEXT - log the entire payload / persist it somewhere for ML
