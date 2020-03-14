@@ -39,8 +39,7 @@ func DumpRequest(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	router := mux.NewRouter()
-	// If I could make sentry_sdk to send to one of these URL's that would be great
-	// conclusion - use gor
+	// sentry_sdk's before_send callback redirects the sdk's outbound traffic to /dumprequest
 	router.HandleFunc("/dumprequest", DumpRequest).Methods("GET")
 	router.HandleFunc("/dumprequest", DumpRequest).Methods("POST")
 
