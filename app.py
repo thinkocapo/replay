@@ -14,7 +14,7 @@ def redirect(event, hint):
 import sentry_sdk
 sentry_sdk.init(
     dsn=os.getenv('DSN'),
-    before_send=redirect
+    before_send=redirect # TODO make this before_send optional (controlled by cli flag), so that running gor w/ middleware.go would pickup the request
 )
 
 def app():
