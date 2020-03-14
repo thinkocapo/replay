@@ -9,16 +9,18 @@ We have a Go Replay called 'gor' running to sniff these POST requests hitting lo
 
 The request body (and possibly headers, etc.) are of interest for analysis. Could write them to a DB, analyze them later.
 
-TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
+TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare them to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
 
 THOUGHT - I realized mid-way through this that the events still end up hitting my on-prem instance (D'oh if i'm trying to generate thousands/millions in seconds). HOWEVER this is crucial if I want to compare pre-ingestion to post-ingestion. Well, to avoid hitting Sentry/localhost:9000, I could maybe run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads, but then terminate the request from reaching the on-prem Sentry?  
 
 THOUGHT - sentry sdk 'Custom Transport Layers'? This would be really easy if I could just have sentry sdk send the events to a URL of my choice, negating the need for a on-prem-Sentry. Could someone help me with this? See comments in deprecated/dump-request.go, I could send sentry sdk events to the router defined in there
 
+example payload structure from a sentry sdk event:  
+![payload-structure](./payload-structure.png)
+
 ## Versions
 tested on ubuntu 18.04 LTS
 
-$ go version
 go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
@@ -49,7 +51,7 @@ go build middleware.go
 1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout`
 2. `python3 app.py`
 
-^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")
+^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")  
 ^ NEXT - log the entire payload / persist it somewhere for ML
 
 ## Reference & Troubleshooting
@@ -70,7 +72,7 @@ About the middleware technique
 https://github.com/buger/goreplay/tree/master/middleware
 
 #### other
-this was cool 'DumpRequest' but not quite what I needed  
+This 'DumpRequest' (deprecated/dump-request.go) would be perfect if I could make sentry_sdk send events to a URL of my choosing. Downside is the events would never reach my on-prem Sentry. Maybe support both techniques in this repo:  
 https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-outgoing-ef7fcdf87113
 
 https://golang.org/pkg/net/http/#Request  

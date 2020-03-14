@@ -72,6 +72,7 @@ func process(buf []byte) (error) {
 		return err
 	}
 
+	// SENTRY - platform is an attribute on the event payload from sentry_sdk ;)
 	platform, err := jsonparser.GetString(body, "platform")
 	Debug("PLATFORM:", platform)
 	// TODO - persist to DB / do data analysis on millions of events
