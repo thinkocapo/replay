@@ -16,10 +16,11 @@ type Person struct {
 
 func DumpRequest(w http.ResponseWriter, req *http.Request) {
 	requestDump, err := httputil.DumpRequest(req, true)
+
 	if err != nil {
 		fmt.Fprint(w, err.Error())
 	} else {
-		// Declare a new Person struct.
+		// TODO make a 'struct' for Sentry Event from the requestDump | payload
 		var p Person
 
 		// Try to decode the request body into the struct. If there is an error,
@@ -31,8 +32,7 @@ func DumpRequest(w http.ResponseWriter, req *http.Request) {
 		}
 	
 		// Do something with the Person struct...
-		fmt.Printf("%v", "hey")
-		fmt.Fprintf(w, "Person: %+v", p)
+		// fmt.Fprintf(w, "Person: %+v", p)
 		fmt.Fprint(w, string(requestDump))
 	}
 }

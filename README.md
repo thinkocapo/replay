@@ -1,17 +1,21 @@
 # event-maker
 
 ## What's Happening
-We self-host a Sentry instance on localhost:9000
 
-We produce errors in app.py and Sentry SDK sends them as events to localhost:9000
+**2 Things You Can Do with this program**
 
-We have a Go Replay called 'gor' running to sniff these POST requests hitting localhost:9000
+We produce errors in app.py and Sentry SDK sends them as events to a self-hosted Sentry instance at localhost:9000  
+We have a Go Replay called 'gor' running to sniff these POST requests hitting localhost:9000  
+OR  
+We produce errors in app.py and Sentry SDK's before_send configuration redirects them to a different API than the DSN  
+We run a httputil.DumpRequest in that API to pick up these POST requests  
+
 
 The request body (and possibly headers, etc.) are of interest for analysis. Could write them to a DB, analyze them later.
 
 TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare them to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
 
-TODO - use before_send callback to re-route the events away from my on-prem Sentry instance. This is good if I don't need to compare them to the post-ingestion data.
+TODO - try a Custom Transport Layer because the request from before_send might have different headers.
 
 THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 
@@ -48,14 +52,19 @@ go build middleware.go
 ```
 
 ## Run
+You can send events using app.py to your on-prem instance. the `middleware` sniffs the events and doesn't interrupt them like a proxy does. 
+
+or  
+
+You can send events using app.py but ignore your on-prem instance. Events get re-directed to a `dump-request` instead.  
+
 1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout`
 2. `python3 app.py`
 3. or
 5. `./dump-request`
-6. `python3 app.py --ignore`
+6. `python3 app.py -i`
 
 ^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")  
-^ NEXT - log the entire payload / persist it somewhere for ML
 
 ## Reference & Troubleshooting
 
@@ -87,4 +96,6 @@ gor file-server 8000
 sudo ./gor --input-raw :8000 --output-stdout
 
 ## TODO
-.mod this
+- log the entire payload / persist it somewhere for ML
+
+- `.mod` this into a Go module
