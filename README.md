@@ -11,9 +11,9 @@ The request body (and possibly headers, etc.) are of interest for analysis. Coul
 
 TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare them to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
 
-THOUGHT - I realized mid-way through this that the events still end up hitting my on-prem instance (D'oh if i'm trying to generate thousands/millions in seconds). HOWEVER this is crucial if I want to compare pre-ingestion to post-ingestion. Well, to avoid hitting Sentry/localhost:9000, I could maybe run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads, but then terminate the request from reaching the on-prem Sentry?  
+TODO - use before_send callback to re-route the events away from my on-prem Sentry instance. This is good if I don't need to compare them to the post-ingestion data.
 
-THOUGHT - sentry sdk 'Custom Transport Layers'? This would be really easy if I could just have sentry sdk send the events to a URL of my choice, negating the need for a on-prem-Sentry. Could someone help me with this? See comments in deprecated/dump-request.go, I could send sentry sdk events to the router defined in there
+THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 
 example payload structure from a sentry sdk event:  
 ![payload-structure](./payload-structure.png)
