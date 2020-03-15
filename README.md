@@ -44,6 +44,7 @@ visit http://localhost:9000 and get a dsn key, put it in a new .env file so app.
 
 ```
 go build middleware.go
+go build deump-request.go
 ```
 
 ## Run
@@ -92,9 +93,8 @@ sudo ./gor --input-raw :8000 --output-stdout
 
 ## TODO
 - type checking events from requests module sent to dump-request.go, as well as interceptions in middleware.go
-- decide how to handle the fact that they have 2 different request headers. I might need these.
-- CTL is preferred, but then need to do that in every SDK platform
-- might be better to focus on middleware.go, and find a way to not let it through to the on-prem instnace (disable the DSN for starters)
+- Ignore: They have 2 different request headers? 'requests' lib vs whatever sentry_sdk is doing vs. Custom Transport Layer is preferred, but then need to do that in every SDK platform
+- Focus: on middleware.go, and find a way to not let it through to the on-prem instance (disable the DSN for starters)
 - log the entire payload / persist it somewhere for ML
 
 - THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not

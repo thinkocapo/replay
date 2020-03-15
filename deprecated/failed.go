@@ -41,3 +41,6 @@
 	// 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 	// })
 	// log.Fatal(http.ListenAndServe(":8080", nil))
+
+
+	// buf, err := ioutil.ReadAll(req.Body) // io/ioutil

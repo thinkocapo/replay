@@ -66,6 +66,7 @@ func process(buf []byte) (error) {
 
 	end := proto.MIMEHeadersEndPos(payload)
 	body := payload[end:]
+	
 
 	body, err := decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	if err != nil {
