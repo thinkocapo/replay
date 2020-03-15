@@ -11,20 +11,17 @@ import (
 )
 
 type Event struct {
-    platform []string
+	platform string
+	shouldfail []string
 }
-// type Person struct {
-// 	name string
-// 	age string
-// }
 
 
 func DumpRequest(w http.ResponseWriter, req *http.Request) {
 	// attempt 1
-	req.ParseForm()
-	for key, value := range req.Form {
-		fmt.Printf("%s = %s\n", key, value)
-	}
+	// req.ParseForm()
+	// for key, value := range req.Form {
+	// 	fmt.Printf("%s = %s\n", key, value)
+	// }
 	// TODO run against a struct to type check it here
 	// Looks like all are arrays
 	/*
@@ -50,11 +47,11 @@ func DumpRequest(w http.ResponseWriter, req *http.Request) {
 		var event Event
 		err := json.NewDecoder(req.Body).Decode(&event)
 		if err != nil {
-			fmt.Printf("%v", "\nERRROR\n")
+			fmt.Printf("%v", "\n------- ERRROR --------\n")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			// return
 		} else {
-			fmt.Printf("%v", "NO ERROR")
+			fmt.Printf("%v", "------- NO ERROR -------\n")
 			// sends as the http response
 			// fmt.Fprint(w, string(requestDump))
 		}

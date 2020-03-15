@@ -9,7 +9,11 @@ DUMP_REQUEST = 'http://localhost:12345/dumprequest'
 
 # redirects the request away from dsn and to an endpoint defined by the router in dump-request.go
 def redirect(event, hint):
-    r = requests.post(DUMP_REQUEST, data=event)
+    # don't use b/c sends as x-www-form-urlencoded
+    # r = requests.post(DUMP_REQUEST, data=event)
+    
+    # json
+    r = requests.post(DUMP_REQUEST, json=event)
     return null
 
 # checks cli arg for '-i'gnoring the redirect or not
