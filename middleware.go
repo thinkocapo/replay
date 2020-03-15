@@ -29,6 +29,8 @@ import (
 	"github.com/buger/goreplay/proto"
 	"github.com/buger/jsonparser"
 	"io/ioutil"
+	"encoding/csv"
+	"log"
 )
 
 var HTTP_CONTENT_ENCODING = []byte("Content-Encoding")
@@ -103,7 +105,21 @@ func process(buf []byte) (error) {
 	var event = Event{platform, level, event_id, timestamp, server_name} 
 	Debug("event", event)
 
-	// Persist to DB
+	// Persist to CSV/DB
+	records := [][]string{
+		{"firstname", "lastname", "username"},
+		{"Zob", "Pike", "rob"},
+		{"Ken", "Thompson", "ken"},
+		{"Robert", "Griesemer", "gri"},
+	}
+
+	file, err := os.Create("result.csv")
+	w := csv.NewWriter(file)
+	w.WriteAll(records) // calls Flush internally
+	if err := w.Error(); err != nil {
+		log.Fatalln("error writing csv:", err)
+	}
+
 	return nil
 }
 
