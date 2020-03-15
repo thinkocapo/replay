@@ -96,6 +96,7 @@ func Debug(args ...interface{}) {
 func decodeBody(body []byte, contentEncoding []byte) ([]byte, error) {
 	switch {
 	case bytes.Equal(contentEncoding, ENCODING_GZIP):
+		fmt.Fprint("%v", "11111111111")
 		r, err := gzip.NewReader(bytes.NewReader(body))
 		if err != nil {
 			return nil, err
@@ -106,6 +107,7 @@ func decodeBody(body []byte, contentEncoding []byte) ([]byte, error) {
 		}
 		return body, nil
 	case bytes.Equal(contentEncoding, ENCODING_DEFLATE):
+		fmt.Fprint("%v", "2222222222")
 		r, err := zlib.NewReader(bytes.NewReader(body))
 		if err != nil {
 			return nil, err
@@ -116,6 +118,7 @@ func decodeBody(body []byte, contentEncoding []byte) ([]byte, error) {
 		}
 		return body, nil
 	case len(body) > 0 && body[0] != '{':
+		fmt.Fprint("%v", "3333333333")
 		buf := make([]byte, base64.StdEncoding.DecodedLen(len(body)))
 		n, err := base64.StdEncoding.Decode(buf, body)
 		if err != nil {
