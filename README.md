@@ -31,7 +31,7 @@ source .virtualenv/bin/activate
 pip3 install requirements.txt
 ```
 
-download gor executable and put to cwd  
+download gor executable and put to cwd or add it to your $PATH  
 https://github.com/buger/goreplay/releases/tag/v1.0.0
 
 ```
@@ -92,10 +92,12 @@ gor file-server 8000
 sudo ./gor --input-raw :8000 --output-stdout
 
 ## TODO
-- type checking events from requests module sent to dump-request.go, as well as interceptions in middleware.go
-- Ignore: They have 2 different request headers? 'requests' lib vs whatever sentry_sdk is doing vs. Custom Transport Layer is preferred, but then need to do that in every SDK platform
-- Focus: on middleware.go, and find a way to not let it through to the on-prem instance (disable the DSN for starters)
+- type checking events from to middleware.go
 - log the entire payload / persist it somewhere for ML
+- could send the event 1 time from Python, and then Replay it a thousands times using gor
 
-- THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
+- Focus: on middleware.go, IF sending too many events causes performance issues on the on-prem sentry, THEN find a way to not let it through to the on-prem instance (e.g. disable the DSN for starters) 'or' Custom Transport Layer. this is better than using 'requests' lib in before_send because requests' event payload (body,headers,etc) won't be 100% match as what sentry_sdk sends. CTL would also be needed on every platform.
+
+- could run this experiment with a sentry Relay
+- could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 - `.mod` this into a Go module

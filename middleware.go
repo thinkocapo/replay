@@ -57,27 +57,53 @@ func main() {
 	}
 }
 
+type Event struct {
+	Platform string
+	Level string
+	Event_id string
+	Timestamp string
+	Server_name string
+}
+
 func process(buf []byte) (error) {
-	
+	// Headers - User-Agent, HostAddress, ClientIP, ClientPort, HTTPProtocalVersion, Connection 
+	// Body - all, is from sentry_sdk
 	headerSize := bytes.IndexByte(buf, '\n') + 1
-
 	payload := buf[headerSize:]
-	Debug("Received payload:", string(buf))
-
+	// Debug("Received payload:", string(buf))
 	end := proto.MIMEHeadersEndPos(payload)
-	body := payload[end:]
-	
+	body := payload[end:]	
+
+	// doesn't work on the 'body' object
+	// var event Event
+	// err := json.NewDecoder(body).Decode(&event)
+	// if err != nil {
+	// 	fmt.Printf("%v", "\n------- ERRROR --------\n")
+	// 	http.Error(w, err.Error(), http.StatusBadRequest)
+	// 	return
+	// } else {
+	// 	fmt.Printf("%v", event) // logs Platform, Level, Server_name as platform, level, server_name
+	// }
 
 	body, err := decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	if err != nil {
 		return err
 	}
 
-	// SENTRY - platform is an attribute on the event payload from sentry_sdk ;)
+	// Sentry Event - String Types
 	platform, err := jsonparser.GetString(body, "platform")
-	Debug("PLATFORM:", platform)
-	// TODO - persist to DB / do data analysis on millions of events
+	level, err := jsonparser.GetString(body, "level")
+	event_id, err := jsonparser.GetString(body, "event_id")
+	timestamp, err := jsonparser.GetString(body, "timestamp")
+	server_name, err := jsonparser.GetString(body, "server_name")
 
+	// Sentry Event - Other Types
+	// could save a stringfied object/array to start
+
+	var event = Event{platform, level, event_id, timestamp, server_name} 
+	Debug("event", event)
+
+	// Persist to DB
 	return nil
 }
 
@@ -136,6 +162,7 @@ func decodeBody(body []byte, contentEncoding []byte) ([]byte, error) {
 		}
 		return buf, nil
 	}
+	fmt.Printf("%v", "444444444")
 	return body, nil
 }
 

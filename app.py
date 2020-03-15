@@ -5,14 +5,12 @@ import sentry_sdk
 import requests
 load_dotenv()
 DSN = os.getenv('DSN')
-DUMP_REQUEST = 'http://localhost:12345/decoderequest'
+DUMP_REQUEST = os.getenv('DUMP_REQUEST')
 
 # redirects the request away from dsn and to an endpoint defined by the router in dump-request.go
 def redirect(event, hint):
-    # don't use b/c sends as x-www-form-urlencoded
-    # r = requests.post(DUMP_REQUEST, data=event)
-    
-    # json
+    # for key in event:
+    #     print('%s: %s' % (key, event[key]))
     r = requests.post(DUMP_REQUEST, json=event)
     return null
 

@@ -34,8 +34,7 @@ func DecodeRequest(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else {
-		fmt.Printf("%v", "\n------- NO ERROR -------\n")
-		fmt.Printf("%v", event)
+		fmt.Printf("%v", event) // logs Platform, Level, Server_name as platform, level, server_name
 	}
 
 }
