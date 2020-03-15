@@ -107,10 +107,9 @@ func process(buf []byte) (error) {
 
 	// Persist to CSV/DB
 	records := [][]string{
-		{"firstname", "lastname", "username"},
-		{"Zob", "Pike", "rob"},
-		{"Ken", "Thompson", "ken"},
-		{"Robert", "Griesemer", "gri"},
+		{"event_id", "server_name", "platform", "level", "timestamp"},
+		{event_id, server_name, platform, level, timestamp},
+		{"write", "these", "in", "batches", "maybe"},
 	}
 
 	file, err := os.Create("result.csv")
