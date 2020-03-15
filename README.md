@@ -10,14 +10,9 @@ OR
 We produce errors in app.py and Sentry SDK's before_send configuration redirects them to a different API than the DSN  
 We run a httputil.DumpRequest in that API to pick up these POST requests  
 
-
 The request body (and possibly headers, etc.) are of interest for analysis. Could write them to a DB, analyze them later.
 
 TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare them to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
-
-TODO - try a Custom Transport Layer because the request from before_send might have different headers.
-
-THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 
 example payload structure from a sentry sdk event:  
 ![payload-structure](./payload-structure.png)
@@ -96,6 +91,11 @@ gor file-server 8000
 sudo ./gor --input-raw :8000 --output-stdout
 
 ## TODO
+- type checking events from requests module sent to dump-request.go, as well as interceptions in middleware.go
+- decide how to handle the fact that they have 2 different request headers. I might need these.
+- CTL is preferred, but then need to do that in every SDK platform
+- might be better to focus on middleware.go, and find a way to not let it through to the on-prem instnace (disable the DSN for starters)
 - log the entire payload / persist it somewhere for ML
 
+- THOUGHT - could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 - `.mod` this into a Go module
