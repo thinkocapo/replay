@@ -106,3 +106,9 @@ sudo ./gor --input-raw :8000 --output-stdout
 - Focus: on middleware.go, IF sending too many events causes performance issues on the on-prem sentry, THEN find a way to not let it through to the on-prem instance (e.g. disable the DSN for starters) 'or' Custom Transport Layer. this is better than using 'requests' lib in before_send because requests' event payload (body,headers,etc) won't be 100% match as what sentry_sdk sends. CTL would also be needed on every platform.
 - could run this experiment with a sentry Relay
 - `.mod` this into a Go module
+
+
+# only wants an Exception passed to it, not an event.
+        # could set the server_name, extra, tags, breadcrumbs and things manually on it, event_id, timestamp?
+        # would it miss the original request headers thoughhh?
+        # sentry_sdk.capture_exception(event) # NO, wants event object ONLY and not headers+body

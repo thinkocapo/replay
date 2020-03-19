@@ -1,19 +1,17 @@
 import argparse
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 import sentry_sdk
 import requests
-load_dotenv()
+# load_dotenv()
 
-# senter_sdk initialization
-DSN = os.getenv('DSN')
+# sentry_sdk will not reject this, and will send it to the Flask API of localhost:3001/42
+MODIFIED_DSN = 'http://2ba68720d38e42079b243c9c5774e05c@localhost:3001/42'
 
-# sentry_sdk for redirects
-DSN_FLASK = os.getenv('DSN_FLASK')
+# set the (optional) redirect
 DUMP_REQUEST = os.getenv('DUMP_REQUEST')
-
-# set the redirect
-DSN_REDIRECT = DSN_FLASK
+FLASK_API = 'http://localhost:3001'
+DSN_REDIRECT = FLASK_API
 
 # checks cli arg for '-r' for redirecting the event
 def set_redirect_toggle():
@@ -32,9 +30,8 @@ def set_redirect_toggle():
 def before_send_redirect(event, hint):
     '''returning the event is optional'''
     try:
-        #r = requests.post(DSN_REDIRECT, json=event) # DSN_REDIRECT is going to be the FLASK app or GO app (DUMP_REQUEST)
-        # TODO save event as a []bytes, load from DB
-        # TODO in sentry-python sdk, find what function is called as before_send returns
+        # optional
+        r = requests.post(DSN_REDIRECT, json=event) # DSN_REDIRECT is going to be the FLASK app or GO app (DUMP_REQUEST)
         return event
     except Exception as err:
         print(err)
@@ -48,7 +45,7 @@ def app():
 
 if __name__ == '__main__':
     params = set_redirect_toggle()
-    params['dsn'] = DSN_FLASK # or DSN_REDIRECT?
+    params['dsn'] = DSN
     print(params)
     sentry_sdk.init(params)
     app()
