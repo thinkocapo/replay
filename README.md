@@ -5,17 +5,17 @@
 **2 Things You Can Do with this program**
 
 We produce errors in app.py and Sentry SDK sends them as events to a self-hosted Sentry instance at localhost:9000  
-We have a Go Replay called 'gor' running to sniff these POST requests hitting localhost:9000  
+We have a Go Replay called 'gor' running to sniff these POST requests hitting localhost:9000, and write the data to a csv  
 OR  
 We produce errors in app.py and Sentry SDK's before_send configuration redirects them to a different API than the DSN  
-We run a httputil.DumpRequest in that API to pick up these POST requests  
+We run a API Server to receive these POST requests, and then write to csv  
 
-The request body (and possibly headers, etc.) are of interest for analysis. Could write them to a DB, analyze them later.
+The request body and headers are of interest.
 
 TODO - create thousands of events via app.py or a homegrown cli tool at once, then run ML on them. and/or could compare them to their post-ingestion state (i.e. where they're stored in Sentry.io/snuba). This cli testing tool is something i've been intersted in developing for a while, for populating test data, aside from ML.  
 
 example payload structure from a sentry sdk event:  
-![payload-structure](./payload-structure.png)
+![payload-structure](./img/payload-structure.png)
 
 ## Versions
 tested on ubuntu 18.04 LTS
@@ -25,6 +25,7 @@ go version go1.12.9 linux/amd64
 sentry-sdk==0.14.2
 
 ## Install
+#### Go Replay
 ```
 virtualenv -p /usr/bin/python3 .virtualenv  
 source .virtualenv/bin/activate  
@@ -47,6 +48,9 @@ go build middleware.go
 go build deump-request.go
 ```
 
+#### flask.py
+update app.py with DSN_EVENT value so the event goes to flask.py API
+
 ## Run
 You can send events using app.py to your on-prem instance. the `middleware` sniffs the events and doesn't interrupt them like a proxy does. 
 
@@ -57,10 +61,13 @@ You can send events using app.py but ignore your on-prem instance. Events get re
 1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout`
 2. `python3 app.py`
 3. or
-5. `./dump-request`
-6. `python3 app.py -i`
+5. `docker-compose up` the onpremise sentry 
+6. `./dump-request`
+7. `python3 app.py -r`
 
 ^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")  
+
+1. `make flask`
 
 ## Reference & Troubleshooting
 
@@ -92,12 +99,10 @@ gor file-server 8000
 sudo ./gor --input-raw :8000 --output-stdout
 
 ## TODO
-- type checking events from to middleware.go
-- log the entire payload / persist it somewhere for ML
-- could send the event 1 time from Python, and then Replay it a thousands times using gor
-
+- replay the payload many times
+- consider persisting the events as bytes https://www.postgresql.org/docs/9.0/datatype-binary.html for loading and sending, decouples the dependency on +10 platform sdk's
+- gRPC experiment, which clients throwing errors.
+- reverse proxy in Go https://hackernoon.com/writing-a-reverse-proxy-in-just-one-line-with-go-c1edfa78c84b or https://stackoverflow.com/questions/34724160/go-http-send-incoming-http-request-to-an-other-server-using-client-do
 - Focus: on middleware.go, IF sending too many events causes performance issues on the on-prem sentry, THEN find a way to not let it through to the on-prem instance (e.g. disable the DSN for starters) 'or' Custom Transport Layer. this is better than using 'requests' lib in before_send because requests' event payload (body,headers,etc) won't be 100% match as what sentry_sdk sends. CTL would also be needed on every platform.
-
 - could run this experiment with a sentry Relay
-- could run this experiment inside of a Network where all http requests gets routed through a Proxy which can also read the request payloads,and have more of a flip-switch control for letting the requests through to my Sentry/localhost:9000 or not
 - `.mod` this into a Go module

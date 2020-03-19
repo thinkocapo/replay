@@ -29,10 +29,10 @@ import (
 	"github.com/buger/goreplay/proto"
 	"github.com/buger/jsonparser"
 	"io/ioutil"
-	"encoding/csv"
-	"log"
-)
 
+)
+// "encoding/csv"
+// "log"
 var HTTP_CONTENT_ENCODING = []byte("Content-Encoding")
 var ENCODING_GZIP = []byte("gzip")
 var ENCODING_DEFLATE = []byte("deflate")
@@ -52,7 +52,12 @@ func main() {
 
 	for scanner.Scan() {
 		encoded := scanner.Bytes()
+		// os.Stdout.Write(encoded)
+		
 		buf := make([]byte, len(encoded)/2)
+
+		// os.Stdout.Write(buf) // doesn't error, but also doesn't work
+
 		hex.Decode(buf, encoded)
 
 		process(buf)
@@ -68,24 +73,11 @@ type Event struct {
 }
 
 func process(buf []byte) (error) {
-	// Headers - User-Agent, HostAddress, ClientIP, ClientPort, HTTPProtocalVersion, Connection 
-	// Body - all, is from sentry_sdk
 	headerSize := bytes.IndexByte(buf, '\n') + 1
 	payload := buf[headerSize:]
 	// Debug("Received payload:", string(buf))
 	end := proto.MIMEHeadersEndPos(payload)
 	body := payload[end:]	
-
-	// doesn't work on the 'body' object
-	// var event Event
-	// err := json.NewDecoder(body).Decode(&event)
-	// if err != nil {
-	// 	fmt.Printf("%v", "\n------- ERRROR --------\n")
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// } else {
-	// 	fmt.Printf("%v", event) // logs Platform, Level, Server_name as platform, level, server_name
-	// }
 
 	body, err := decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	if err != nil {
@@ -105,20 +97,23 @@ func process(buf []byte) (error) {
 	var event = Event{platform, level, event_id, timestamp, server_name} 
 	Debug("event", event)
 
-	// Persist to CSV/DB
-	records := [][]string{
-		{"event_id", "server_name", "platform", "level", "timestamp"},
-		{event_id, server_name, platform, level, timestamp},
-		{"write", "these", "in", "batches", "maybe"},
-	}
+	// Persist to CSV/JSON/DB
+	// records := [][]string{
+	// 	{"event_id", "server_name", "platform", "level", "timestamp"},
+	// 	{event_id, server_name, platform, level, timestamp},
+	// 	{"write", "these", "in", "batches", "maybe"},
+	// }
+	// file, err := os.Create("result.csv")
+	// w := csv.NewWriter(file)
+	// w.WriteAll(records) // calls Flush internally
+	// if err := w.Error(); err != nil {
+	// 	log.Fatalln("error writing csv:", err)
+	// }
 
-	file, err := os.Create("result.csv")
-	w := csv.NewWriter(file)
-	w.WriteAll(records) // calls Flush internally
-	if err := w.Error(); err != nil {
-		log.Fatalln("error writing csv:", err)
-	}
-
+	// return nil
+	// redirect the event to somewhere
+	//os.Stdout.Write(buf)
+	os.Stdout.Write(encode(append(buf[:headerSize], payload...)))
 	return nil
 }
 
@@ -210,3 +205,14 @@ func deflateEncoder(b []byte) []byte {
 	w.Close()
 	return buf.Bytes()
 }
+
+	// doesn't work on the 'body' object
+	// var event Event
+	// err := json.NewDecoder(body).Decode(&event)
+	// if err != nil {
+	// 	fmt.Printf("%v", "\n------- ERRROR --------\n")
+	// 	http.Error(w, err.Error(), http.StatusBadRequest)
+	// 	return
+	// } else {
+	// 	fmt.Printf("%v", event) // logs Platform, Level, Server_name as platform, level, server_name
+	// }

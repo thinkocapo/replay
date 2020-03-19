@@ -6,3 +6,5 @@ middleware
 dump-request
 decode-request
 result-csv
+grpc.png
+maker.go
