@@ -112,3 +112,10 @@ sudo ./gor --input-raw :8000 --output-stdout
         # could set the server_name, extra, tags, breadcrumbs and things manually on it, event_id, timestamp?
         # would it miss the original request headers thoughhh?
         # sentry_sdk.capture_exception(event) # NO, wants event object ONLY and not headers+body
+
+https://flask.palletsprojects.com/en/1.1.x/api/
+
+https://requests.readthedocs.io/en/master/  
+https://realpython.com/python-requests/#request-headers
+
+json.loads(r.data.decode('utf-8'))['headers']
