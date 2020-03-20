@@ -5,13 +5,23 @@ import sentry_sdk
 import requests
 # load_dotenv()
 
-# sentry_sdk will not reject this, and will send it to the Flask API of localhost:3001/42
-MODIFIED_DSN = 'http://2ba68720d38e42079b243c9c5774e05c@localhost:3001/42'
+# trick the sentry_sdk into sending the event to the Flask API on localhost:3001/42
+MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/42'
 
-# set the (optional) redirect
+# this redirect is optional
 DUMP_REQUEST = os.getenv('DUMP_REQUEST')
-FLASK_API = 'http://localhost:3001'
-DSN_REDIRECT = FLASK_API
+
+
+def app():
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_tag("customer", "special")
+    sentry_sdk.capture_exception(Exception("This is from app.py."))
+
+def initialize_sentry():
+    params = set_redirect_toggle()
+    params['dsn'] = MODIFIED_DSN
+    print(params)
+    sentry_sdk.init(params)
 
 # checks cli arg for '-r' for redirecting the event
 def set_redirect_toggle():
@@ -20,32 +30,21 @@ def set_redirect_toggle():
     args = parser.parse_args()
     params = {}
     if args.redirect == True:
-        print('from: %s\n  to: %s' % (DSN, DSN_REDIRECT))
         params['before_send'] = before_send_redirect
     return params
 
-# redirects the request away from dsn and to an endpoint defined by the router in dump-request.go
-# or
-# redirects the request to a homemade api and still sends to DSN
+# redirects to dump-request.go or to whatever VARIABLE you define
 def before_send_redirect(event, hint):
     '''returning the event is optional'''
     try:
         # optional
-        r = requests.post(DSN_REDIRECT, json=event) # DSN_REDIRECT is going to be the FLASK app or GO app (DUMP_REQUEST)
+        r = requests.post(DUMP_REQUEST, json=event)
         return event
     except Exception as err:
         print(err)
         return 'failed'
     return null
-
-def app():
-    with sentry_sdk.configure_scope() as scope:
-        scope.set_tag("customer", "SPECIAL")
-    sentry_sdk.capture_exception(Exception("This is from app.py"))
-
+    
 if __name__ == '__main__':
-    params = set_redirect_toggle()
-    params['dsn'] = DSN
-    print(params)
-    sentry_sdk.init(params)
+    initialize_sentry()
     app()
