@@ -6,7 +6,7 @@ import requests
 # load_dotenv()
 
 # trick the sentry_sdk into sending the event to the Flask API on localhost:3001/42
-MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/42'
+MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/2'
 
 # this redirect is optional
 DUMP_REQUEST = os.getenv('DUMP_REQUEST')
@@ -39,6 +39,7 @@ def before_send_redirect(event, hint):
     try:
         # optional
         r = requests.post(DUMP_REQUEST, json=event)
+        # optional
         return event
     except Exception as err:
         print(err)
