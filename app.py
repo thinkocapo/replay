@@ -9,8 +9,9 @@ import requests
 # MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/2'
 # MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/api/2/store'
 
+# 3001 is flask, not sentry on-prem
 MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
-ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
+# ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
 
 # this redirect is optional
 DUMP_REQUEST = os.getenv('DUMP_REQUEST')
@@ -23,7 +24,7 @@ def app():
 
 def initialize_sentry():
     params = set_redirect_toggle()
-    params['dsn'] = ORIGINAL_DSN
+    params['dsn'] = MODIFIED_DSN
     print(params)
     sentry_sdk.init(params)
 

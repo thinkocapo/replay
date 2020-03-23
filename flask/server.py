@@ -22,11 +22,16 @@ from gzip import GzipFile
 # TODO does this match the numbers in dsn on onpremise sentry? check UI
 # TODO ask about 403-csrf.html
 
-SENTRY_API_STORE_ONPREMISE ="http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/api/2/store"
+# SENTRY_API_STORE_ONPREMISE ="http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/api/2/store"
 # SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store"
+SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf0ad07984bb3941e677b35a13d2c&sentry_version=7"
+
 
 app = Flask(__name__)
 CORS(app)
+
+# core_api.py
+# event_manager.py
 
 # Receives payload from sentry-sdk in app.py
 @app.route('/api/2/store/', methods=['POST'])
@@ -36,23 +41,29 @@ def event():
     print('\n content_type', request.content_type)
 
     headers = request.headers
-    # for key in headers:
-    #     print("key", key)
+    for key in headers:
+        print("key", key)
     requests_headers = {
         # 'Host': headers.get('Host'),
-        'Host': headers.get('Host'),
+        # 'Host': headers.get('Host'),
+        'Host': 'localhost:3001',
+
         # 'Cookie': '_xsrf=2|978a1d70|6e2dc68178acf21053e8d6bd21b7d063|1583120785; username-localhost-8889="2|1:0|10:1583896358|23:username-localhost-8889|44:NDhmMGU4YjEyMjNjNDhiZGFlMjgwY2Y5ZTQ2ZjEzZmI=|5891415757f2c0073dc30c5cadeaa886a772bd22c3c6afba31e0ef28ace2d089"; sc=p9v2tVJRLp6n5EiS19Qci6EXdtsBFAsaBfolfuTwGHx1IKwSCmF4YPoF1OCEvb22; username-localhost-8888="2|1:0|10:1584890480|23:username-localhost-8888|44:N2JmZDI0MTczYzkzNDQ0ZDhjZGYzNTY2M2E1MTE1OWI=|5386d1c09598742716d6e4e505c85b02eb7b3180c160093127ffd7ca33012f0b"; io=Yl3cJ51IKH6ILCp9AAAI; sentrysid=".eJxNjssKgkAUhs0iKIqgR2jVSpTxksuC3qAhdzKeM-SgOTWXLougR8_KhbvD9___x3m7r-tgTec5s6bMreYqF5gNHMcJ6ISBETcu1Skbt0Dzxqjn1aUjbVFmsxYdHuaI5gK3XaCyaQsM1wakrAT_Te5SVRzpsmcvGFS8Qbr66zxrRK29b-7tz0zU2_badZ2h1rL7ZdFTlEyXdI3ICBIf04IACzEIgfgbkiIibPw4hihK0iSF2HofbvNIkg:1jG9pT:JXPuM56EKosEyJXHhlwjByyUA-E"',
         'Accept-Encoding': headers.get('Accept-Encoding'),
 
         'Content-Length': headers.get('Content-Length'),
 
-        'Content-Encoding': headers.get('Content-Encoding'),
+        # 'Content-Encoding': headers.get('Content-Encoding'),
+        # Correct, see sentry-python
+        
+        'Content-Encoding': 'gzip',
         'Content-Type': 'application/json',
+
         # 'X-Sentry-Auth': headers.get('X-Sentry-Auth'),
-        'X-Sentry-Auth': 'Sentry sentry_key=759bf0ad07984bb3941e677b35a13d2c, sentry_version=7, sentry_client=sentry.python/0.14.2',
+        # 'X-Sentry-Auth': 'Sentry sentry_key=759bf0ad07984bb3941e677b35a13d2c, sentry_version=7, sentry_client=sentry.python/0.14.2',
         'User-Agent': headers.get('User-Agent'),
 
-        # 'Referer': 'localhost:3001'
+        'Referer': 'http://localhost:3001'
     }
     print("request.headers\n", request.headers)
     print("requests_headers\n", requests_headers)
@@ -79,7 +90,7 @@ def event():
 
         #ca_cert stuff?
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=body.getvalue(), headers=requests_headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=requests_headers 
         )
         print("\nresponse.data\n", response.data)
         print("\nresponse.status", response.status)
