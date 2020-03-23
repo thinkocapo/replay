@@ -44,26 +44,6 @@ var originalTokens map[string][]byte
 // originalToken -> replayedToken
 var tokenAliases map[string][]byte
 
-func main() {
-	originalTokens = make(map[string][]byte)
-	tokenAliases = make(map[string][]byte)
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for scanner.Scan() {
-		encoded := scanner.Bytes()
-		// os.Stdout.Write(encoded)
-		
-		buf := make([]byte, len(encoded)/2)
-
-		// os.Stdout.Write(buf) // doesn't error, but also doesn't work
-
-		hex.Decode(buf, encoded)
-
-		process(buf)
-	}
-}
-
 type Event struct {
 	Platform string
 	Level string
@@ -72,16 +52,54 @@ type Event struct {
 	Server_name string
 }
 
-func process(buf []byte) (error) {
+func main() {
+	originalTokens = make(map[string][]byte)
+	tokenAliases = make(map[string][]byte)
+
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		encoded := scanner.Bytes()
+
+		// nothing
+		// os.Stdout.Write(encoded)
+
+		buf := make([]byte, len(encoded)/2)
+
+		Debug("\n1111111111", "maybe")
+
+		// "Failed to decode input payload encoding/hex: invalid byte: U+0000 5676"
+		// os.Stdout.Write(buf)
+
+		// "Failed to decode input payload encoding/hex: odd length hex string 3462"
+		// os.Stdout.Write(encode(buf))
+
+		// "Failed to decode input payload encoding/hex: odd length hex string 7568"
+		// os.Stdout.Write(encoded)
+
+		hex.Decode(buf, encoded)
+
+		// "Failed to decode input payload encoding/hex: odd length hex string 3462"
+		// os.Stdout.Write(encode(buf))
+
+		process(buf)
+	}
+}
+
+
+
+func process(buf []byte) {
 	headerSize := bytes.IndexByte(buf, '\n') + 1
 	payload := buf[headerSize:]
+	
+	// TODO - is any of this modifying the payload? would be badd...
 	// Debug("Received payload:", string(buf))
 	end := proto.MIMEHeadersEndPos(payload)
 	body := payload[end:]	
 
 	body, err := decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	if err != nil {
-		return err
+		Debug("err decoding", err)
 	}
 
 	// Sentry Event - String Types
@@ -90,12 +108,8 @@ func process(buf []byte) (error) {
 	event_id, err := jsonparser.GetString(body, "event_id")
 	timestamp, err := jsonparser.GetString(body, "timestamp")
 	server_name, err := jsonparser.GetString(body, "server_name")
-
-	// Sentry Event - Other Types
-	// could save a stringfied object/array to start
-
 	var event = Event{platform, level, event_id, timestamp, server_name} 
-	Debug("event", event)
+	Debug("event:", event)
 
 	// Persist to CSV/JSON/DB
 	// records := [][]string{
@@ -110,11 +124,10 @@ func process(buf []byte) (error) {
 	// 	log.Fatalln("error writing csv:", err)
 	// }
 
-	// return nil
-	// redirect the event to somewhere
-	//os.Stdout.Write(buf)
-	os.Stdout.Write(encode(append(buf[:headerSize], payload...)))
-	return nil
+	// "Failed to decode input payload encoding/hex: odd length hex string 3462"
+	buf = append(buf[:headerSize], payload...)
+	Debug("os.Stdout", "os.Stdout")
+	os.Stdout.Write(encode(buf))
 }
 
 func encode(buf []byte) []byte {

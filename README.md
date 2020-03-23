@@ -58,12 +58,15 @@ or
 
 You can send events using app.py but ignore your on-prem instance. Events get re-directed to a `dump-request` instead.  
 
-1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout`
-2. `python3 app.py`
+1. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-stdout` or --output-http
+2. `python3 app.py` w/ ORIGINAL_DSN
 3. or
 5. `docker-compose up` the onpremise sentry 
 6. `./dump-request`
 7. `python3 app.py -r`
+8. or
+9. `docker-compose up`
+10. `python app.py`
 
 ^ see the debug log statement in your terminal, it logs the platform property of the event (i.e. event.platform, should read "python")  
 

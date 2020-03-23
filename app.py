@@ -6,7 +6,11 @@ import requests
 # load_dotenv()
 
 # trick the sentry_sdk into sending the event to the Flask API on localhost:3001/42
-MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/2'
+# MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/2'
+# MODIFIED_DSN = 'http://18562a9e8e3943088b1ca3cedf222e21@localhost:3001/api/2/store'
+
+MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
+ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
 
 # this redirect is optional
 DUMP_REQUEST = os.getenv('DUMP_REQUEST')
@@ -15,11 +19,11 @@ DUMP_REQUEST = os.getenv('DUMP_REQUEST')
 def app():
     with sentry_sdk.configure_scope() as scope:
         scope.set_tag("customer", "special")
-    sentry_sdk.capture_exception(Exception("This is from app.py."))
+    sentry_sdk.capture_exception(Exception("Exceptional"))
 
 def initialize_sentry():
     params = set_redirect_toggle()
-    params['dsn'] = MODIFIED_DSN
+    params['dsn'] = ORIGINAL_DSN
     print(params)
     sentry_sdk.init(params)
 

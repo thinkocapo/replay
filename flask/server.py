@@ -20,6 +20,8 @@ from gzip import GzipFile
 
 # TODO see what sentry-sdk sends as outbound url
 # TODO does this match the numbers in dsn on onpremise sentry? check UI
+# TODO ask about 403-csrf.html
+
 SENTRY_API_STORE_ONPREMISE ="http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/api/2/store"
 # SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store"
 
@@ -47,18 +49,18 @@ def event():
         'Content-Encoding': headers.get('Content-Encoding'),
         'Content-Type': 'application/json',
         # 'X-Sentry-Auth': headers.get('X-Sentry-Auth'),
-        'X-Sentry-Auth': 'sentry_key=18562a9e8e3943088b1ca3cedf222e21, sentry_version=7, sentry_client=sentry.python/0.14.2',
+        'X-Sentry-Auth': 'Sentry sentry_key=759bf0ad07984bb3941e677b35a13d2c, sentry_version=7, sentry_client=sentry.python/0.14.2',
         'User-Agent': headers.get('User-Agent'),
 
-        # 'Referer': 'localhost:9000'
+        # 'Referer': 'localhost:3001'
     }
-    print("request.headers", request.headers)
-    print("requests_headers", requests_headers)
+    print("request.headers\n", request.headers)
+    print("requests_headers\n", requests_headers)
 
     # TODO Save data and headers to DB
     data = decompress_gzip(request.data) # keys: exception, server_name, tags, event_id, timestamp, extra, modules, contexts, platform, breadcrumbs, level, sdk
-    for key in json.loads(data):
-        print("key", key)
+    # for key in json.loads(data):
+    #     print("key", key)
     # JSON
     # print('dump', json.dumps(data, indent=1).replace("\\",""))
     # print ('request.json', request.json) # No, it's bytes
@@ -70,24 +72,21 @@ def event():
         # TODO  
         body = io.BytesIO()
         with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(data, allow_nan=False).encode("utf-8"))
+            f.write(json.dumps(data, allow_nan=False).encode("utf-8")) #body still of type BytesIO
 
-        print('type(request.headers)', type(request.headers)) #flask type...BAD
         print('type(requests_headers)', type(requests_headers)) #dict
-        print('type(body.getvalue()', type(body.getvalue())) # why does this print as 'str'?
+        print('type(body.getvalue()', type(body.getvalue())) # str
 
         #ca_cert stuff?
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=body.getvalue(), headers=requests_headers 
         )
-
-        print("\nresponse.data", response.data)
-        print("\nr.status", response.status)
-
+        print("\nresponse.data\n", response.data)
+        print("\nresponse.status", response.status)
 
     except Exception as err:
-        print('\nLOCAL EXCEPTION')
-        print(err)
+        print('\nLOCAL EXCEPTION', err)
+
     return 'Success - handled'
 
 @app.route('/test', methods=['GET'])
