@@ -8,3 +8,6 @@ decode-request
 result-csv
 grpc.png
 maker.go
+*.pyc
+**.pyc
+/flask/__pycache__
