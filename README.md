@@ -104,3 +104,9 @@ Working Request Headers
     'User-Agent': 'sentry.python/0.14.2'
 }
 ```
+
+
+
+https://muharem.wordpress.com/2007/10/27/fun-with-postgresql-psycopg2-and-bytea-arrays/
+
+https://www.postgresqltutorial.com/postgresql-python/blob/

@@ -9,7 +9,7 @@ import requests
 MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 
 def app():
-    sentry_sdk.capture_exception(Exception("middleman_11"))
+    sentry_sdk.capture_exception(Exception("middleman_15"))
 
 def initialize_sentry():
     params = { 'dsn': MODIFIED_DSN }
