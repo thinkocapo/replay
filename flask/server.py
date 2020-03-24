@@ -30,13 +30,12 @@ def event():
 
     headers = request.headers
     requests_headers = {
-        'Host': 'localhost:3001',
+        'Host': headers.get('Host'),
         'Accept-Encoding': headers.get('Accept-Encoding'),
         'Content-Length': headers.get('Content-Length'),
-        'Content-Encoding': 'gzip',
-        'Content-Type': 'application/json',
-        'User-Agent': headers.get('User-Agent'),
-        'Referer': 'http://localhost:3001'
+        'Content-Encoding': headers.get('Content-Encoding'),
+        'Content-Type': headers.get('Content-Type'),
+        'User-Agent': headers.get('User-Agent')
     }
 
     data = decompress_gzip(request.data) 

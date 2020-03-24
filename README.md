@@ -36,7 +36,7 @@ install -r requirements.txt
 #### works
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
-2. `make flask`
+2. `make` runs Flask server
 3. `python app.py` using MODIFIED_dsn
 
 #### doesnt' work yet
@@ -92,3 +92,15 @@ https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using
 gor file-server 8000
 
 transport.py, core_api.py, event_manager.py
+
+Working Request Headers
+```
+{
+    'Host': 'localhost:3001',
+    'Accept-Encoding': 'identity', 
+    'Content-Length': '1501', 
+    'Content-Encoding': 'gzip', 
+    'Content-Type': 'application/json', 
+    'User-Agent': 'sentry.python/0.14.2'
+}
+```
