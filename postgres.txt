@@ -1,0 +1,18 @@
+Image is postgres
+Container name is db-postgres
+
+docker run -it --rm \
+    --name db-postgres \
+    -e POSTGRES_PASSWORD=admin \
+    -e POSTGRES_USER=admin \
+    postgres
+
+docker exec -it db-postgres psql -U admin
+
+1. show all databases
+2. identify db name (should be admin?) 'OR' create one if none exist
+3. create a table w/ row w/ pid, name(?), []bytes
+4. practice psql adding a row...
+5. practice reading from it from python console
+6. practice writing to it from python console (psycopg2? or sqlalchemy preferred)
+7. try writing []bytes to it as well
