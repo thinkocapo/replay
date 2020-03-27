@@ -1,3 +1,5 @@
+https://hub.docker.com/_/postgres
+
 Image is postgres
 Container name is db-postgres
 
@@ -16,3 +18,18 @@ docker exec -it db-postgres psql -U admin
 5. practice reading from it from python console
 6. practice writing to it from python console (psycopg2? or sqlalchemy preferred)
 7. try writing []bytes to it as well
+
+
+https://www.postgresqltutorial.com/psql-commands/
+http://www.postgresonline.com/downloads/special_feature/postgresql83_psql_cheatsheet.pdf
+
+
+
+CREATE TABLE events(
+   pk SERIAL PRIMARY KEY,
+   type varchar(40) NOT NULL,
+   name varchar(40) NOT NULL
+);
+
+insert into events (type, name)
+    values ('type1', 'name1');
