@@ -43,3 +43,11 @@ create user admin with login password 'admin';
 8:25p
 database is called 'postgres'
 -p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`
+
+10:38p
+ALTER TABLE events
+    ADD COLUMN data BYTEA;
+
+\dt data tables , show them
+\l show all databases
+\c use a db
