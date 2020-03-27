@@ -39,7 +39,7 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 
 # Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
-def event():
+def api_store():
 
     headers = request.headers
     requests_headers = {
@@ -91,7 +91,7 @@ def get_connection():
 
 @app.route('/events', methods=['GET'])
 def events():
-    print('EEEEEEEEEE')
+    print('/event GET')
 
     with db.connect() as conn:
         results = conn.execute(
@@ -103,6 +103,21 @@ def events():
         for row in results:
             rows.append(dict(row))
         return json.dumps(rows)
+
+@app.route('/event', methods=['GET'])
+def event():
+    print('/event POST')
+  
+    with db.connect() as conn:
+        conn.execute(
+            "INSERT INTO events (type,name) VALUES ('type2', 'name2')"
+        )
+        conn.close()
+        print("inserted")
+        # rows = []
+        # for row in results:
+        #     rows.append(dict(row))
+        # return json.dumps(rows)
 
 @app.route('/test', methods=['GET'])
 def test():
