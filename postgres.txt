@@ -7,6 +7,7 @@ docker run -it --rm \
     --name db-postgres \
     -e POSTGRES_PASSWORD=admin \
     -e POSTGRES_USER=admin \
+    -p 5432:5432 \
     postgres
 
 docker exec -it db-postgres psql -U admin
@@ -33,3 +34,10 @@ CREATE TABLE events(
 
 insert into events (type, name)
     values ('type1', 'name1');
+
+
+create user admin with login password 'admin';
+
+8:25p
+database is called 'postgres'
+-p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`

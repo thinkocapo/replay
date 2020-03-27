@@ -31,6 +31,33 @@ and
 
 install -r requirements.txt
 
+## Database
+postgres.txt
+
+```
+docker run -it --rm \
+    --name db-postgres \
+    -e POSTGRES_PASSWORD=admin \
+    -e POSTGRES_USER=admin \
+    -p 5432:5432 \
+    postgres
+```
+
+`docker exec -it db-postgres psql -U admin`
+
+```
+CREATE TABLE events(
+   pk SERIAL PRIMARY KEY,
+   type varchar(40) NOT NULL,
+   name varchar(40) NOT NULL
+);
+
+insert into events (type, name)
+    values ('type1', 'name1');
+```
+
+create user admin with login password 'admin';
+
 ## Run
 
 #### works
