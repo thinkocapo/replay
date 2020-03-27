@@ -1,15 +1,22 @@
 import os
 from flask import Flask, request, json, abort
 from flask_cors import CORS
+import gzip
+import json
 import requests
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
-import gzip
+import sqlalchemy
+from sqlalchemy import create_engine
 import io
 from six import BytesIO
 from gzip import GzipFile
 import urllib3
 http = urllib3.PoolManager()
+
+import psycopg2
+import string
+import psycopg2.extras
 
 ''' NOTES
 Got error w/ 403-csrf.html until I put X-Sentry-Auth in URL rather than headers, which then gave error on the onprem Internal project
@@ -23,6 +30,12 @@ SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf
 
 app = Flask(__name__)
 CORS(app)
+
+HOST='localhost'
+DATABASE='postgres'
+USERNAME='admin'
+PASSWORD='admin'
+db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
 # Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
@@ -38,7 +51,7 @@ def event():
         'User-Agent': headers.get('User-Agent')
     }
 
-    data = decompress_gzip(request.data) 
+    data = decompress_gzip(request.data)
 
     try:
         body = io.BytesIO()
@@ -67,6 +80,41 @@ def decompress_gzip(encoded_data):
     except Exception as e:
         raise e
 
+def get_connection():
+    with sentry_sdk.start_span(op="psycopg2.connect"):
+        connection = psycopg2.connect(
+            host=HOST,
+            database=DATABASE,
+            user=USERNAME,
+            password=PASSWORD)
+    return connection 
+
+@app.route('/events', methods=['GET'])
+def events():
+    print('EEEEEEEEEE')
+
+    with db.connect() as conn:
+        results = conn.execute(
+            "SELECT * FROM events"
+        ).fetchall()
+        conn.close()
+        
+        rows = []
+        for row in results:
+            rows.append(dict(row))
+        return json.dumps(rows)
+
 @app.route('/test', methods=['GET'])
 def test():
     return 'Success'
+
+# connection = get_connection()
+# cursor = connection.cursor(cursor_factory = psycopg2.extras.DictCursor)
+# try:
+#     cursor.execute(insert_query, (name, tool_type, randomString(10), image, random.randint(10,50)))
+#     connection.commit()
+# except:
+#     raise "Row insert failed\n"
+#     return 'fail'
+# cursor.close()
+# connection.close()
