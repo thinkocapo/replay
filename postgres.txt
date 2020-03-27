@@ -1,5 +1,7 @@
 https://hub.docker.com/_/postgres
 
+`sudo service postgresql stop` stops local postgres on 5432
+
 Image is postgres
 Container name is db-postgres
 
