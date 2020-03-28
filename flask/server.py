@@ -37,13 +37,22 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
-# TODO intercepts event from sentry sdk('s?) and saves to DB
+# Intercepts event from sentry sdk('s?) and saves to DB
 @app.route('/undertaker', methods=['POST'])
 def undertaker():
-    # request.headers save to DB
-        # can load back into new werkzeug.datastructures.EnvironHeaders? probably not...
+    # can use 'pop'? https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.Headers
+
+    # print('headers.pop()', headers.pop())
+    # print('headers.pop()', headers.pop())
+
+    # TODO
+    # request_headers = {}
+    # for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']
+    #     request_headers[key] = headers.get(key)
+    # print('request_headers', request_headers)
+
     # request.data
-    
+
     # DB.execute w/ request.headers and request.data
 
     return 'event was undertaken from its journey to Sentry'
@@ -61,8 +70,12 @@ def impersonator():
 def api_store():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
-    print('request.headers', request.headers)
+    # print('request.headers', request.headers) (K | V line separated)
     # print('type(request.data)', type(request.data)) # <class 'bytes'>
+
+    # h = Headers(request.headers)
+    # print('request.headers.pop()', h.pop('Host'))
+    # print('request.headers.pop()', h.pop(0))
 
     headers = request.headers
     requests_headers = {
@@ -76,7 +89,7 @@ def api_store():
 
     data = decompress_gzip(request.data)
     print('type(data)', type(data)) # <class 'str'>...
-    print('data', data) # {"exception": {"values": [{"stacktrace": {"...
+    # print('data', data) # {"exception": {"values": [{"stacktrace": {"...
 
     try:
         body = io.BytesIO()
@@ -131,25 +144,27 @@ def event_bytea_get():
         for key in keys:
             print("key", key)
 
-        print('row_proxy.type', row_proxy.type)
-        print('row_proxy.data', row_proxy.data)
+        print('row_proxy.data', row_proxy.data) # b'{ "foo": "bar" }'
         print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
-        print('row_proxy.data', row_proxy.data)
 
-        return row_proxy.data
+        return { "data": row_proxy.data.decode("utf-8")  }
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
     print('/event-bytea POST')
     print('type(request.data)', type(request.data)) # bytes
-    print('request.data', request.data) # b'{ "foo": "bar" }'
+    print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
+    # print('request.data', request.data) # b'{ "foo": "bar" }'
 
-    # fp = BytesIO(request.data)
-    # print('type(fp)', type(fp))
 
-    insert_query = """ INSERT INTO events (type, name, data) VALUES (%s,%s,%s)"""
-    record = ('python', 'example', request.data)
-    # record = ('python', 'example', fp)
+    request_headers = {}
+    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        request_headers[key] = request.headers.get(key)
+    print('request_headers', request_headers)
+
+    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+    record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
+
 
     with db.connect() as conn:
         conn.execute(insert_query, record)

@@ -84,6 +84,8 @@ Send events using app.py to your on-prem instance. the middleware.go sniffs the 
 3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
 3. `python3 app.py` using ORIGINAL_DSN
 
+## TODO
+- once it all works, try using other sentry sdk's to produce events that get intercepted by flask/server.py
 
 ## Notes
 #### Sentry & buger's goreplay
