@@ -32,8 +32,7 @@ and
 install -r requirements.txt
 
 ## Database
-postgres.txt
-
+1.
 ```
 docker run -it --rm \
     --name db-postgres \
@@ -42,18 +41,27 @@ docker run -it --rm \
     -p 5432:5432 \
     postgres
 ```
+sudo lsof -i -P -n
 
+sudo service postgresql stop
+
+2.
 `docker exec -it db-postgres psql -U admin`
 
+```
+\l list databases
+\c choose db
+\dt list data tables
+```
+
+3.
 ```
 CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
    type varchar(40) NOT NULL,
-   name varchar(40) NOT NULL
+   name varchar(40) NOT NULL,
+   data bytea
 );
-
-insert into events (type, name)
-    values ('type1', 'name1');
 ```
 
 create user admin with login password 'admin';
