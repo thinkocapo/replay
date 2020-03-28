@@ -109,7 +109,7 @@ def event_bytea_get():
 
     with db.connect() as conn:
         results = conn.execute(
-            "SELECT * FROM events WHERE pk=9"
+            "SELECT * FROM events WHERE pk=11"
         ).fetchall()
         conn.close()
         print('results[0]', results[0])
@@ -128,14 +128,14 @@ def event_bytea_get():
         print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
         print('row_proxy.data', row_proxy.data)
 
-        
+        return row_proxy.data
         # strings = decompress_gzip(row_proxy.data)
         # print('strings', strings)
-
-        rows = []
-        for row in results:
-            rows.append(dict(row))
-        return json.dumps(rows)
+        
+        # rows = []
+        # for row in results:
+        #     rows.append(dict(row))
+        # return json.dumps(rows)
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
