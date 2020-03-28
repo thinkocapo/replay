@@ -104,7 +104,7 @@ def events():
             rows.append(dict(row))
         return json.dumps(rows)
 
-@app.route('/event', methods=['GET'])
+@app.route('/event', methods=['POST'])
 def event():
     print('/event POST')
   
