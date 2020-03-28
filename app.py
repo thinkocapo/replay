@@ -5,11 +5,22 @@ import requests
 # from dotenv import load_dotenv
 # load_dotenv()
 
+# Unadulterated DSN, as provided by Sentry instance
+ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
+
 # make sentry_sdk send the event to :3001 which is a Flask API and not Sentry.io
 MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 
+def random():
+    print('something ramdom')
 def app():
-    sentry_sdk.capture_exception(Exception("middleman_11"))
+    random()
+    # TODO try raise Exception as well
+    sentry_sdk.capture_exception(Exception("longman_6"))
+
+    # Note - does not add stacktrace, even when you use random(). used ORIGINAL_DSN to test this
+    # random()
+    # sentry_sdk.capture_exception(Exception("longman_5Normal with random() "))
 
 def initialize_sentry():
     params = { 'dsn': MODIFIED_DSN }
