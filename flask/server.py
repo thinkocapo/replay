@@ -40,6 +40,9 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 # Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def api_store():
+    print('type(request)', type(request))
+    print('type(request.headers)', type(request.headers))
+    print('type(request.data)', type(request.data))
 
     headers = request.headers
     requests_headers = {
@@ -111,7 +114,7 @@ def event():
     insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
     with db.connect() as conn:
         conn.execute(
-            "INSERT INTO events (type,name) VALUES ('type2', 'name2')"
+            "INSERT INTO events (type,name) VALUES ('type4', 'name4')"
         )
         conn.close()
         print("inserted")
@@ -119,7 +122,10 @@ def event():
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea():
-    binary = request
+    # TODO different from request and request.headre but try it
+    print('/event-bytea POST')
+    binary = request.data
+    print('type(binary)', type(binary))
 
     insert_query = """ INSERT INTO events (type, name, data) VALUES (%s,%s,%s)"""
     record = ('python', 'example', binary)

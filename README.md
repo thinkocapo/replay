@@ -45,6 +45,8 @@ sudo lsof -i -P -n
 
 sudo service postgresql stop
 
+^ or could do 8080:5432 and it wouldn't conflict?
+
 2.
 `docker exec -it db-postgres psql -U admin`
 
@@ -73,6 +75,7 @@ Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then 
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
 2. `make` runs Flask server
 3. `python app.py` using MODIFIED_dsn
+4. `localhost:9000` to see your Sentry onprem event
 
 #### doesnt' work yet
 Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
@@ -80,14 +83,6 @@ Send events using app.py to your on-prem instance. the middleware.go sniffs the 
 2. `go build middleware.go`
 3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
 3. `python3 app.py` using ORIGINAL_DSN
-
-## TODO
-- TODO try sending events to here from other sdk's (javascript, go)
-- TODO Save data and headers to DB after decompressing, and use a different module to load from DB and send to sentry instance
-- replaying the payload many times
-- persisting events as []bytes? https://www.postgresql.org/docs/9.0/datatype-binary.html for loading and sending, decouples the dependency on +10 platform sdk's
-- gRPC
-- get the middleware.go or even a basic go replay (gor without middleware) working
 
 
 ## Notes
@@ -123,10 +118,12 @@ https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-ou
 
 https://golang.org/pkg/net/http/#Request  
 https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
-
 gor file-server 8000
 
+```
+getsentry/sentry-python
 transport.py, core_api.py, event_manager.py
+```
 
 Working Request Headers
 ```
@@ -139,3 +136,12 @@ Working Request Headers
     'User-Agent': 'sentry.python/0.14.2'
 }
 ```
+
+```
+type(request) <class 'werkzeug.local.LocalProxy'>
+type(request.headers) <class 'werkzeug.datastructures.EnvironHeaders'>
+type(request.data) <class 'bytes'>
+200 RESPONSE and event_id b'{"id":"2e8e7ab795ed4f9fb70d172aa2b79815"}'
+```
+
+replaying the payload many times. grpc
