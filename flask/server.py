@@ -38,7 +38,7 @@ PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
 # Intercepts event from sentry sdk('s?) and saves to DB
-@app.route('/api/2/storeTEMP/', methods=['POST'])
+@app.route('/api/2/store/', methods=['POST'])
 def undertaker():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
