@@ -46,6 +46,11 @@ database is called 'postgres'
 -p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`
 
 
+# rows = []
+# for row in results:
+#     rows.append(dict(row))
+# return json.dumps(rows)
+
 
 
 

@@ -107,18 +107,15 @@ def events():
 @app.route('/event', methods=['POST'])
 def event():
     print('/event POST')
-    insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
     record = ('python', 'example')
+    insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
     with db.connect() as conn:
         conn.execute(
             "INSERT INTO events (type,name) VALUES ('type2', 'name2')"
         )
         conn.close()
         print("inserted")
-        # rows = []
-        # for row in results:
-        #     rows.append(dict(row))
-        # return json.dumps(rows)
+    return 'successful'
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea():
@@ -128,7 +125,7 @@ def event_bytea():
     record = ('python', 'example', binary)
     
     with db.connect() as conn:
-        conn.execute(insert_query, record))
+        conn.execute(insert_query, record)
         conn.close()
 
 @app.route('/test', methods=['GET'])
