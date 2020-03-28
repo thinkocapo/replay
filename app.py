@@ -11,6 +11,11 @@ ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
 # make sentry_sdk send the event to :3001 which is a Flask API and not Sentry.io
 MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 
+
+# TODO - for hitting different endpoints. 1 endpoint only saves, 2nd endpoint saves and sends, 3rd endpoint doesnt save but sends?
+MODIFIED_DSN_2 = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
+
+
 def random():
     print('something ramdom')
 def app():
