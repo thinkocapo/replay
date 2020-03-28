@@ -130,24 +130,19 @@ def event_bytea_get():
 
     with db.connect() as conn:
         results = conn.execute(
-            "SELECT * FROM events WHERE pk=13"
+            "SELECT * FROM events WHERE pk=15"
         ).fetchall()
         conn.close()
-        print('results[0]', results[0])
-
         row_proxy = results[0]
-        
         print('type(row_proxy)', type(row_proxy))
         print('row_proxy', row_proxy)
-        keys = row_proxy.keys()
- 
-        for key in keys:
-            print("key", key)
+        # keys = row_proxy.keys() 
+        # for key in keys:
+        #     print("key", key)
 
         print('row_proxy.data', row_proxy.data) # b'{ "foo": "bar" }'
         print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
-
-        return { "data": row_proxy.data.decode("utf-8")  }
+        return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
@@ -156,7 +151,6 @@ def event_bytea_post():
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
     # print('request.data', request.data) # b'{ "foo": "bar" }'
 
-
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
@@ -164,7 +158,6 @@ def event_bytea_post():
 
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
-
 
     with db.connect() as conn:
         conn.execute(insert_query, record)
