@@ -145,3 +145,8 @@ type(request.data) <class 'bytes'>
 ```
 
 replaying the payload many times. grpc
+
+
+MemoryView  
+https://www.postgresql.org/message-id/25EDB20679154BDBB3CBBD335184E1D7%40frank  
+https://www.postgresql.org/message-id/C2C12FD0FCE64CE8BB77765A526D3C73%40frank  

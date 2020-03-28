@@ -55,6 +55,8 @@ def api_store():
     }
 
     data = decompress_gzip(request.data)
+    print('type(data)', type(data))
+    print('data', data)
 
     try:
         body = io.BytesIO()
@@ -92,6 +94,68 @@ def get_connection():
             password=PASSWORD)
     return connection 
 
+@app.route('/event-bytea', methods=['GET'])
+def event_bytea_get():
+    print('/event GET')
+
+    # set typecasting because psycopg2 will return a <MemoryView> for bytea instead of the bytes
+    def bytea2bytes(value, cur):
+        m = psycopg2.BINARY(value, cur)
+        if m is not None:
+            return m.tobytes()
+    BYTEA2BYTES = psycopg2.extensions.new_type(
+        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    psycopg2.extensions.register_type(BYTEA2BYTES)
+
+    with db.connect() as conn:
+        results = conn.execute(
+            "SELECT * FROM events WHERE pk=9"
+        ).fetchall()
+        conn.close()
+        print('results[0]', results[0])
+
+        row_proxy = results[0]
+        
+        print('type(row_proxy)', type(row_proxy))
+        print('row_proxy', row_proxy)
+        keys = row_proxy.keys()
+ 
+        for key in keys:
+            print("key", key)
+
+        print('row_proxy.type', row_proxy.type)
+        print('row_proxy.data', row_proxy.data)
+        print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
+        print('row_proxy.data', row_proxy.data)
+
+        
+        # strings = decompress_gzip(row_proxy.data)
+        # print('strings', strings)
+
+        rows = []
+        for row in results:
+            rows.append(dict(row))
+        return json.dumps(rows)
+
+@app.route('/event-bytea', methods=['POST'])
+def event_bytea_post():
+    # TODO different from request and request.headre but try it
+    print('/event-bytea POST')
+    print('type(request.data)', type(request.data)) # bytes
+    print('request.data', request.data)
+
+    # fp = BytesIO(request.data)
+    # print('type(fp)', type(fp))
+
+    insert_query = """ INSERT INTO events (type, name, data) VALUES (%s,%s,%s)"""
+    record = ('python', 'example', request.data)
+    # record = ('python', 'example', fp)
+
+    with db.connect() as conn:
+        conn.execute(insert_query, record)
+        conn.close()
+    return 'successfull bytea'
+
 @app.route('/events', methods=['GET'])
 def events():
     print('/event GET')
@@ -119,20 +183,6 @@ def event():
         conn.close()
         print("inserted")
     return 'successful'
-
-@app.route('/event-bytea', methods=['POST'])
-def event_bytea():
-    # TODO different from request and request.headre but try it
-    print('/event-bytea POST')
-    binary = request.data
-    print('type(binary)', type(binary))
-
-    insert_query = """ INSERT INTO events (type, name, data) VALUES (%s,%s,%s)"""
-    record = ('python', 'example', binary)
-    
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
 
 @app.route('/test', methods=['GET'])
 def test():
