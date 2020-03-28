@@ -38,6 +38,10 @@ INSERT INTO events (type, name)
 
 ALTER TABLE events
     ADD COLUMN data BYTEA;
+ALTER TABLE events
+    ADD COLUMN headers JSONB; <-- limited on chars. ~10,400,000 is rough limit. TEXT type available too. JSONB
+
+    ADD COLUMN data varchar(20000); <-- limited on chars. ~10,400,000 is rough limit. TEXT type available too. JSONB
 
 create user admin with login password 'admin';
 
