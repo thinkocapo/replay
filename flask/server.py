@@ -37,6 +37,8 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
+# TODO attempt the workflow using platform sdk's other than python. 
+
 # Intercepts event from sentry sdk('s?) and saves to DB
 @app.route('/api/2/store/', methods=['POST'])
 def undertaker():
@@ -51,8 +53,6 @@ def undertaker():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    # TODO
-    # DB.execute w/ request.headers and request.data
     with db.connect() as conn:
         conn.execute(insert_query, record)
         conn.close()
@@ -61,7 +61,7 @@ def undertaker():
     return 'event was undertaken from its journey to Sentry'
 
 
-
+# TODO /impersonate/:id and could default to whatever most recent one is...
 # Loads bytes+headers from DB, and sends to Sentry instance 
 @app.route('/impersonator', methods=['GET']) #re-birth
 def impersonator():
@@ -97,6 +97,8 @@ def impersonator():
 
     return 'event was impersonated to Sentry'
 
+# TODO create a second version of this where it also daves to DB
+# @app.route('/api/2/storeOG/', methods=['POST'])
 
 # Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/storeOG/', methods=['POST'])
