@@ -77,6 +77,10 @@ Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then 
 3. `python app.py` using MODIFIED_dsn
 4. `localhost:9000` to see your Sentry onprem event
 
+Workflow:
+python app.py <-- sdk sends event to the intercetpor, which saves it in database (event never reaches Sentry instance)
+localhost:3001/impersonator <--- takes this event from the database and sends it along to Sentry instance
+
 #### doesnt' work yet
 Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
 1. `docker-compose up`
@@ -84,6 +88,8 @@ Send events using app.py to your on-prem instance. the middleware.go sniffs the 
 3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
 3. `python3 app.py` using ORIGINAL_DSN
 
+## TODO
+- once it all works, try using other sentry sdk's to produce events that get intercepted by flask/server.py
 
 ## Notes
 #### Sentry & buger's goreplay
@@ -150,3 +156,11 @@ replaying the payload many times. grpc
 MemoryView  
 https://www.postgresql.org/message-id/25EDB20679154BDBB3CBBD335184E1D7%40frank  
 https://www.postgresql.org/message-id/C2C12FD0FCE64CE8BB77765A526D3C73%40frank  
+
+
+"Q. How to save a instance of a Class to the DB?"
+"A. You can't store the object itself in the DB. What you do is to store the data from the object and reconstruct it later."
+https://stackoverflow.com/questions/2047814/is-it-possible-to-store-python-class-objects-in-sqlite
+
+
+Troubleshoot - compare len(bytes) on the way in as when it came out...
