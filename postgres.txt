@@ -1,4 +1,6 @@
 https://hub.docker.com/_/postgres
+https://www.postgresqltutorial.com/psql-commands/
+http://www.postgresonline.com/downloads/special_feature/postgresql83_psql_cheatsheet.pdf
 
 `sudo service postgresql stop` stops local postgres on 5432
 
@@ -14,19 +16,16 @@ docker run -it --rm \
 
 docker exec -it db-postgres psql -U admin
 
-1. show all databases
-2. identify db name (should be admin?) 'OR' create one if none exist
-3. create a table w/ row w/ pid, name(?), []bytes
-4. practice psql adding a row...
-5. practice reading from it from python console
-6. practice writing to it from python console (psycopg2? or sqlalchemy preferred)
-7. try writing []bytes to it as well
+1. + show all databases
+2. + identify db name (should be admin?) 'OR' create one if none exist
+3. + create a table w/ row w/ pid, name(?), []bytes
+4. + psql adding a row...
+5. +read from it from python console
+6. +write from python console (psycopg2? or sqlalchemy preferred)
+7. write parameterized
 
-
-https://www.postgresqltutorial.com/psql-commands/
-http://www.postgresonline.com/downloads/special_feature/postgresql83_psql_cheatsheet.pdf
-
-
+sqlalchemy uses LargeBinary for bytea  
+psygopg2  
 
 CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
@@ -34,20 +33,25 @@ CREATE TABLE events(
    name varchar(40) NOT NULL
 );
 
-insert into events (type, name)
-    values ('type1', 'name1');
+INSERT INTO events (type, name)
+    VALUES ('type1', 'name1');
 
-
-create user admin with login password 'admin';
-
-8:25p
-database is called 'postgres'
--p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`
-
-10:38p
 ALTER TABLE events
     ADD COLUMN data BYTEA;
 
-\dt data tables , show them
-\l show all databases
-\c use a db
+create user admin with login password 'admin';
+
+database is called 'postgres'
+
+-p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`
+
+
+# rows = []
+# for row in results:
+#     rows.append(dict(row))
+# return json.dumps(rows)
+
+
+
+
+
