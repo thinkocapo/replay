@@ -150,3 +150,8 @@ replaying the payload many times. grpc
 MemoryView  
 https://www.postgresql.org/message-id/25EDB20679154BDBB3CBBD335184E1D7%40frank  
 https://www.postgresql.org/message-id/C2C12FD0FCE64CE8BB77765A526D3C73%40frank  
+
+
+"Q. How to save a instance of a Class to the DB?"
+"A. You can't store the object itself in the DB. What you do is to store the data from the object and reconstruct it later."
+https://stackoverflow.com/questions/2047814/is-it-possible-to-store-python-class-objects-in-sqlite

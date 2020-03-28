@@ -37,12 +37,32 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
+# TODO intercepts event from sentry sdk('s?) and saves to DB
+@app.route('/undertaker', methods=['POST'])
+def undertaker():
+    # request.headers save to DB
+        # can load back into new werkzeug.datastructures.EnvironHeaders? probably not...
+    # request.data
+    
+    # DB.execute w/ request.headers and request.data
+
+    return 'event was undertaken from its journey to Sentry'
+
+
+
+# TODO loads bytes+headers from DB, and sends to Sentry instance 
+@app.route('/impersonator', methods=['GET']) #re-birth
+def impersonator():
+    return 'event was impersonated to Sentry'
+
+
 # Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def api_store():
-    print('type(request)', type(request))
-    print('type(request.headers)', type(request.headers))
-    print('type(request.data)', type(request.data))
+    print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
+    print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
+    print('request.headers', request.headers)
+    # print('type(request.data)', type(request.data)) # <class 'bytes'>
 
     headers = request.headers
     requests_headers = {
@@ -55,8 +75,8 @@ def api_store():
     }
 
     data = decompress_gzip(request.data)
-    print('type(data)', type(data))
-    print('data', data)
+    print('type(data)', type(data)) # <class 'str'>...
+    print('data', data) # {"exception": {"values": [{"stacktrace": {"...
 
     try:
         body = io.BytesIO()
@@ -73,18 +93,6 @@ def api_store():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-
-def decompress_gzip(encoded_data):
-    try:
-        fp = BytesIO(encoded_data)
-        try:
-            f = GzipFile(fileobj=fp)
-            return f.read().decode("utf-8")
-        finally:
-            f.close()
-    except Exception as e:
-        raise e
-
 def get_connection():
     with sentry_sdk.start_span(op="psycopg2.connect"):
         connection = psycopg2.connect(
@@ -92,13 +100,13 @@ def get_connection():
             database=DATABASE,
             user=USERNAME,
             password=PASSWORD)
-    return connection 
+    return connection
 
 @app.route('/event-bytea', methods=['GET'])
 def event_bytea_get():
     print('/event GET')
 
-    # set typecasting because psycopg2 will return a <MemoryView> for bytea instead of the bytes
+    # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
     def bytea2bytes(value, cur):
         m = psycopg2.BINARY(value, cur)
         if m is not None:
@@ -109,7 +117,7 @@ def event_bytea_get():
 
     with db.connect() as conn:
         results = conn.execute(
-            "SELECT * FROM events WHERE pk=11"
+            "SELECT * FROM events WHERE pk=13"
         ).fetchall()
         conn.close()
         print('results[0]', results[0])
@@ -129,20 +137,12 @@ def event_bytea_get():
         print('row_proxy.data', row_proxy.data)
 
         return row_proxy.data
-        # strings = decompress_gzip(row_proxy.data)
-        # print('strings', strings)
-        
-        # rows = []
-        # for row in results:
-        #     rows.append(dict(row))
-        # return json.dumps(rows)
 
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
-    # TODO different from request and request.headre but try it
     print('/event-bytea POST')
     print('type(request.data)', type(request.data)) # bytes
-    print('request.data', request.data)
+    print('request.data', request.data) # b'{ "foo": "bar" }'
 
     # fp = BytesIO(request.data)
     # print('type(fp)', type(fp))
@@ -155,6 +155,20 @@ def event_bytea_post():
         conn.execute(insert_query, record)
         conn.close()
     return 'successfull bytea'
+
+def decompress_gzip(encoded_data):
+    try:
+        fp = BytesIO(encoded_data)
+        try:
+            f = GzipFile(fileobj=fp)
+            return f.read().decode("utf-8")
+        finally:
+            f.close()
+    except Exception as e:
+        raise e
+
+#######################################################################################
+
 
 @app.route('/events', methods=['GET'])
 def events():
@@ -198,3 +212,8 @@ def test():
 #     return 'fail'
 # cursor.close()
 # connection.close()
+
+# rows = []
+# for row in results:
+#     rows.append(dict(row))
+# return json.dumps(rows)
