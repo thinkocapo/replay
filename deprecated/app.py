@@ -18,11 +18,12 @@
 ##########################################################################################
 
 # data = decompress_gzip(request.data)
-        # print('type(data)', type(data)) # <class 'str'>...
-        # print('data', data) # {"exception": {"values": [{"stacktrace": {"...
-        # body = io.BytesIO()
-        # with gzip.GzipFile(fileobj=body, mode="w") as f:
-        #     f.write(json.dumps(data, allow_nan=False).encode("utf-8"))
+
+# print('type(data)', type(data)) # <class 'str'>...
+# print('data', data) # {"exception": {"values": [{"stacktrace": {"...
+# body = io.BytesIO()
+# with gzip.GzipFile(fileobj=body, mode="w") as f:
+#     f.write(json.dumps(data, allow_nan=False).encode("utf-8"))
 
         # NOTE body=body.getvalue() errors in the onprem Sentry as "b'{"error":"Bad data decoding request (TypeError, Incorrect padding)"}'"
 
