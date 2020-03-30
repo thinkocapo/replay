@@ -70,9 +70,14 @@ create user admin with login password 'admin';
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
 2. `docker run...` the database
-2. `make` runs Flask server
-3. `python app.py`
-4. `localhost:9000` to see your Sentry onprem event
+3. `make` runs Flask server
+4. `python app.py`
+5. `psql` or `/event-bytea` to load the event again
+or
+6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.
+
+or
+7. just load event `/event-bytea` and forward to Sentry
 
 Workflow:  
 `python app.py` sdk sends event to the intercetpor.
@@ -81,7 +86,11 @@ The `DSN` that you use in your `app.py` determine what the proxy will do. They a
 
 `localhost:3001/impersonator` will load an event from the database and forward it (by http) to your Sentry instance.
 
+'STEP1' endpoints require an sdk that sends an event to them
 
+'STEP2' endpoints you can hit yourself from Postman
+
+you may have to `sudo service postgresql stop` to free up 5432 on your machine
 
 ## Gor Middleware
 There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
