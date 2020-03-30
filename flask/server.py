@@ -37,9 +37,7 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
-# TODO attempt the workflow using platform sdk's other than python. 
-
-# Intercepts event from sentry sdk('s?) and saves to DB
+# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
 @app.route('/api/2/store/', methods=['POST'])
 def undertaker():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
@@ -60,48 +58,11 @@ def undertaker():
     # does not log on the python app.py side, because sync sentry_sdk.capture_exception()
     return 'event was undertaken from its journey to Sentry'
 
-
-# TODO 2 /impersonate/:id and could default to whatever most recent one is...
-# Loads bytes+headers from DB, and sends to Sentry instance 
-@app.route('/impersonator', methods=['GET']) #re-birth
-def impersonator():
-
-    # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
-    def bytea2bytes(value, cur):
-        m = psycopg2.BINARY(value, cur)
-        if m is not None:
-            return m.tobytes()
-    BYTEA2BYTES = psycopg2.extensions.new_type(
-        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
-    psycopg2.extensions.register_type(BYTEA2BYTES)
-    print('11111111')
-    with db.connect() as conn:
-        rows = conn.execute(
-            "SELECT * FROM events WHERE pk=19"
-        ).fetchall()
-        conn.close()
-        # is of type RowProxy
-        row = rows[0]
-        # print('row', row)
-
-    print('22222222222')
-    print('type(row)', type(row))
-
-    try:
-        response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=row.data, headers=row.headers 
-        )
-    except Exception as err:
-        print('LOCAL EXCEPTION', err)
-
-
-    return 'event was impersonated to Sentry'
-
-# TODO create a second version of this where it also daves to DB
+# MODIFIED_DSN_SAVE_AND_FORWARD
 # @app.route('/api/2/storeOG/', methods=['POST'])
 
-# Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
-@app.route('/api/2/storeOG/', methods=['POST'])
+# MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
+@app.route('/api/4/store/', methods=['POST'])
 def api_store():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
@@ -140,6 +101,42 @@ def api_store():
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION', err)
+
+# TODO 2 /impersonate/:id and could default to whatever most recent one is...
+# Loads bytes+headers from DB, and sends to Sentry instance 
+@app.route('/impersonator', methods=['GET']) #re-birth
+def impersonator():
+
+    # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
+    def bytea2bytes(value, cur):
+        m = psycopg2.BINARY(value, cur)
+        if m is not None:
+            return m.tobytes()
+    BYTEA2BYTES = psycopg2.extensions.new_type(
+        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    psycopg2.extensions.register_type(BYTEA2BYTES)
+    print('11111111')
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM events WHERE pk=19"
+        ).fetchall()
+        conn.close()
+        # is of type RowProxy
+        row = rows[0]
+        # print('row', row)
+
+    print('22222222222')
+    print('type(row)', type(row))
+
+    try:
+        response = http.request(
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=row.data, headers=row.headers 
+        )
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+
+    return 'event was impersonated to Sentry'
 
 def get_connection():
     with sentry_sdk.start_span(op="psycopg2.connect"):
