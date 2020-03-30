@@ -22,8 +22,10 @@ ORIGINAL_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2
 
 def app():
     # err = raise Exception("raised exception")
-    # sentry_sdk.capture_exception(err)
-    raise Exception('this is the exception')
+    sentry_sdk.capture_exception(Exception("hand raised exception"))
+
+    # gzip not?
+    # raise Exception('big problem')
 
 def initialize_sentry():
     params = { 'dsn': MODIFIED_DSN_SAVE }
