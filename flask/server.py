@@ -61,7 +61,7 @@ def undertaker():
     return 'event was undertaken from its journey to Sentry'
 
 
-# TODO /impersonate/:id and could default to whatever most recent one is...
+# TODO 2 /impersonate/:id and could default to whatever most recent one is...
 # Loads bytes+headers from DB, and sends to Sentry instance 
 @app.route('/impersonator', methods=['GET']) #re-birth
 def impersonator():

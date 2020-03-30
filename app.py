@@ -16,11 +16,10 @@ MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 MODIFIED_DSN_2 = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 
 
-def random():
-    print('something ramdom')
+
 def app():
-    random()
-    # TODO try raise Exception as well
+
+    # TODO 1 try raise Exception as well
     sentry_sdk.capture_exception(Exception("longman_6"))
 
     # Note - does not add stacktrace, even when you use random(). used ORIGINAL_DSN to test this

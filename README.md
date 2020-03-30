@@ -1,13 +1,20 @@
 # event-maker
+## Goal
+Test data automation.
+
+Sending diverse events from multiple sdk types to a Sentry Organization on a regular basis.
+
+Keep 1 app running instead of 1 app per platform.
+
 
 ## What's Happening
+<img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-Sentry_sdk sends events and the API in /flask 'intercepts' them like a proxy, then forwards them along to a Sentry On-Prem instance
+STEP1 - Sentry sdk's send events and the API in /flask serves as a proxy to intercept the events and save copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database.
 
-The middleware.go is for sniffing traffic on the Sentr On-Prem's listening port, but isn't fully working yet.
+STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry sees them as coming from live apps.
 
-example payload structure from a sentry sdk event:  
-![payload-structure](./img/payload-structure.png)
+[example payload structure](./img/payload-structure.png) from a sentry sdk event:  
 
 ## Versions
 tested on ubuntu 18.04 LTS
@@ -17,17 +24,6 @@ go version go1.12.9 linux/amd64
 sentry-sdk==0.14.2
 
 ## Install
-If using middleware.go then you need gor (goreplay)
-
-1. download gor executable and put to cwd or add it to your $PATH  
-https://github.com/buger/goreplay/releases/tag/v1.0.0
-2.
-```
-go get github.com/buger/goreplay/proto  
-go get github.com/buger/jsonparser
-```
-
-and
 
 install -r requirements.txt
 
@@ -81,18 +77,35 @@ Workflow:
 python app.py <-- sdk sends event to the intercetpor, which saves it in database (event never reaches Sentry instance)
 localhost:3001/impersonator <--- takes this event from the database and sends it along to Sentry instance
 
-#### doesnt' work yet
+
+
+## Gor Middleware
+There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
+
+#### Install
+If using middleware.go then you need gor (goreplay)
+
+1. download gor executable and put to cwd or add it to your $PATH  
+https://github.com/buger/goreplay/releases/tag/v1.0.0
+2.
+```
+go get github.com/buger/goreplay/proto  
+go get github.com/buger/jsonparser
+```
+
+and
+
+install -r requirements.txt
+
+#### Run
 Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
 1. `docker-compose up`
 2. `go build middleware.go`
 3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
 3. `python3 app.py` using ORIGINAL_DSN
 
-## TODO
-- once it all works, try using other sentry sdk's to produce events that get intercepted by flask/server.py
+and
 
-## Notes
-#### Sentry & buger's goreplay
 https://github.com/getsentry/sentry-python  
 https://github.com/getsentry/sentry-go  
 https://github.com/getsentry/onpremise  
@@ -106,7 +119,7 @@ https://github.com/buger/goreplay/blob/master/examples/middleware/token_modifier
 About the middleware technique  
 https://github.com/buger/goreplay/tree/master/middleware
 
-#### other
+## Notes
 https://flask.palletsprojects.com/en/1.1.x/api/  
 https://requests.readthedocs.io/en/master/  
 https://realpython.com/python-requests/#request-headers  
