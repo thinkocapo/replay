@@ -121,13 +121,15 @@ def impersonator():
         m = psycopg2.BINARY(value, cur)
         if m is not None:
             return m.tobytes()
+
     BYTEA2BYTES = psycopg2.extensions.new_type(
         psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+
     psycopg2.extensions.register_type(BYTEA2BYTES)
 
     with db.connect() as conn:
         rows = conn.execute( # <RowProxy>
-            "SELECT * FROM events WHERE pk=10"
+            "SELECT * FROM events WHERE pk=18"
         ).fetchall()
         conn.close()
         row = rows[0]
@@ -163,7 +165,7 @@ def event_bytea_get():
 
     with db.connect() as conn:
         results = conn.execute(
-            "SELECT * FROM events WHERE pk=10"
+            "SELECT * FROM events WHERE pk=16"
         ).fetchall()
         conn.close()
         row_proxy = results[0]
