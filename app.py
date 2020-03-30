@@ -5,29 +5,30 @@ import requests
 # from dotenv import load_dotenv
 # load_dotenv()
 
-# Unadulterated DSN, as provided by Sentry instance
-ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
+# TODO attempt the workflow using platform sdk's other than python. 
+
 
 # make sentry_sdk send the event to :3001 which is a Flask API and not Sentry.io
-MODIFIED_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
+# saves in db
+MODIFIED_DSN_SAVE = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
 
+# saves in db and forwards the event to your Sentry instance's endpoint doesnt save but sends?
+MODIFIED_DSN_SAVE_AND_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/3'
 
-# TODO - for hitting different endpoints. 1 endpoint only saves, 2nd endpoint saves and sends, 3rd endpoint doesnt save but sends?
-MODIFIED_DSN_2 = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
+# The proxy forwards it on through to Sentry. Doesn' save to DB
+MODIFIED_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/4'
 
+# Unadulterated DSN, as provided by Sentry instance. As provided in the DSN Client Keys for the Organization's Project
+ORIGINAL_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
 
 
 def app():
-
-    # TODO 1 try raise Exception as well
-    sentry_sdk.capture_exception(Exception("longman_6"))
-
-    # Note - does not add stacktrace, even when you use random(). used ORIGINAL_DSN to test this
-    # random()
-    # sentry_sdk.capture_exception(Exception("longman_5Normal with random() "))
+    # err = raise Exception("raised exception")
+    # sentry_sdk.capture_exception(err)
+    raise Exception('this is the exception')
 
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN }
+    params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

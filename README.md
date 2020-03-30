@@ -69,13 +69,17 @@ create user admin with login password 'admin';
 #### works
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
+2. `docker run...` the database
 2. `make` runs Flask server
-3. `python app.py` using MODIFIED_dsn
+3. `python app.py`
 4. `localhost:9000` to see your Sentry onprem event
 
-Workflow:
-python app.py <-- sdk sends event to the intercetpor, which saves it in database (event never reaches Sentry instance)
-localhost:3001/impersonator <--- takes this event from the database and sends it along to Sentry instance
+Workflow:  
+`python app.py` sdk sends event to the intercetpor.
+
+The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
+
+`localhost:3001/impersonator` will load an event from the database and forward it (by http) to your Sentry instance.
 
 
 
