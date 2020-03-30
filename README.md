@@ -46,12 +46,6 @@ sudo service postgresql stop
 2.
 `docker exec -it db-postgres psql -U admin`
 
-```
-\l list databases
-\c choose db
-\dt list data tables
-```
-
 3.
 ```
 CREATE TABLE events(

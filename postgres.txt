@@ -6,6 +6,7 @@ http://www.postgresonline.com/downloads/special_feature/postgresql83_psql_cheats
 
 Image is postgres
 Container name is db-postgres
+--------------------------------------------
 
 docker run -it --rm \
     --name db-postgres \
@@ -16,32 +17,33 @@ docker run -it --rm \
 
 docker exec -it db-postgres psql -U admin
 
-1. + show all databases
-2. + identify db name (should be admin?) 'OR' create one if none exist
-3. + create a table w/ row w/ pid, name(?), []bytes
-4. + psql adding a row...
-5. +read from it from python console
-6. +write from python console (psycopg2? or sqlalchemy preferred)
-7. write parameterized
 
-sqlalchemy uses LargeBinary for bytea  
-psygopg2  
+`\l list databases`
+`\c postgres` to choose db named 'postgres'
 
 CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
    type varchar(40) NOT NULL,
-   name varchar(40) NOT NULL
+   name varchar(40) NOT NULL,
+   data bytea
 );
-
-INSERT INTO events (type, name)
-    VALUES ('type1', 'name1');
 
 ALTER TABLE events
     ADD COLUMN data BYTEA;
 ALTER TABLE events
-    ADD COLUMN headers JSONB; <-- limited on chars. ~10,400,000 is rough limit. TEXT type available too. JSONB
+    ADD COLUMN headers JSONB;
 
-    ADD COLUMN data varchar(20000); <-- limited on chars. ~10,400,000 is rough limit. TEXT type available too. JSONB
+INSERT INTO "events" (type, name)
+    VALUES ('type1', 'name1');
+
+`\dt list data tables`
+
+select headers from events where pk=2;
+
+-----------------------------------
+
+limits on chars (varchar). ~10,400,000 is rough limit. TEXT type available too. JSONB
+ADD COLUMN data varchar(20000); <-- limited on chars. ~10,400,000 is rough limit. TEXT type available too. JSONB
 
 create user admin with login password 'admin';
 
@@ -49,6 +51,8 @@ database is called 'postgres'
 
 -p 5432 and made sure postgresql not running locally (without docker) by `sudo lsof -i -P -n`
 
+sqlalchemy uses LargeBinary for bytea  
+psygopg2  
 
 # rows = []
 # for row in results:
