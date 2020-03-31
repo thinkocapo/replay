@@ -10,9 +10,9 @@ Keep 1 app running instead of 1 app per platform.
 ## What's Happening
 <img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-STEP1 - Sentry sdk's send events and the API in /flask serves as a proxy to intercept the events and save copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database.
+STEP1 - Sentry sdk's send events to the API defined in /flask/server.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
 
-STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry sees them as coming from live apps.
+STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry thinks they're coming from live apps.
 
 [example payload structure](./img/payload-structure.png) from a sentry sdk event:  
 
