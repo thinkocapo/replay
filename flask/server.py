@@ -37,8 +37,6 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
 @app.route('/api/2/store/', methods=['POST'])
 def save():
-    print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
-    print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
 
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -52,15 +50,14 @@ def save():
         conn.execute(insert_query, record)
         conn.close()
     print("\n DONE \n")
-    # does not log on the python app.py side, because sync sentry_sdk.capture_exception()
+
+    # does not log on the python app.py side, because async sentry_sdk call
     return 'event was undertaken from its journey to Sentry'
 
 # STEP1
 # MODIFIED_DSN_SAVE_AND_FORWARD
 @app.route('/api/3/store/', methods=['POST'])
 def save_and_forward():
-    # print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
-    # print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
 
     # Save
     request_headers = {}
@@ -90,10 +87,6 @@ def save_and_forward():
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/4/store/', methods=['POST'])
 def forward():
-    # print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
-    # print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
-    # print('request.headers', request.headers) (K | V line separated)
-    # print('type(request.data)', type(request.data)) # <class 'bytes'>
 
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -175,7 +168,7 @@ def impersonator():
     newbody = compress_gzip(json_body)
 
     # print("body is \n", type(body))
-    # print('LENGTH', len(body)) # TODO is length 0
+    # print('length', len(body))
     # print('type(body.getvalue())'
 
     try:
@@ -191,13 +184,10 @@ def impersonator():
 
 # TESTING 
 # STEP1
-# {"foo": "bar"}
+#  send body {"foo": "bar"} from Postman
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
-    print('/event-bytea POST')
-    print('type(request.data)', type(request.data)) # bytes
-    print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
-    print('request.data', request.data) # b'{ "foo": "bar" }'
+    # print('request.data', request.data) # b'{ "foo": "bar" }'
 
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -219,7 +209,6 @@ def event_bytea_post():
 # Loads that event's bytes+headers from database
 @app.route('/event-bytea', methods=['GET'])
 def event_bytea_get():
-    print('/event GET')
 
     # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
     def bytea2bytes(value, cur):
@@ -236,13 +225,10 @@ def event_bytea_get():
         ).fetchall()
         conn.close()
         row_proxy = results[0]
-        print('type(row_proxy)', type(row_proxy))
 
-        print('row_proxy.data LENGTH', len(row_proxy.data))
-        print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
-
-        # only need to decompress the gzip if you're trying to read it in JSON or responde with JSON
-        # body = decompress_gzip(row_proxy.data)
+        # print('type(row_proxy)', type(row_proxy))
+        # print('row_proxy.data LENGTH', len(row_proxy.data))
+        # print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
 
         return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
         # return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }

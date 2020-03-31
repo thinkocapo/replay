@@ -161,6 +161,9 @@ type(request) <class 'werkzeug.local.LocalProxy'>
 type(request.headers) <class 'werkzeug.datastructures.EnvironHeaders'>
 type(request.data) <class 'bytes'>
 200 RESPONSE and event_id b'{"id":"2e8e7ab795ed4f9fb70d172aa2b79815"}'
+
+print('request.headers', request.headers) (K | V line separated)
+print('type(request.data)', type(request.data)) # <class 'bytes'>
 ```
 
 replaying the payload many times. grpc
