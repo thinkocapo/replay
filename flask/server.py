@@ -18,14 +18,7 @@ import psycopg2
 import string
 import psycopg2.extras
 
-''' NOTES
-Got error w/ 403-csrf.html until I put X-Sentry-Auth in URL rather than headers, which then gave error on the onprem Internal project
-But (my interpretation of) getsentry/sentry-python shows it being set in the request's headers, not URL.
-    # 'X-Sentry-Auth': headers.get('X-Sentry-Auth'),
-    # 'X-Sentry-Auth': 'Sentry sentry_key=759bf0ad07984bb3941e677b35a13d2c, sentry_version=7, sentry_client=sentry.python/0.14.2',
-'''
-
-# SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store"
+# must path auth key in URL or else 403 CSRF error
 SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf0ad07984bb3941e677b35a13d2c&sentry_version=7"
 
 app = Flask(__name__)
@@ -37,9 +30,10 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
-# Intercepts event from sentry sdk('s?) and saves to DB
+# STEP1
+# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
 @app.route('/api/2/store/', methods=['POST'])
-def undertaker():
+def save():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
 
@@ -51,8 +45,6 @@ def undertaker():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    # TODO
-    # DB.execute w/ request.headers and request.data
     with db.connect() as conn:
         conn.execute(insert_query, record)
         conn.close()
@@ -60,78 +52,59 @@ def undertaker():
     # does not log on the python app.py side, because sync sentry_sdk.capture_exception()
     return 'event was undertaken from its journey to Sentry'
 
+# STEP1
+# MODIFIED_DSN_SAVE_AND_FORWARD
+@app.route('/api/3/store/', methods=['POST'])
+def save_and_forward():
+    # print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
+    # print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
 
+    # Save
+    request_headers = {}
+    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        request_headers[key] = request.headers.get(key)
+    print('request_headers', request_headers)
 
-# Loads bytes+headers from DB, and sends to Sentry instance 
-@app.route('/impersonator', methods=['GET']) #re-birth
-def impersonator():
+    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+    record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
-    def bytea2bytes(value, cur):
-        m = psycopg2.BINARY(value, cur)
-        if m is not None:
-            return m.tobytes()
-    BYTEA2BYTES = psycopg2.extensions.new_type(
-        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
-    psycopg2.extensions.register_type(BYTEA2BYTES)
-    print('11111111')
     with db.connect() as conn:
-        rows = conn.execute(
-            "SELECT * FROM events WHERE pk=19"
-        ).fetchall()
+        conn.execute(insert_query, record)
         conn.close()
-        # is of type RowProxy
-        row = rows[0]
-        # print('row', row)
 
-    print('22222222222')
-    print('type(row)', type(row))
-
+    # Forward
     try:
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=row.data, headers=row.headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
         )
+
+        print("%s RESPONSE and event_id %s" % (response.status, response.data))
+        return 'success save_and_forward' # not read by sdk
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-
-    return 'event was impersonated to Sentry'
-
-
-# Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
-@app.route('/api/2/storeOG/', methods=['POST'])
-def api_store():
+# STEP1
+# MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
+@app.route('/api/4/store/', methods=['POST'])
+def forward():
     print('type(request)', type(request)) # <class 'werkzeug.local.LocalProxy'
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
     # print('request.headers', request.headers) (K | V line separated)
     # print('type(request.data)', type(request.data)) # <class 'bytes'>
 
-    # h = Headers(request.headers)
-    # print('request.headers.pop()', h.pop('Host'))
-    # print('request.headers.pop()', h.pop(0))
+    request_headers = {}
+    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        request_headers[key] = request.headers.get(key)
+    print('request_headers', request_headers)
 
-    headers = request.headers
-    requests_headers = {
-        'Host': headers.get('Host'),
-        'Accept-Encoding': headers.get('Accept-Encoding'),
-        'Content-Length': headers.get('Content-Length'),
-        'Content-Encoding': headers.get('Content-Encoding'),
-        'Content-Type': headers.get('Content-Type'),
-        'User-Agent': headers.get('User-Agent')
-    }
-
-    data = decompress_gzip(request.data)
-    print('type(data)', type(data)) # <class 'str'>...
-    # print('data', data) # {"exception": {"values": [{"stacktrace": {"...
+    # TESTING...WORKS
+    # body = decompress_gzip(request.data)
+    # newbody = compress_gzip(json.loads(body))
+    
 
     try:
-        body = io.BytesIO()
-        with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(data, allow_nan=False).encode("utf-8"))
-
-        # TODO body=body.getvalue() errors in the onprem Sentry as "b'{"error":"Bad data decoding request (TypeError, Incorrect padding)"}'"
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=requests_headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
         )
 
         print("%s RESPONSE and event_id %s" % (response.status, response.data))
@@ -139,15 +112,100 @@ def api_store():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-def get_connection():
-    with sentry_sdk.start_span(op="psycopg2.connect"):
-        connection = psycopg2.connect(
-            host=HOST,
-            database=DATABASE,
-            user=USERNAME,
-            password=PASSWORD)
-    return connection
+    return 'event was impersonated to Sentry'
 
+def decompress_gzip(encoded_data):
+    try:
+        fp = BytesIO(encoded_data)
+        try:
+            f = GzipFile(fileobj=fp)
+            return f.read().decode("utf-8")
+        finally:
+            f.close()
+    except Exception as e:
+        raise e
+
+def compress_gzip(unencoded_data):
+    try:
+        # body = io.BytesIO()
+        # with gzip.GzipFile(fileobj=body, mode="w") as f:
+        #     f.write(json.dumps(event, allow_nan=False).encode("utf-8"))
+        body = io.BytesIO()
+        with gzip.GzipFile(fileobj=body, mode="w") as f:
+            f.write(json.dumps(unencoded_data, allow_nan=False).encode("utf-8"))
+            # 
+            # f.write(json.dumps(unencoded_data))
+            # f.write("\n")
+    except Exception as e:
+        raise e
+    return body
+
+# if isinstance(payload, bytes):
+#     payload = PayloadRef(bytes=payload)
+# elif isinstance(payload, text_type):
+#     payload = PayloadRef(bytes=payload.encode("utf-8"))
+# else:
+#     payload = payload
+    
+# TODO
+# STEP2
+# Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
+# Loads that event's bytes+headers from database and forwards to Sentry instance 
+@app.route('/event-bytea/and/forward', methods=['GET']) #re-birth
+def impersonator():
+
+    # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
+    def bytea2bytes(value, cur):
+        m = psycopg2.BINARY(value, cur)
+        if m is not None:
+            return m.tobytes()
+
+    BYTEA2BYTES = psycopg2.extensions.new_type(
+        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+
+    psycopg2.extensions.register_type(BYTEA2BYTES)
+
+    with db.connect() as conn:
+        rows = conn.execute( # <RowProxy>
+            "SELECT * FROM events WHERE pk=2"
+        ).fetchall()
+        conn.close()
+        row = rows[0]
+
+    print('type(row)', type(row)) # 'sqlalchemy.engine.result.RowProxy'
+    print('row.data LENGTH', len(row.data)) # 
+    print('type(row.data)', type(row.data)) # <class 'bytes'>
+    # print('row.data', row.data) # b'\x1f\x8b\......
+    # print("row.headers", row.headers)
+
+
+    body = decompress_gzip(row.data)
+    
+ # body = decompress_gzip(request.data)
+    # newbody = compress_gzip(json.loads(body))
+    
+    newbody = compress_gzip(json.loads(body))
+    # body = body.read()
+    # print("body is \n", type(body))
+    # print('222 LENGTH', len(body)) # TODO is length 0
+    # print('SENDING..........\n', type(body.getvalue()))
+
+    try:
+        response = http.request(
+            # "POST", str(SENTRY_API_STORE_ONPREMISE), body=body, headers=row.headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=newbody.getvalue(), headers=row.headers 
+            # "POST", str(SENTRY_API_STORE_ONPREMISE), body=row.data, headers=row.headers 
+        )
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+    return 'loaded and forwarded to Sentry'
+
+# TESTING
+# STEP 2
+# TODO
+# Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
+# Loads that event's bytes+headers from database
 @app.route('/event-bytea', methods=['GET'])
 def event_bytea_get():
     print('/event GET')
@@ -163,26 +221,34 @@ def event_bytea_get():
 
     with db.connect() as conn:
         results = conn.execute(
-            "SELECT * FROM events WHERE pk=16"
+            "SELECT * FROM events WHERE pk=18"
         ).fetchall()
         conn.close()
         row_proxy = results[0]
         print('type(row_proxy)', type(row_proxy))
-        # print('row_proxy', row_proxy)
-        # keys = row_proxy.keys() 
-        # for key in keys:
-        #     print("key", key)
 
-        print('row_proxy.data LENGTH', len(row_proxy.data)) # b'{ "foo": "bar" }'
+        print('row_proxy.data LENGTH', len(row_proxy.data))
         print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
-        return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
+        # print("****** DATA *******", row_proxy.data)
 
+        # only need to decompress the gzip if you're trying to read it in JSON or responde with JSON
+        # body = decompress_gzip(row_proxy.data)
+
+        return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
+        # return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
+
+
+#################################################################################################
+
+# TESTING 
+# STEP1
+# {"foo": "bar"}
 @app.route('/event-bytea', methods=['POST'])
 def event_bytea_post():
     print('/event-bytea POST')
     print('type(request.data)', type(request.data)) # bytes
     print('type(request.headers)', type(request.headers)) # <class 'werkzeug.datastructures.EnvironHeaders'>
-    # print('request.data', request.data) # b'{ "foo": "bar" }'
+    print('request.data', request.data) # b'{ "foo": "bar" }'
 
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -197,64 +263,34 @@ def event_bytea_post():
         conn.close()
     return 'successfull bytea'
 
-def decompress_gzip(encoded_data):
-    try:
-        fp = BytesIO(encoded_data)
-        try:
-            f = GzipFile(fileobj=fp)
-            return f.read().decode("utf-8")
-        finally:
-            f.close()
-    except Exception as e:
-        raise e
+# TESTING
+# STEP2
+# @app.route('/events', methods=['GET'])
+# def events():
+#     print('/event GET')
 
-#######################################################################################
-
-
-@app.route('/events', methods=['GET'])
-def events():
-    print('/event GET')
-
-    with db.connect() as conn:
-        results = conn.execute(
-            "SELECT * FROM events"
-        ).fetchall()
-        conn.close()
+#     with db.connect() as conn:
+#         results = conn.execute(
+#             "SELECT * FROM events"
+#         ).fetchall()
+#         conn.close()
         
-        rows = []
-        for row in results:
-            rows.append(dict(row))
-        return json.dumps(rows)
+#         rows = []
+#         for row in results:
+#             rows.append(dict(row))
+#         return json.dumps(rows)
 
-@app.route('/event', methods=['POST'])
-def event():
-    print('/event POST')
-    record = ('python', 'example')
-    insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
-    with db.connect() as conn:
-        conn.execute(
-            "INSERT INTO events (type,name) VALUES ('type4', 'name4')"
-        )
-        conn.close()
-        print("inserted")
-    return 'successful'
-
-@app.route('/test', methods=['GET'])
-def test():
-    return 'Success'
-
-# connection = get_connection()
-# cursor = connection.cursor(cursor_factory = psycopg2.extras.DictCursor)
-# try:
-#     cursor.execute(insert_query, (name, tool_type, randomString(10), image, random.randint(10,50)))
-#     connection.commit()
-# except:
-#     raise "Row insert failed\n"
-#     return 'fail'
-# cursor.close()
-# connection.close()
-
-# rows = []
-# for row in results:
-#     rows.append(dict(row))
-# return json.dumps(rows)
+# TESTING
+# STEP1
+# @app.route('/event', methods=['POST'])
+# def event():
+#     print('/event POST')
+#     record = ('python', 'example')
+#     insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
+#     with db.connect() as conn:
+#         conn.execute(
+#             "INSERT INTO events (type,name) VALUES ('type4', 'name4')"
+#         )
+#         conn.close()
+#         print("inserted")
+#     return 'successful'
