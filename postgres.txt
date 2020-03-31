@@ -25,7 +25,8 @@ CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
    type varchar(40) NOT NULL,
    name varchar(40) NOT NULL,
-   data bytea
+   data bytea,
+   headers jsonb
 );
 
 ALTER TABLE events
