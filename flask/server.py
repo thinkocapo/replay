@@ -97,6 +97,11 @@ def forward():
         request_headers[key] = request.headers.get(key)
     print('request_headers', request_headers)
 
+    # TESTING...WORKS
+    # body = decompress_gzip(request.data)
+    # newbody = compress_gzip(json.loads(body))
+    
+
     try:
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
@@ -121,18 +126,26 @@ def decompress_gzip(encoded_data):
         raise e
 
 def compress_gzip(unencoded_data):
-    print('compress_gzip()')
-    # json.dumps(data, allow_nan=False).encode("utf-8")
     try:
+        # body = io.BytesIO()
+        # with gzip.GzipFile(fileobj=body, mode="w") as f:
+        #     f.write(json.dumps(event, allow_nan=False).encode("utf-8"))
         body = io.BytesIO()
         with gzip.GzipFile(fileobj=body, mode="w") as f:
             f.write(json.dumps(unencoded_data, allow_nan=False).encode("utf-8"))
-            # f.write(unencoded_data).encode("utf-8")
-            # return body
+            # 
+            # f.write(json.dumps(unencoded_data))
+            # f.write("\n")
     except Exception as e:
         raise e
     return body
 
+# if isinstance(payload, bytes):
+#     payload = PayloadRef(bytes=payload)
+# elif isinstance(payload, text_type):
+#     payload = PayloadRef(bytes=payload.encode("utf-8"))
+# else:
+#     payload = payload
     
 # TODO
 # STEP2
@@ -154,7 +167,7 @@ def impersonator():
 
     with db.connect() as conn:
         rows = conn.execute( # <RowProxy>
-            "SELECT * FROM events WHERE pk=20"
+            "SELECT * FROM events WHERE pk=2"
         ).fetchall()
         conn.close()
         row = rows[0]
@@ -165,24 +178,22 @@ def impersonator():
     # print('row.data', row.data) # b'\x1f\x8b\......
     # print("row.headers", row.headers)
 
-    print('111 LENGTH', len(row.data))
+
     body = decompress_gzip(row.data)
     
-    # body = json.loads(body)
-    print('type(body)', type(body))
-    # TODO change these values...
-    # print("\n++++++ event_id ++++ ", body["event_id"])
-    # print("\n++++++ timestamp +++ ", body["timestamp"])
-
-    body = compress_gzip(body) #getvalue()
-    body = body.read()
-    print("body is \n", type(body))
-    print('222 LENGTH', len(body)) # TODO is length 0
-
+ # body = decompress_gzip(request.data)
+    # newbody = compress_gzip(json.loads(body))
+    
+    newbody = compress_gzip(json.loads(body))
+    # body = body.read()
+    # print("body is \n", type(body))
+    # print('222 LENGTH', len(body)) # TODO is length 0
+    # print('SENDING..........\n', type(body.getvalue()))
 
     try:
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=body, headers=row.headers 
+            # "POST", str(SENTRY_API_STORE_ONPREMISE), body=body, headers=row.headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=newbody.getvalue(), headers=row.headers 
             # "POST", str(SENTRY_API_STORE_ONPREMISE), body=row.data, headers=row.headers 
         )
     except Exception as err:
