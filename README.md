@@ -126,25 +126,18 @@ https://github.com/buger/goreplay/blob/master/examples/middleware/token_modifier
 About the middleware technique  
 https://github.com/buger/goreplay/tree/master/middleware
 
+https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-outgoing-ef7fcdf87113
+https://golang.org/pkg/net/http/#Request  
+https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
+gor file-server 8000
+
 ## Notes
 https://flask.palletsprojects.com/en/1.1.x/api/  
 https://requests.readthedocs.io/en/master/  
 https://realpython.com/python-requests/#request-headers  
 
-json.loads(r.data.decode('utf-8'))['headers']  
 request.headers is a #dict  
 request.data keys are exception, server_name, tags, event_id, timestamp, extra, modules, contexts, platform, breadcrumbs, level, sdk  
-request.data <class 'bytes'>  
-request.content_encoding gzip  
-request.content_type application/json  
-body.getvalue() is a #str or <class 'bytes'>  
-
-This 'DumpRequest' (deprecated/dump-request.go) would be perfect if I could make sentry_sdk send events to a URL of my choosing. Downside is the events would never reach my on-prem Sentry. Maybe support both techniques in this repo:  
-https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-outgoing-ef7fcdf87113
-
-https://golang.org/pkg/net/http/#Request  
-https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
-gor file-server 8000
 
 ```
 getsentry/sentry-python
@@ -172,22 +165,15 @@ type(request.data) <class 'bytes'>
 
 replaying the payload many times. grpc
 
-
 MemoryView  
 https://www.postgresql.org/message-id/25EDB20679154BDBB3CBBD335184E1D7%40frank  
 https://www.postgresql.org/message-id/C2C12FD0FCE64CE8BB77765A526D3C73%40frank  
-
 
 "Q. How to save a instance of a Class to the DB?"
 "A. You can't store the object itself in the DB. What you do is to store the data from the object and reconstruct it later."
 https://stackoverflow.com/questions/2047814/is-it-possible-to-store-python-class-objects-in-sqlite
 
-
 Troubleshoot - compare len(bytes) on the way in as when it came out...
-
-
-
-
 
 {\"exception\": 
     {
