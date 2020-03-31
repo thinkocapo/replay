@@ -1,4 +1,6 @@
 import os
+# from datetime import datetime
+import datetime
 from flask import Flask, request, json, abort
 from flask_cors import CORS
 import gzip
@@ -134,9 +136,8 @@ def compress_gzip(unencoded_data):
         raise e
     return body
 
-# TODO
 # STEP2
-# Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
+# TODO - Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
 # Loads that event's bytes+headers from database and forwards to Sentry instance 
 @app.route('/event-bytea/and/forward', methods=['GET']) #re-birth
 def impersonator():
@@ -159,23 +160,19 @@ def impersonator():
         conn.close()
         row = rows[0]
 
-    print('type(row)', type(row)) # 'sqlalchemy.engine.result.RowProxy'
-    print('row.data LENGTH', len(row.data)) # 
-    print('type(row.data)', type(row.data)) # <class 'bytes'>
+    # print('type(row)', type(row)) # 'sqlalchemy.engine.result.RowProxy'
+    # print('row.data LENGTH', len(row.data)) # 
+    # print('type(row.data)', type(row.data)) # <class 'bytes'>
     # print('row.data', row.data) # b'\x1f\x8b\......
     # print("row.headers", row.headers)
 
-
     body = decompress_gzip(row.data)
-    json_body = json.loads(body)
-    print('timestamp', json_body['timestamp'])
-    print('event_id', json_body['event_id'])
-    # json_body['timestamp'] = '2019-03-31T05:35:39.320763Z'
-    json_body['event_id'] = uuid.uuid4().hex
-    # print('timestamp', json_body['timestamp'])
-    newbody = compress_gzip(json_body)
 
-    # newbody = compress_gzip(json.loads(body))
+    json_body = json.loads(body)
+    json_body['event_id'] = uuid.uuid4().hex
+    json_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+
+    newbody = compress_gzip(json_body)
 
     # print("body is \n", type(body))
     # print('LENGTH', len(body)) # TODO is length 0
