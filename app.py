@@ -24,7 +24,6 @@ def app():
     # err = raise Exception("raised exception")
     sentry_sdk.capture_exception(Exception("fifth good event"))
 
-    # gzip not?
     # raise Exception('big problem')
 
 def initialize_sentry():
