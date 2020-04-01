@@ -4,7 +4,9 @@ Test data automation.
 
 Sending diverse events from multiple sdk types to a Sentry Organization on a regular basis.
 
-Keep 1 app running instead of 1 app per platform.
+Use a proxy API (Flask) and database to do this for you.
+
+Keep 1 app running (STEP2) instead of 1 app for every platform's sdk.
 
 
 ## What's Happening
@@ -29,6 +31,8 @@ install -r requirements.txt
 
 ## Database
 1.
+sudo lsof -i -P -n  
+sudo service postgresql stop  
 ```
 docker run -it --rm \
     --name db-postgres \
@@ -37,22 +41,20 @@ docker run -it --rm \
     -p 5432:5432 \
     postgres
 ```
-sudo lsof -i -P -n
 
-sudo service postgresql stop
 
-^ or could do 8080:5432 and it wouldn't conflict?
 
 2.
-`docker exec -it db-postgres psql -U admin`
-
+`docker exec -it db-postgres psql -U admin`  
+\c postgres  
 3.
 ```
 CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
    type varchar(40) NOT NULL,
    name varchar(40) NOT NULL,
-   data bytea
+   data bytea,
+   headers jsonb
 );
 ```
 
@@ -60,31 +62,30 @@ create user admin with login password 'admin';
 
 ## Run
 
-#### works
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
 2. `docker run...` the database
 3. `make` runs Flask server
 4. `python app.py`
-5. `psql` or `/event-bytea` to load the event again
-or
+5. Postman for hitting the STEP2 endpoints in Flask, which send the events to Sentry.
 6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.
-
-or
-7. just load event `/event-bytea` and forward to Sentry
 
 Workflow:  
 `python app.py` sdk sends event to the intercetpor.
 
 The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
 
-`localhost:3001/impersonator` will load an event from the database and forward it (by http) to your Sentry instance.
+`localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
 
-'STEP1' endpoints require an sdk that sends an event to them
+'STEP1' endpoints require a sdk (app.py) to send events to
 
-'STEP2' endpoints you can hit yourself from Postman
+'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
 
-you may have to `sudo service postgresql stop` to free up 5432 on your machine
+## TODO
+- docker-compose.yaml for Flask + DB together, w/ DB initiation script and/or volume mount
+- send events sentry-javascript
+- script for pulling 100 events out of db and sending 10 of each. 1000 events. time it.
+- postgres column for fingerprint so never end up with duplicates
 
 ## Gor Middleware
 There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
@@ -175,6 +176,8 @@ https://www.postgresql.org/message-id/C2C12FD0FCE64CE8BB77765A526D3C73%40frank
 "Q. How to save a instance of a Class to the DB?"
 "A. You can't store the object itself in the DB. What you do is to store the data from the object and reconstruct it later."
 https://stackoverflow.com/questions/2047814/is-it-possible-to-store-python-class-objects-in-sqlite
+
+you may have to `sudo service postgresql stop` to free up 5432 on your machine
 
 Troubleshoot - compare len(bytes) on the way in as when it came out...
 
