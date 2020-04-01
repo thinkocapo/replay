@@ -131,12 +131,11 @@ def compress_gzip(dict_body):
     return body
 
 # STEP2
-# TODO - Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
 # Loads that event's bytes+headers from database and forwards to Sentry instance 
-@app.route('/event-bytea/and/forward', defaults={'pk':0}, methods=['GET']) #re-birth
-@app.route('/event-bytea/and/forward/<pk>', methods=['GET']) #re-birth
-def impersonator(pk):
-    print('***** pk *****\n', pk)
+# if no pk ID is provided then query selects most recent event
+@app.route('/event-bytea/and/forward', defaults={'pk':0}, methods=['GET'])
+@app.route('/event-bytea/and/forward/<pk>', methods=['GET'])
+def event_maker(pk):
 
     # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
     def bytea2bytes(value, cur):
@@ -167,8 +166,8 @@ def impersonator(pk):
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
-    bytes_io_body = compress_gzip(dict_body)
-
+    bytes_io_body = compress_gzip(dict_body) # bytes_io_body.getvalue() is also bytes (method for returning the bytes themselves)
+    
     try:
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=row_proxy.headers 
@@ -180,7 +179,7 @@ def impersonator(pk):
 
 #################################################################################################
 
-# TESTING 
+# TESTING w/ database
 # STEP1
 #  send body {"foo": "bar"} from Postman
 @app.route('/event-bytea', methods=['POST'])
@@ -200,12 +199,11 @@ def event_bytea_post():
         conn.close()
     return 'successfull bytea'
 
-# TESTING
+# TESTING w/ database
 # STEP 2
-# TODO
-# Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
-# Loads that event's bytes+headers from database
-@app.route('/event-bytea', methods=['GET'])
+# Loads that event's bytes+headers from database. defaults to last record in table if no pk ID provided
+@app.route('/event-bytea', defaults={'pk':0}, methods=['GET'])
+@app.route('/event-bytea/<pk>', methods=['GET'])
 def event_bytea_get():
 
     # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
@@ -217,32 +215,15 @@ def event_bytea_get():
         psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
     psycopg2.extensions.register_type(BYTEA2BYTES)
 
+    if pk==0:
+        query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
+    else:
+        query = "SELECT * FROM events WHERE pk={};".format(pk)
+
     with db.connect() as conn:
-        results = conn.execute(
-            "SELECT * FROM events WHERE pk=18"
-        ).fetchall()
+        results = conn.execute(query).fetchall()
         conn.close()
         row_proxy = results[0]
 
-        # print('type(row_proxy)', type(row_proxy))
-        # print('row_proxy.data LENGTH', len(row_proxy.data))
-        # print('type(row_proxy.data)', type(row_proxy.data)) #'bytes' if you use the typecasting. 'MemoryView' if you don't use typecasting
-
         return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
         # return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
-
-
-# TESTING
-# STEP1
-# @app.route('/event', methods=['POST'])
-# def event():
-#     print('/event POST')
-#     record = ('python', 'example')
-#     insert_query = """ INSERT INTO events (type, name) VALUES (%s,%s)"""
-#     with db.connect() as conn:
-#         conn.execute(
-#             "INSERT INTO events (type,name) VALUES ('type4', 'name4')"
-#         )
-#         conn.close()
-#         print("inserted")
-#     return 'successful'
