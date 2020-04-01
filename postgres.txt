@@ -16,6 +16,7 @@ docker run -it --rm \
     postgres
 
 docker exec -it db-postgres psql -U admin
+^ or could do 8080:5432 and it wouldn't conflict?
 
 
 `\l list databases`

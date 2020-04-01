@@ -49,7 +49,8 @@ def save():
     with db.connect() as conn:
         conn.execute(insert_query, record)
         conn.close()
-    print("\n DONE \n")
+    
+    print("created event in postgres")
 
     # does not log on the python app.py side, because async sentry_sdk call
     return 'event was undertaken from its journey to Sentry'
@@ -120,11 +121,11 @@ def decompress_gzip(encoded_data):
     except Exception as e:
         raise e
 
-def compress_gzip(unencoded_data):
+def compress_gzip(dict_body):
     try:
         body = io.BytesIO()
         with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(unencoded_data, allow_nan=False).encode("utf-8"))
+            f.write(json.dumps(dict_body, allow_nan=False).encode("utf-8"))
     except Exception as e:
         raise e
     return body
@@ -132,8 +133,10 @@ def compress_gzip(unencoded_data):
 # STEP2
 # TODO - Pass a pkey ID /impersonate/:id OR could default to whatever most recent event is
 # Loads that event's bytes+headers from database and forwards to Sentry instance 
-@app.route('/event-bytea/and/forward', methods=['GET']) #re-birth
-def impersonator():
+@app.route('/event-bytea/and/forward', defaults={'pk':0}, methods=['GET']) #re-birth
+@app.route('/event-bytea/and/forward/<pk>', methods=['GET']) #re-birth
+def impersonator(pk):
+    print('***** pk *****\n', pk)
 
     # Set typecasting so psycopg2 returns bytea as 'bytes'. Without typecasting, it returns a MemoryView type
     def bytea2bytes(value, cur):
@@ -146,34 +149,29 @@ def impersonator():
 
     psycopg2.extensions.register_type(BYTEA2BYTES)
 
+    if pk==0:
+        query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
+    else:
+        query = "SELECT * FROM events WHERE pk={};".format(pk)
+    print("query ", query)
     with db.connect() as conn:
-        rows = conn.execute( # <RowProxy>
-            "SELECT * FROM events WHERE pk=3"
-        ).fetchall()
+        rows = conn.execute(query).fetchall()
         conn.close()
-        row = rows[0]
+        # Class 'sqlalchemy.engine.result.RowProxy'
+        row_proxy = rows[0]
+ 
+    # row_proxy.data is <class bytes> and row.data is b'\x1f\x8b\
+    json_body = decompress_gzip(row_proxy.data)
 
-    # print('type(row)', type(row)) # 'sqlalchemy.engine.result.RowProxy'
-    # print('row.data LENGTH', len(row.data)) # 
-    # print('type(row.data)', type(row.data)) # <class 'bytes'>
-    # print('row.data', row.data) # b'\x1f\x8b\......
-    # print("row.headers", row.headers)
+    dict_body = json.loads(json_body)
+    dict_body['event_id'] = uuid.uuid4().hex
+    dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
-    body = decompress_gzip(row.data)
-
-    json_body = json.loads(body)
-    json_body['event_id'] = uuid.uuid4().hex
-    json_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-
-    newbody = compress_gzip(json_body)
-
-    # print("body is \n", type(body))
-    # print('length', len(body))
-    # print('type(body.getvalue())'
+    bytes_io_body = compress_gzip(dict_body)
 
     try:
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=newbody.getvalue(), headers=row.headers 
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=row_proxy.headers 
         )
     except Exception as err:
         print('LOCAL EXCEPTION', err)
