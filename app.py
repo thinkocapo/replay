@@ -5,26 +5,23 @@ import requests
 # from dotenv import load_dotenv
 # load_dotenv()
 
-# TODO attempt the workflow using platform sdk's other than python. 
+SENTRY = 'localhost:9000'
+FLASK = 'localhost:3001'
 
-# make sentry_sdk send the event to :3001 which is a Flask API and not Sentry.io
-# saves in db
-MODIFIED_DSN_SAVE = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/2'
+# The event skips the proxy and goes directly to Sentry. DSN in its original form from Sentry
+ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@' + SENTRY + '/2'
 
-# saves in db and forwards the event to your Sentry instance's endpoint doesnt save but sends?
-MODIFIED_DSN_SAVE_AND_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/3'
+# The proxy forwards the event on to Sentry. Doesn't save to DB
+MODIFIED_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@' + FLASK + '/2'
 
-# The proxy forwards it on through to Sentry. Doesn' save to DB
-MODIFIED_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:3001/4'
+# The proxy saves the event to database. Doesn't send to Senry.
+MODIFIED_DSN_SAVE = 'http://759bf0ad07984bb3941e677b35a13d2c@' + FLASK + '/3'
 
-# Unadulterated DSN, as provided by Sentry instance. As provided in the DSN Client Keys for the Organization's Project
-ORIGINAL_DSN_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@localhost:9000/2'
+# The proxy saves the event to database and forwards it on to Sentry
+MODIFIED_DSN_SAVE_AND_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@'+ FLASK + '/4'
 
 def app():
-    # err = raise Exception("raised exception")
-    sentry_sdk.capture_exception(Exception("second good event"))
-
-    # gzip not?
+    sentry_sdk.capture_exception(Exception("really"))
     # raise Exception('big problem')
 
 def initialize_sentry():
