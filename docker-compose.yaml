@@ -1,0 +1,11 @@
+version: '3'
+services:
+  flask-service:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    environment:
+     FLASK_ENV: 'test'
+  postgres-service:
+    ports:
+     - 5432:5432

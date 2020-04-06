@@ -5,7 +5,7 @@ gor
 middleware
 dump-request
 decode-request
-result-csv
+result.csv
 grpc.png
 maker.go
 *.pyc
