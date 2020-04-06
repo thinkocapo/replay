@@ -40,15 +40,20 @@ docker run -it --rm \
     -e POSTGRES_USER=admin \
     -p 5432:5432 \
     postgres
-```
 
+# mount a volume
+docker run -it --rm \
+    --name db-postgres \
+    -e POSTGRES_PASSWORD=admin \
+    -e POSTGRES_USER=admin \
+    -p 5432:5432 \
+    -v /home/wcap/tmp/event-maker:/var/lib/postgresql/data \
+    postgres
 
+docker exec -it db-postgres psql -U admin
 
-2.
-`docker exec -it db-postgres psql -U admin`  
 \c postgres  
-3.
-```
+
 CREATE TABLE events(
    pk SERIAL PRIMARY KEY,
    type varchar(40) NOT NULL,
@@ -195,3 +200,4 @@ Troubleshoot - compare len(bytes) on the way in as when it came out...
      }
 
 }
+

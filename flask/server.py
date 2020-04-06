@@ -33,6 +33,7 @@ USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
+# sometimes needed in endpoint
 # Database - set typecasting so psycopg2 returns bytea type as 'bytes' and not 'MemoryView'
 # def bytea2bytes(value, cur):
 #     m = psycopg2.BINARY(value, cur)
@@ -95,12 +96,14 @@ def save():
 
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
+    try:
+        with db.connect() as conn:
+            conn.execute(insert_query, record)
+            conn.close()
+        print("created event in postgres")
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
-    
-    print("created event in postgres")
     return 'response not read by client sdk'
 
 # MODIFIED_DSN_SAVE_AND_FORWARD
@@ -116,9 +119,13 @@ def save_and_forward():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
+    # TODO - TEST...the new try/except on db.connect here
+    try:
+        with db.connect() as conn:
+            conn.execute(insert_query, record)
+            conn.close()
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
 
     # Forward
     try:
@@ -137,6 +144,15 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
+    # TODO 'If it's of class type memoryview then run this'
+    # sometimes needed
+    def bytea2bytes(value, cur):
+        m = psycopg2.BINARY(value, cur)
+        if m is not None:
+            return m.tobytes()
+    BYTEA2BYTES = psycopg2.extensions.new_type(
+        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    psycopg2.extensions.register_type(BYTEA2BYTES)
 
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
@@ -148,7 +164,10 @@ def load_and_forward(pk):
         conn.close()
         # <class 'sqlalchemy.engine.result.RowProxy'
         row_proxy = rows[0]
- 
+    
+    # check if it's of class type MemoryView or it's Bytes
+    print('\nTYPE ', type(row_proxy.data))
+
     # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
     json_body = decompress_gzip(row_proxy.data)
 
@@ -156,9 +175,14 @@ def load_and_forward(pk):
     dict_body = json.loads(json_body)
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    print(dict_body['event_id'])
+    print(dict_body['timestamp'])
 
     bytes_io_body = compress_gzip(dict_body)
     
+    # print(bytes_io_body.getvalue())
+    # print(row_proxy.headers)
+
     try:
         # bytes_io_body.getvalue() is for reading the bytes
         response = http.request(
@@ -167,6 +191,7 @@ def load_and_forward(pk):
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
+    return("FINISH")
     return 'loaded and forwarded to Sentry'
 
 ##########################  TESTING  ###############################
