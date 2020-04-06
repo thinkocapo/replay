@@ -6,7 +6,9 @@ import requests
 # load_dotenv()
 
 SENTRY = 'localhost:9000'
-FLASK = 'localhost:3001'
+# TODO - for docker-compose
+# FLASK = 'localhost:3001'
+FLASK = '0.0.0.0:3001'
 
 # The event skips the proxy and goes directly to Sentry. DSN in its original form from Sentry
 ORIGINAL_DSN = 'http://759bf0ad07984bb3941e677b35a13d2c@' + SENTRY + '/2'
