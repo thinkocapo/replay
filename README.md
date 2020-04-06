@@ -201,3 +201,10 @@ Troubleshoot - compare len(bytes) on the way in as when it came out...
 
 }
 
+
+
+
+environment:
+      - POSTGRES_USER=hello_flask
+      - POSTGRES_PASSWORD=hello_flask
+      - POSTGRES_DB=hello_flask_dev

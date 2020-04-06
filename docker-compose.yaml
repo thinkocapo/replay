@@ -1,11 +1,17 @@
 version: '3'
 services:
-  flask-service:
+  web:
     build:
       context: ./flask
       dockerfile: Dockerfile
-    environment:
-     FLASK_ENV: 'test'
-  postgres-service:
     ports:
-     - 5432:5432
+      - 3001:3001
+    depends_on:
+      - db
+      
+  db:
+    image: postgres
+    volumes:
+      - /home/wcap/tmp/event-maker:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
