@@ -5,4 +5,4 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-CMD FLASK_APP=app.py flask run --host=0.0.0.0 -p 3001
+CMD FLASK_APP=server.py flask run --host=0.0.0.0 -p 3001
