@@ -150,18 +150,21 @@ def load_and_forward(pk):
     print("***************************")
     # TODO 'If it's of class type memoryview then run this'
     # sometimes needed
-    def bytea2bytes(value, cur):
-        m = psycopg2.BINARY(value, cur)
-        if m is not None:
-            return m.tobytes()
-    BYTEA2BYTES = psycopg2.extensions.new_type(
-        psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
-    psycopg2.extensions.register_type(BYTEA2BYTES)
+    # def bytea2bytes(value, cur):
+    #     m = psycopg2.BINARY(value, cur)
+    #     if m is not None:
+    #         return m.tobytes()
+    # BYTEA2BYTES = psycopg2.extensions.new_type(
+    #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    # psycopg2.extensions.register_type(BYTEA2BYTES)
     print('\n pk ', pk)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
+
+    ## THIS IS TEMP...
+    query='SELECT * FROM "events";'
     print('\n query ', query)
     
     with db.connect() as conn:
