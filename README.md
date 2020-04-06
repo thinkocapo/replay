@@ -92,6 +92,8 @@ docker-compose up
 
 docker-comppose down
 docker-compose stop web
+
+docker-compose up --build
 ```
 
 ## TODO

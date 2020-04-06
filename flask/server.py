@@ -30,6 +30,7 @@ CORS(app)
 # HOST='localhost'
 # TODO docker-compose
 HOST='db'
+
 DATABASE='postgres'
 USERNAME='admin'
 PASSWORD='admin'
@@ -146,6 +147,7 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
+    print("***************************")
     # TODO 'If it's of class type memoryview then run this'
     # sometimes needed
     def bytea2bytes(value, cur):
@@ -155,16 +157,20 @@ def load_and_forward(pk):
     BYTEA2BYTES = psycopg2.extensions.new_type(
         psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
     psycopg2.extensions.register_type(BYTEA2BYTES)
-
+    print('\n pk ', pk)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
+    print('\n query ', query)
     
     with db.connect() as conn:
         rows = conn.execute(query).fetchall()
         conn.close()
         # <class 'sqlalchemy.engine.result.RowProxy'
+        print('LENGTH', len(rows))
+        print('TYPE rows', type(rows))
+        print("\n ROWS", rows)
         row_proxy = rows[0]
     
     # check if it's of class type MemoryView or it's Bytes

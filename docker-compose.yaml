@@ -8,9 +8,9 @@ services:
       - default
     ports:
       - 3001:3001
-    restart: always
     environment:
       PORT: 3001
+      PYTHONUNBUFFERED: 1
     depends_on:
       - db
       
