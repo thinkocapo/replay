@@ -4,8 +4,11 @@ services:
     build:
       context: ./flask
       dockerfile: Dockerfile
+    networks:
+      - default
     ports:
       - 3001:3001
+    restart: always
     environment:
       PORT: 3001
     depends_on:
@@ -13,7 +16,11 @@ services:
       
   db:
     image: postgres
+    networks:
+      - default
     volumes:
       - /home/wcap/tmp/event-maker:/var/lib/postgresql/data/
     ports:
       - 5432:5432
+    environment:
+      PORT: 5432

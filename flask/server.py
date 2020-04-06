@@ -27,7 +27,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Database
-HOST='localhost'
+# HOST='localhost'
+# TODO docker-compose
+HOST='db'
 DATABASE='postgres'
 USERNAME='admin'
 PASSWORD='admin'

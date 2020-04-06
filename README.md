@@ -86,6 +86,14 @@ The `DSN` that you use in your `app.py` determine what the proxy will do. They a
 
 'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
 
+## Run w/ docker-compose
+```
+docker-compose up
+
+docker-comppose down
+docker-compose stop web
+```
+
 ## TODO
 - docker-compose.yaml for Flask + DB together, w/ DB initiation script and/or volume mount
 - send events sentry-javascript
