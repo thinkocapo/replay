@@ -11,9 +11,22 @@ sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
                                         headers BLOB
                                     ); """
 
-
 try:
-    c = conn.cursor()
-    c.execute(sql_table_events)
+
+    with conn:
+        cur = conn.cursor()
+
+        # CREATE TABLE
+        cur.execute(sql_table_events)
+        print('DONE')
+
+        # READ
+        cur.execute("SELECT * FROM events")
+ 
+        rows = cur.fetchall()
+        print('LENGTH', len(rows))
+        for row in rows:
+            print(row)
+
 except Error as e:
     print(e)
