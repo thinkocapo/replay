@@ -208,6 +208,9 @@ def load_and_forward(pk):
     # check if it's of class type MemoryView or it's Bytes
     print('\nTYPE ', type(row_proxy.data)) # now buffer?
 
+    # TODO load data from Sqlite and then continue as normal here:
+
+
     # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
     json_body = decompress_gzip(row_proxy.data)
 
