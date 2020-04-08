@@ -36,7 +36,8 @@ try:
         test = list(test)
         print("\nLast Item's ID", test[0])
 
-        print('type is', test[3].read().hex())
+        read_write_buffer = test[3]
+        print('------------', str(read_write_buffer))
 
 
 
