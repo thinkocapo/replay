@@ -53,7 +53,7 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 
 # DATABASE - SQLITE
 path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
-conn = sqlite3.connect(path_to_database)
+# conn = sqlite3.connect(path_to_database)
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -113,7 +113,7 @@ def save():
         # TODO save to sqlite3
         print('111111111')
 
-        with conn:
+        with sqlite3.connect(path_to_database) as conn:
             # TODO save event
             insert_sql = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
