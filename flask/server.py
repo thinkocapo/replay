@@ -10,6 +10,7 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 import sqlalchemy
 from sqlalchemy import create_engine
+import sqlite3
 import io
 from six import BytesIO
 from gzip import GzipFile
@@ -34,6 +35,7 @@ HOST='localhost'
 # for docker-compose:
 # HOST='db'
 
+# DATABASE - POSTGRES
 DATABASE='postgres'
 USERNAME='admin'
 PASSWORD='admin'
@@ -48,6 +50,10 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 # BYTEA2BYTES = psycopg2.extensions.new_type(
 #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
 # psycopg2.extensions.register_type(BYTEA2BYTES)
+
+# DATABASE - SQLITE
+path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
+conn = sqlite3.connect(path_to_database)
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -103,14 +109,21 @@ def save():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
     try:
+        
         # TODO save to sqlite3
-        path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
-        conn = sqlite3.connect(path_to_database)
-
-        print('****** CREATED CONNECTION1 *****')
+        print('111111111')
 
         with conn:
             # TODO save event
+            insert_sql = ''' INSERT INTO events(name,type,data,headers)
+              VALUES(?,?,?,?) '''
+            event = ('python', 'python', json.dumps({'exception': 'value'}), json.dumps({'host':'chrome'}))
+
+            cur = conn.cursor()
+            cur.execute(insert_sql, event)
+            
+            print('222222222')
+            return cur.lastrowid
 
 
         # ORIGINAL
