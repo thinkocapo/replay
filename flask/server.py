@@ -20,6 +20,9 @@ import psycopg2
 import string
 import psycopg2.extras
 
+from db import create_connection, create_table, events_table, create_project, create_task
+# from db import create_connection
+
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf0ad07984bb3941e677b35a13d2c&sentry_version=7"
 
@@ -28,11 +31,15 @@ CORS(app)
 
 # Database
 HOST='localhost'
+# for docker-compose:
+# HOST='db'
+
 DATABASE='postgres'
 USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
+# sometimes needed in endpoint
 # Database - set typecasting so psycopg2 returns bytea type as 'bytes' and not 'MemoryView'
 # def bytea2bytes(value, cur):
 #     m = psycopg2.BINARY(value, cur)
@@ -95,12 +102,22 @@ def save():
 
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
+    try:
+        # TODO save to sqlite3
+        database = r"/home/wcap/tmp/mypythonsqlite.db"
+        conn = create_connection(database)
+        print('****** CREATED CONNECTION *****')
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
-    
-    print("created event in postgres")
+        with conn:
+            create_table(conn, events_table)
+
+        # with db.connect() as conn:
+        #     conn.execute(insert_query, record)
+        #     conn.close()
+        # print("created event in postgres")
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
+
     return 'response not read by client sdk'
 
 # MODIFIED_DSN_SAVE_AND_FORWARD
@@ -116,9 +133,13 @@ def save_and_forward():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
+    # the try/except here has not been tested yet
+    try:
+        with db.connect() as conn:
+            conn.execute(insert_query, record)
+            conn.close()
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
 
     # Forward
     try:
@@ -137,18 +158,38 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-
+    # TODO 'If it's of class type memoryview then run this'
+    # sometimes needed
+    # def bytea2bytes(value, cur):
+    #     m = psycopg2.BINARY(value, cur)
+    #     if m is not None:
+    #         return m.tobytes()
+    # BYTEA2BYTES = psycopg2.extensions.new_type(
+    #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    # psycopg2.extensions.register_type(BYTEA2BYTES)
+    
+    print('\n pk ', pk)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
+
+    ## THIS IS TEMP...
+    # query='SELECT * FROM "events";'
+    # print('\n query ', query)
     
     with db.connect() as conn:
         rows = conn.execute(query).fetchall()
         conn.close()
         # <class 'sqlalchemy.engine.result.RowProxy'
+        print('LENGTH', len(rows))
+        print('TYPE rows', type(rows))
+        print("\n ROWS", rows)
         row_proxy = rows[0]
- 
+    
+    # check if it's of class type MemoryView or it's Bytes
+    print('\nTYPE ', type(row_proxy.data)) # now buffer?
+
     # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
     json_body = decompress_gzip(row_proxy.data)
 
@@ -156,9 +197,14 @@ def load_and_forward(pk):
     dict_body = json.loads(json_body)
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    print(dict_body['event_id'])
+    print(dict_body['timestamp'])
 
     bytes_io_body = compress_gzip(dict_body)
     
+    # print(bytes_io_body.getvalue())
+    # print(row_proxy.headers)
+
     try:
         # bytes_io_body.getvalue() is for reading the bytes
         response = http.request(
@@ -167,6 +213,7 @@ def load_and_forward(pk):
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
+    return("FINISH")
     return 'loaded and forwarded to Sentry'
 
 ##########################  TESTING  ###############################
