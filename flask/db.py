@@ -95,12 +95,12 @@ sql_create_projects_table = """ CREATE TABLE IF NOT EXISTS projects (
                                         end_date text
                                     ); """
 
-events_table = """ CREATE TABLE IF NOT EXISTS events (
+sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
                                         id integer PRIMARY KEY,
                                         name text,
                                         type text,
                                         data BLOB,
-                                        headers BLOG
+                                        headers BLOB
                                     ); """
 
 sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS tasks (

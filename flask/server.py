@@ -20,7 +20,7 @@ import psycopg2
 import string
 import psycopg2.extras
 
-from db import create_connection, create_table, events_table, create_project, create_task
+from db import create_connection, create_table, sql_table_events, create_project, create_task
 # from db import create_connection
 
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
@@ -104,13 +104,16 @@ def save():
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
     try:
         # TODO save to sqlite3
-        database = r"/home/wcap/tmp/mypythonsqlite.db"
-        conn = create_connection(database)
-        print('****** CREATED CONNECTION *****')
+        path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
+        conn = sqlite3.connect(path_to_database)
+
+        print('****** CREATED CONNECTION1 *****')
 
         with conn:
-            create_table(conn, events_table)
+            # TODO save event
 
+
+        # ORIGINAL
         # with db.connect() as conn:
         #     conn.execute(insert_query, record)
         #     conn.close()
@@ -167,7 +170,7 @@ def load_and_forward(pk):
     # BYTEA2BYTES = psycopg2.extensions.new_type(
     #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
     # psycopg2.extensions.register_type(BYTEA2BYTES)
-    
+
     print('\n pk ', pk)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
