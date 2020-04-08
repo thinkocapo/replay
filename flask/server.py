@@ -123,8 +123,9 @@ def save():
             cur.execute(insert_sql, event)
             
             print('222222222')
-            return cur.lastrowid
-
+            print('ID', cur.lastrowid)
+            # cur.close()
+            return str(cur.lastrowid)
 
         # ORIGINAL
         # with db.connect() as conn:

@@ -25,6 +25,7 @@ try:
  
         rows = cur.fetchall()
         print('LENGTH', len(rows))
+        
         for row in rows:
             print(row)
 
