@@ -94,7 +94,15 @@ sql_create_projects_table = """ CREATE TABLE IF NOT EXISTS projects (
                                         begin_date text,
                                         end_date text
                                     ); """
- 
+
+events_table = """ CREATE TABLE IF NOT EXISTS events (
+                                        id integer PRIMARY KEY,
+                                        name text,
+                                        type text,
+                                        data BLOB,
+                                        headers BLOG
+                                    ); """
+
 sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS tasks (
                                 id integer PRIMARY KEY,
                                 name text NOT NULL,
@@ -107,11 +115,11 @@ sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS tasks (
                             );"""
 
 # create a database connection
-database = r"/Users/wcap/tmp/mypythonsqlite.db"
-conn = create_connection(database)
-print('****** CREATED CONNECTION *****')
+# database = r"/Users/wcap/tmp/mypythonsqlite.db"
+# conn = create_connection(database)
+# print('****** CREATED CONNECTION *****')
 
-with conn:
+# with conn:
 
     # create tables
     # create_table(conn, sql_create_projects_table)
@@ -131,8 +139,8 @@ with conn:
     # create_task(conn, task_1)
     # create_task(conn, task_2)
 
-    print("1. Query task by priority:")
-    select_task_by_priority(conn, 1)
+    # print("1. Query task by priority:")
+    # select_task_by_priority(conn, 1)
  
-    print("2. Query all tasks")
-    select_all_tasks(conn)
+    # print("2. Query all tasks")
+    # select_all_tasks(conn)
