@@ -39,6 +39,10 @@ try:
         read_write_buffer = test[3]
         print('------------', str(read_write_buffer))
 
+        data = str(read_write_buffer)
+        print('TYPEOF data', type(data)) # <type 'str'> okay? is same as result as .getvalue()
+        print('TYPEOF data', type(bytearray(data))) # <type 'bytearray'>
+
 
 
 except Error as e:

@@ -101,7 +101,7 @@ def forward():
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
-
+    # type(request.data) is <class 'bytes'>
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
