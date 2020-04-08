@@ -117,10 +117,11 @@ def save():
             # TODO save event
             insert_sql = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-            event = ('python', 'python', json.dumps({'exception': 'value'}), json.dumps({'host':'chrome'}))
+            # dummy_event = ('python', 'python', json.dumps({'exception': 'value'}), json.dumps({'host':'chrome'}))
+            real_event = ('python1', 'python', request.data, json.dumps(request_headers))
 
             cur = conn.cursor()
-            cur.execute(insert_sql, event)
+            cur.execute(insert_sql, real_event)
             
             print('222222222')
             print('ID', cur.lastrowid)

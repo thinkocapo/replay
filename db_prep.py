@@ -25,9 +25,20 @@ try:
  
         rows = cur.fetchall()
         print('LENGTH', len(rows))
-        
+
         for row in rows:
+        # for row in cur.fetchall():
+            # print('YEAAAH')
             print(row)
+
+        # test = rows[len(rows) - 1]
+        test = rows[-1]
+        test = list(test)
+        print("\nLast Item's ID", test[0])
+
+        print('type is', test[3].read().hex())
+
+
 
 except Error as e:
     print(e)
