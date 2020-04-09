@@ -164,57 +164,39 @@ def save_and_forward():
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
     print('\n pk ', pk)
+    # TODO use pk again
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
 
-    # was trying docker...
-    # query='SELECT * FROM "events";'
-    # with db.connect() as conn:
-    #     rows = conn.execute(query).fetchall()
-    #     conn.close()
-    #     # <class 'sqlalchemy.engine.result.RowProxy'
-    #     print('LENGTH', len(rows))
-    #     print('TYPE rows', type(rows))
-    #     print("\n ROWS", rows)
-    #     row_proxy = rows[0]    
-    #     # check if it's of class type MemoryView or it's Bytes
-    #     print('\nTYPE ', type(row_proxy.data)) # now buffer?
-
     with sqlite3.connect(path_to_database) as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
         rows = cur.fetchall()
-        print('Length', len(rows))
         row = rows[0]
         row = list(row)
-        # print('\nrow', row)
+        # 'bytes' not 'buffer' like in db_prep.py
         body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
         request_headers = json.loads(row[4])
-        # 'bytes' not 'buffer' like in db_prep.py
-        print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
+        # print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
 
-        # update event_id/timestamp so Sentry will accept the event again
+    # call it 'bytes_buffer_body'
+    # update event_id/timestamp so Sentry will accept the event again
     json_body = decompress_gzip(body_bytes_buffer)
     dict_body = json.loads(json_body)
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print(dict_body['event_id'])
     print(dict_body['timestamp'])
-    print('type(dict_body)', type(dict_body))
-    # for key in dict_body:
-    #     print(key)
-
     bytes_io_body = compress_gzip(dict_body)
         
     try:
-        # print('request_headers', request_headers)
-        print('type(request_headers)', type(request_headers))
+        # print('type(request_headers)', type(request_headers))
+        # print('type(bytes_io_body)', type(bytes_io_body))
+        # print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
 
-        print('type(bytes_io_body)', type(bytes_io_body))
-        print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
-        # print('getvalue()', bytes_io_body.getvalue())
+        # TODO function for checking data types
         # bytes_io_body.getvalue() is for reading the bytes
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=request_headers
