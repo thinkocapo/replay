@@ -22,11 +22,11 @@ MODIFIED_DSN_SAVE = 'http://09aa0d909232457a8a6dfff118bac658@' + FLASK + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = 'http://09aa0d909232457a8a6dfff118bac658@'+ FLASK + '/4'
 
 def app():
-    sentry_sdk.capture_exception(Exception("superduper123"))
+    sentry_sdk.capture_exception(Exception("stringobject"))
     # raise Exception('big problem')
 
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE_AND_FORWARD }
+    params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
