@@ -204,30 +204,30 @@ def load_and_forward(pk):
         # print('row', row)
 
         buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
+        request_headers = row[4]
+
+        # 'bytes' not 'buffer' like in db_prep.py
         print('type(buffer)', type(buffer))
 
+        # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
+        # update event_id/timestamp so Sentry will accept the event again
         json_body = decompress_gzip(buffer)
         dict_body = json.loads(json_body)
-        print('\ndict_body', dict_body)
+        # print('\ndict_body', dict_body)
+        dict_body['event_id'] = uuid.uuid4().hex
+        dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+        print(dict_body['event_id'])
+        print(dict_body['timestamp'])
 
-    # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
-    # update event_id/timestamp so Sentry will accept the event again
-    # json_body = decompress_gzip(row_proxy.data)
-    # dict_body = json.loads(json_body)
-    # dict_body['event_id'] = uuid.uuid4().hex
-    # dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-    # print(dict_body['event_id'])
-    # print(dict_body['timestamp'])
-
-    # bytes_io_body = compress_gzip(dict_body)
-    
-    # try:
-    #     # bytes_io_body.getvalue() is for reading the bytes
-    #     response = http.request(
-    #         "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=row_proxy.headers 
-    #     )
-    # except Exception as err:
-    #     print('LOCAL EXCEPTION', err)
+        bytes_io_body = compress_gzip(dict_body)
+        
+        try:
+            # bytes_io_body.getvalue() is for reading the bytes
+            response = http.request(
+                "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=request_headers
+            )
+        except Exception as err:
+            print('LOCAL EXCEPTION', err)
 
     return("FINISH")
     return 'loaded and forwarded to Sentry'
