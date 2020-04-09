@@ -53,7 +53,6 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 
 # DATABASE - SQLITE
 path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
-# conn = sqlite3.connect(path_to_database)
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -98,7 +97,7 @@ def forward():
 
     return 'event was impersonated to Sentry'
 
-# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
+# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     # type(request.data) is <class 'bytes'>
@@ -106,38 +105,24 @@ def save():
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
 
-    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
-    record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
-    try:
-        
-        # TODO save to sqlite3
-        print('111111111')
-
-        with sqlite3.connect(path_to_database) as conn:
-            # TODO save event
-            insert_sql = ''' INSERT INTO events(name,type,data,headers)
+    insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-            # dummy_event = ('python', 'python', json.dumps({'exception': 'value'}), json.dumps({'host':'chrome'}))
-            real_event = ('python1', 'python', request.data, json.dumps(request_headers))
-
+    record = ('python1', 'python', request.data, json.dumps(request_headers))
+   
+    try:
+        with sqlite3.connect(path_to_database) as conn:
             cur = conn.cursor()
-            cur.execute(insert_sql, real_event)
-            
-            print('222222222')
-            print('ID', cur.lastrowid)
-            # cur.close()
+            cur.execute(insert_query, record)
+            print('\n sqlite3 ID', cur.lastrowid)
+            cur.close()
             return str(cur.lastrowid)
-
-        # ORIGINAL
-        # with db.connect() as conn:
-        #     conn.execute(insert_query, record)
-        #     conn.close()
-        # print("created event in postgres")
     except Exception as err:
         print("LOCAL EXCEPTION", err)
 
     return 'response not read by client sdk'
 
+# TODO - update with SQLITE3, already saved copy of this in psotgres_server.py
+# TODO - test...
 # MODIFIED_DSN_SAVE_AND_FORWARD
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
@@ -151,13 +136,15 @@ def save_and_forward():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    # the try/except here has not been tested yet
     try:
-        with db.connect() as conn:
-            conn.execute(insert_query, record)
-            conn.close()
+        with sqlite3.connect(path_to_database) as conn:
+            cur = conn.cursor()
+            cur.execute(insert_query, record)
+            print('\n sqlite3 ID', cur.lastrowid)
+            cur.close()
+            return str(cur.lastrowid)
     except Exception as err:
-        print('LOCAL EXCEPTION', err)
+        print("LOCAL EXCEPTION", err)
 
     # Forward
     try:
@@ -192,47 +179,55 @@ def load_and_forward(pk):
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
 
-    ## THIS IS TEMP...
+    # was trying docker...
     # query='SELECT * FROM "events";'
-    # print('\n query ', query)
-    
-    with db.connect() as conn:
-        rows = conn.execute(query).fetchall()
-        conn.close()
-        # <class 'sqlalchemy.engine.result.RowProxy'
-        print('LENGTH', len(rows))
-        print('TYPE rows', type(rows))
-        print("\n ROWS", rows)
-        row_proxy = rows[0]
-    
-    # check if it's of class type MemoryView or it's Bytes
-    print('\nTYPE ', type(row_proxy.data)) # now buffer?
+    # with db.connect() as conn:
+    #     rows = conn.execute(query).fetchall()
+    #     conn.close()
+    #     # <class 'sqlalchemy.engine.result.RowProxy'
+    #     print('LENGTH', len(rows))
+    #     print('TYPE rows', type(rows))
+    #     print("\n ROWS", rows)
+    #     row_proxy = rows[0]    
+    #     # check if it's of class type MemoryView or it's Bytes
+    #     print('\nTYPE ', type(row_proxy.data)) # now buffer?
 
     # TODO load data from Sqlite and then continue as normal here:
+    with sqlite3.connect(path_to_database) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+        rows = cur.fetchall()
+        print('Length', len(rows))
+        row = rows[0]
 
+        # row = list(rows[0])
+        # print('row', row)
+
+        buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
+        print('type(buffer)', type(buffer))
+
+        json_body = decompress_gzip(buffer)
+        dict_body = json.loads(json_body)
+        print('\ndict_body', dict_body)
 
     # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
-    json_body = decompress_gzip(row_proxy.data)
-
     # update event_id/timestamp so Sentry will accept the event again
-    dict_body = json.loads(json_body)
-    dict_body['event_id'] = uuid.uuid4().hex
-    dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-    print(dict_body['event_id'])
-    print(dict_body['timestamp'])
+    # json_body = decompress_gzip(row_proxy.data)
+    # dict_body = json.loads(json_body)
+    # dict_body['event_id'] = uuid.uuid4().hex
+    # dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    # print(dict_body['event_id'])
+    # print(dict_body['timestamp'])
 
-    bytes_io_body = compress_gzip(dict_body)
+    # bytes_io_body = compress_gzip(dict_body)
     
-    # print(bytes_io_body.getvalue())
-    # print(row_proxy.headers)
-
-    try:
-        # bytes_io_body.getvalue() is for reading the bytes
-        response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=row_proxy.headers 
-        )
-    except Exception as err:
-        print('LOCAL EXCEPTION', err)
+    # try:
+    #     # bytes_io_body.getvalue() is for reading the bytes
+    #     response = http.request(
+    #         "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=row_proxy.headers 
+    #     )
+    # except Exception as err:
+    #     print('LOCAL EXCEPTION', err)
 
     return("FINISH")
     return 'loaded and forwarded to Sentry'
