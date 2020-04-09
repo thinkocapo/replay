@@ -188,9 +188,10 @@ def load_and_forward(pk):
         rows = cur.fetchall()
         print('Length', len(rows))
         row = rows[0]
-        print('\nrow', row)
+        row = list(row)
+        # print('\nrow', row)
         body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
-        request_headers = row[4]
+        request_headers = json.loads(row[4])
         # 'bytes' not 'buffer' like in db_prep.py
         print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
 
@@ -201,14 +202,16 @@ def load_and_forward(pk):
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print(dict_body['event_id'])
     print(dict_body['timestamp'])
-
+    print('type(dict_body)', type(dict_body))
     # for key in dict_body:
     #     print(key)
 
     bytes_io_body = compress_gzip(dict_body)
         
     try:
-        print('request_headers', request_headers)
+        # print('request_headers', request_headers)
+        print('type(request_headers)', type(request_headers))
+
         print('type(bytes_io_body)', type(bytes_io_body))
         print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
         # print('getvalue()', bytes_io_body.getvalue())
