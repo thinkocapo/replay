@@ -8,9 +8,7 @@ def decompress_gzip(bytes_encoded_data):
     try:
         fp = BytesIO(bytes_encoded_data)
         try:
-            print('111')
             f = GzipFile(fileobj=fp)
-            print('2222')
             return f.read().decode("utf-8")
         finally:
             f.close()
@@ -30,7 +28,6 @@ sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
                                     ); """
 
 try:
-
     with conn:
         cur = conn.cursor()
 
@@ -44,30 +41,25 @@ try:
         rows = cur.fetchall()
         print('LENGTH', len(rows))
 
-        for row in rows:
-        # for row in cur.fetchall():
-            # print('YEAAAH')
-            print(row)
+        # for row in rows:
+        #     print(row)
 
         # test = rows[len(rows) - 1]
         test = rows[-1]
         test = list(test)
-        print("\nLast Item's ID", test[0])
+        print('Last Item ID', test[0])
 
-        read_write_buffer = test[3]
-        # print('TYPE read_write_buffer', read_write_buffer)
+        buffer = test[3]
 
-        # print('------------', str(read_write_buffer))
-        # print('decode...', read_write_buffer.decode("utf-8"))
+        # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
+        # <type 'buffer'>
+        print('type(buffer)', type(buffer))
 
-        json_body = decompress_gzip(str(read_write_buffer))
+        json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
 
         print('dict_body', dict_body)
 
-        # data = str(read_write_buffer)
-        # print('TYPEOF data', type(data)) # <type 'str'> okay? is same as result as .getvalue()
-        # print('TYPEOF data', type(bytearray(data))) # <type 'bytearray'>
 
 except Exception as e:
     print(e)

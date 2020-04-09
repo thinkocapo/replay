@@ -22,7 +22,7 @@ MODIFIED_DSN_SAVE = 'http://759bf0ad07984bb3941e677b35a13d2c@' + FLASK + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = 'http://759bf0ad07984bb3941e677b35a13d2c@'+ FLASK + '/4'
 
 def app():
-    sentry_sdk.capture_exception(Exception("classy2"))
+    sentry_sdk.capture_exception(Exception("superduper"))
     # raise Exception('big problem')
 
 def initialize_sentry():
