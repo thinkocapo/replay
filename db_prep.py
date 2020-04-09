@@ -1,4 +1,22 @@
+from gzip import GzipFile
+import json
+from six import BytesIO
 import sqlite3
+
+# Functions from getsentry/sentry-python
+def decompress_gzip(bytes_encoded_data):
+    try:
+        fp = BytesIO(bytes_encoded_data)
+        try:
+            print('111')
+            f = GzipFile(fileobj=fp)
+            print('2222')
+            return f.read().decode("utf-8")
+        finally:
+            f.close()
+    except Exception as e:
+        raise e
+
 
 path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
 conn = sqlite3.connect(path_to_database)
@@ -37,13 +55,19 @@ try:
         print("\nLast Item's ID", test[0])
 
         read_write_buffer = test[3]
-        print('------------', str(read_write_buffer))
+        # print('TYPE read_write_buffer', read_write_buffer)
 
-        data = str(read_write_buffer)
-        print('TYPEOF data', type(data)) # <type 'str'> okay? is same as result as .getvalue()
-        print('TYPEOF data', type(bytearray(data))) # <type 'bytearray'>
+        # print('------------', str(read_write_buffer))
+        # print('decode...', read_write_buffer.decode("utf-8"))
 
+        json_body = decompress_gzip(str(read_write_buffer))
+        dict_body = json.loads(json_body)
 
+        print('dict_body', dict_body)
 
-except Error as e:
+        # data = str(read_write_buffer)
+        # print('TYPEOF data', type(data)) # <type 'str'> okay? is same as result as .getvalue()
+        # print('TYPEOF data', type(bytearray(data))) # <type 'bytearray'>
+
+except Exception as e:
     print(e)
