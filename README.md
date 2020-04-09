@@ -202,9 +202,4 @@ Troubleshoot - compare len(bytes) on the way in as when it came out...
      }
 }
 
-
-
-1. DSN_SAVE can write to sqlite3 a string
-2. load the string from separate python interpreter session
-3. write JSON as BLOB 
-3. write bytes as BLOG and load it, decode -> object code
+sudo snap start docker
