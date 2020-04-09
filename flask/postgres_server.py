@@ -81,7 +81,15 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-
+    # TODO 'If it's of class type memoryview then run this'
+    # sometimes needed
+    # def bytea2bytes(value, cur):
+    #     m = psycopg2.BINARY(value, cur)
+    #     if m is not None:
+    #         return m.tobytes()
+    # BYTEA2BYTES = psycopg2.extensions.new_type(
+    #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    # psycopg2.extensions.register_type(BYTEA2BYTES)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
