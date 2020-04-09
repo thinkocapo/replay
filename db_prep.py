@@ -58,7 +58,7 @@ try:
         json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
 
-        print('dict_body', dict_body)
+        # print('dict_body', dict_body)
 
 
 except Exception as e:

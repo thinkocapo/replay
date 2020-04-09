@@ -25,7 +25,7 @@ from db import create_connection, create_table, sql_table_events, create_project
 # from db import create_connection
 
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf0ad07984bb3941e677b35a13d2c&sentry_version=7"
+SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 app = Flask(__name__)
 CORS(app)
@@ -89,7 +89,7 @@ def forward():
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
         )
-
+        print('type(request.data)', type(request.data))
         print("%s RESPONSE and event_id %s" % (response.status, response.data))
         return 'success'
     except Exception as err:
@@ -121,8 +121,6 @@ def save():
 
     return 'response not read by client sdk'
 
-# TODO - update with SQLITE3, already saved copy of this in psotgres_server.py
-# TODO - test...
 # MODIFIED_DSN_SAVE_AND_FORWARD
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
@@ -133,7 +131,9 @@ def save_and_forward():
         request_headers[key] = request.headers.get(key)
     print('request_headers', request_headers)
 
-    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+    # insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+    insert_query = ''' INSERT INTO events(name,type,data,headers)
+              VALUES(?,?,?,?) '''
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
     try:
@@ -142,10 +142,10 @@ def save_and_forward():
             cur.execute(insert_query, record)
             print('\n sqlite3 ID', cur.lastrowid)
             cur.close()
-            return str(cur.lastrowid)
     except Exception as err:
-        print("LOCAL EXCEPTION", err)
+        print("LOCAL EXCEPTION SAVE", err)
 
+    print('request.data', request.data)
     # Forward
     try:
         response = http.request(
@@ -154,7 +154,7 @@ def save_and_forward():
         print("%s RESPONSE and event_id %s" % (response.status, response.data))
         return 'response not read by client sdk'
     except Exception as err:
-        print('LOCAL EXCEPTION', err)
+        print('LOCAL EXCEPTION FORWARD', err)
 
 ########################  STEP 2  #########################
 
@@ -163,16 +163,6 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-    # TODO 'If it's of class type memoryview then run this'
-    # sometimes needed
-    # def bytea2bytes(value, cur):
-    #     m = psycopg2.BINARY(value, cur)
-    #     if m is not None:
-    #         return m.tobytes()
-    # BYTEA2BYTES = psycopg2.extensions.new_type(
-    #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
-    # psycopg2.extensions.register_type(BYTEA2BYTES)
-
     print('\n pk ', pk)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
@@ -192,45 +182,44 @@ def load_and_forward(pk):
     #     # check if it's of class type MemoryView or it's Bytes
     #     print('\nTYPE ', type(row_proxy.data)) # now buffer?
 
-    # TODO load data from Sqlite and then continue as normal here:
     with sqlite3.connect(path_to_database) as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
         rows = cur.fetchall()
         print('Length', len(rows))
         row = rows[0]
-
-        # row = list(rows[0])
-        # print('row', row)
-
-        buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
+        print('\nrow', row)
+        body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
         request_headers = row[4]
-
         # 'bytes' not 'buffer' like in db_prep.py
-        print('type(buffer)', type(buffer))
+        print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
 
-        # row_proxy.data is <class bytes> so row_proxy.data is b'\x1f\x8b\
         # update event_id/timestamp so Sentry will accept the event again
-        json_body = decompress_gzip(buffer)
-        dict_body = json.loads(json_body)
-        # print('\ndict_body', dict_body)
-        dict_body['event_id'] = uuid.uuid4().hex
-        dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-        print(dict_body['event_id'])
-        print(dict_body['timestamp'])
+    json_body = decompress_gzip(body_bytes_buffer)
+    dict_body = json.loads(json_body)
+    dict_body['event_id'] = uuid.uuid4().hex
+    dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    print(dict_body['event_id'])
+    print(dict_body['timestamp'])
 
-        bytes_io_body = compress_gzip(dict_body)
+    # for key in dict_body:
+    #     print(key)
+
+    bytes_io_body = compress_gzip(dict_body)
         
-        try:
-            # bytes_io_body.getvalue() is for reading the bytes
-            response = http.request(
-                "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=request_headers
-            )
-        except Exception as err:
-            print('LOCAL EXCEPTION', err)
+    try:
+        print('request_headers', request_headers)
+        print('type(bytes_io_body)', type(bytes_io_body))
+        print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
+        # print('getvalue()', bytes_io_body.getvalue())
+        # bytes_io_body.getvalue() is for reading the bytes
+        response = http.request(
+            "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=request_headers
+        )
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
 
     return("FINISH")
-    return 'loaded and forwarded to Sentry'
 
 ##########################  TESTING  ###############################
 
