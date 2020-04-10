@@ -83,15 +83,15 @@ The `DSN` that you use in your `app.py` determine what the proxy will do. They a
 
 ## TODO
 PI  
-- sqlite3 so can deprecate postgres docker image
-- docker-compose.yaml for Flask + DB together, w/ DB initiation script and/or volume mount. HOLD
+- 1 Docker container w/ Flask+Sqlite3 volume mount
+- Docker DB initiation script
 
 PII  
-- golang script for grabbing x events of y type from DB and send to Sentry,io, instead of hidding GET/load-and-forward endpoint
+- golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 
 PIII  
-- send events sentry-javascript
+- send sentry-javascript events
 - db column for fingerprint so never end up with duplicates
 
 ## Gor Middleware
