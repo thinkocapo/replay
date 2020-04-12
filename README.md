@@ -158,7 +158,7 @@ you may have to `sudo service postgresql stop` to free up 5432 on your machine
 
 Troubleshoot - compare len(bytes) on the way in as when it came out...
 
-If you think you messed up your database, delete database.py and re-create the file, run db_prep again to set the schema on it.
+If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
 
 {\"exception\": 
     {
