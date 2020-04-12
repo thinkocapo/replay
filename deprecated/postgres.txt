@@ -65,3 +65,47 @@ psygopg2
 
 
 
+------------------------
+
+04/11/2020 deprecated these postgres instructions:
+
+1.
+sudo lsof -i -P -n  
+sudo service postgresql stop  
+```
+docker run -it --rm \
+    --name db-postgres \
+    -e POSTGRES_PASSWORD=admin \
+    -e POSTGRES_USER=admin \
+    -p 5432:5432 \
+    postgres
+```
+
+2.
+`docker exec -it db-postgres psql -U admin`  
+\c postgres  
+3.
+```
+CREATE TABLE events(
+   pk SERIAL PRIMARY KEY,
+   type varchar(40) NOT NULL,
+   name varchar(40) NOT NULL,
+   data bytea,
+   headers jsonb
+);
+```
+
+create user admin with login password 'admin';
+
+
+---------------------------------------------
+
+04/11/2020 previous instructions:
+
+Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
+1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
+2. `docker run...` the database
+3. `make` runs Flask server
+4. `python app.py`
+5. Postman for hitting the STEP2 endpoints in Flask, which send the events to Sentry.
+6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.

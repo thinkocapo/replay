@@ -12,7 +12,7 @@ Keep 1 app running (STEP2) instead of 1 app for every platform's sdk.
 ## What's Happening
 <img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-STEP1 - Sentry sdk's send events to the API defined in /flask/server.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
+STEP1 - Sentry sdk's send events to the API defined in /flask/server-sqlite.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
 
 STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry thinks they're coming from live apps.
 
@@ -25,85 +25,48 @@ go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
 
-## Install
+## Setup
 
-install -r requirements.txt
+put your DSN in app.py
 
-## Database
-1.
-sudo lsof -i -P -n  
-sudo service postgresql stop  
-```
-docker run -it --rm \
-    --name db-postgres \
-    -e POSTGRES_PASSWORD=admin \
-    -e POSTGRES_USER=admin \
-    -p 5432:5432 \
-    postgres
-```
+could do make command here...  
+` make flask_prep`
 
+`make db_prep`
 
-
-2.
-`docker exec -it db-postgres psql -U admin`  
-\c postgres  
-3.
-```
-CREATE TABLE events(
-   pk SERIAL PRIMARY KEY,
-   type varchar(40) NOT NULL,
-   name varchar(40) NOT NULL,
-   data bytea,
-   headers jsonb
-);
-```
-
-create user admin with login password 'admin';
+`git clone getsentry/onpremise` and `install.sh` in it
 
 ## Run
-
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
-1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
-2. `docker run...` the database
-3. `make` runs Flask server
-4. `python app.py`
-5. Postman for hitting the STEP2 endpoints in Flask, which send the events to Sentry.
-6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.
+1. `make proxy` runs Flask server
+2. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000.... TODO 3 path to your docker-compose.yaml...? via Makefile
+3. `python app.py` creates an event, hit's the /save endpoint
+4. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
+or
+6. `make events` to run go program for sending events / set the crontab job...
+7. Sentry OnPrem to see your event, it's at `localhost:9000`, if you did load-and-forward. 
 
 Workflow:  
-`python app.py` sdk sends event to the intercetpor.
-
-The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
-
-`localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
-
-'STEP1' endpoints require a sdk (app.py) to send events to
-
-'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
+- `python app.py` sdk sends event to the intercetpor
+- The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
+- `localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
+- 'STEP1' endpoints require a sdk (app.py) to send events to
+- 'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
 
 ## TODO
-- docker-compose.yaml for Flask + DB together, w/ DB initiation script and/or volume mount
-- send events sentry-javascript
-- script for pulling 100 events out of db and sending 10 of each. 1000 events. time it.
-- postgres column for fingerprint so never end up with duplicates
+PI  
+- DONE Makefile commands. maybe docker for flask/sqlit3. or virtualenv
+- DONE Docker DB initiation script. make all, or single command.
 
-## Gor Middleware
-There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
+PII  
+- golang script for grabbing x events of type y from DB and send to Sentry,io
+- gloang script on a crontab (macbook cronjob) every hour
 
-#### Install
-If using middleware.go then you need gor (goreplay)
+PIII  
+- send sentry-javascript events
+- db column for fingerprint so never end up with duplicates
+- raise Exception('big problem')
 
-1. download gor executable and put to cwd or add it to your $PATH  
-https://github.com/buger/goreplay/releases/tag/v1.0.0
-2.
-```
-go get github.com/buger/goreplay/proto  
-go get github.com/buger/jsonparser
-```
-
-and
-
-install -r requirements.txt
 
 #### Run
 Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
@@ -181,6 +144,8 @@ you may have to `sudo service postgresql stop` to free up 5432 on your machine
 
 Troubleshoot - compare len(bytes) on the way in as when it came out...
 
+If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
+
 {\"exception\": 
     {
         \"values\":
@@ -193,5 +158,9 @@ Troubleshoot - compare len(bytes) on the way in as when it came out...
      "timestamp\": \"2020-03-30T03:47:37.000588Z\", 
      \"extra\": {\"sys.argv\": [\"app.py\"]}, \"modules\": {\"pandocfilters\": \"1.4.2\", \"ipython-genutils\": \"0.2.0\", \"oauth\": \"1.0.1\", \"attrs\": \"19.3.0\", \"pyparsing\": \"2.4.0\", \"keyrings.alt\": \"3.0\", \"jupyterlab-launcher\": \"0.11.2\", \"lazr.uri\": \"1.0.3\", \"flask\": \"1.1.1\", \"send2trash\": \"1.5.0\", \"dotenv\": \"0.0.5\", \"itsdangerous\": \"1.1.0\", \"prometheus-client\": \"0.7.1\", \"pathlib2\": \"2.3.5\", \"backports.shutil-get-terminal-size\": \"1.0.0\", \"python\": \"2.7.17\", \"secretstorage\": \"2.3.1\", \"markupsafe\": \"1.1.1\", \"jinja2\": \"2.11.1\", \"httplib2\": \"0.9.2\", \"bleach\": \"3.1.1\", \"decorator\": \"4.4.2\", \"contextlib2\": \"0.6.0.post1\", \"jupyter-client\": \"5.3.4\", \"wadllib\": \"1.3.2\", \"psutil\": \"5.4.2\", \"cycler\": \"0.10.0\", \"jsonschema\": \"3.2.0\", \"ipywidgets\": \"7.5.1\", \"kiwisolver\": \"1.1.0\", \"sentry-sdk\": \"0.14.2\", \"ptyprocess\": \"0.6.0\", \"importlib-metadata\": \"1.5.0\", \"qtpy\": \"1.9.0\", \"werkzeug\": \"1.0.0\", \"qtconsole\": \"4.7.0\", \"olefile\": \"0.45.1\", \"entrypoints\": \"0.3\", \"blinker\": \"1.4\", \"gunicorn\": \"19.10.0\", \"matplotlib\": \"2.2.4\", \"ipython\": \"5.9.0\", \"zipp\": \"1.2.0\", \"pickleshare\": \"0.7.5\", \"mistune\": \"0.8.4\", \"nbformat\": \"4.4.0\", \"pyxdg\": \"0.25\", \"wcwidth\": \"0.1.8\", \"wsgiref\": \"0.1.2\", \"traitlets\": \"4.3.3\", \"terminado\": \"0.8.3\", \"requests\": \"2.18.4\", \"defusedxml\": \"0.6.0\", \"simplegeneric\": \"0.8.1\", \"pillow\": \"5.1.0\", \"asn1crypto\": \"0.24.0\", \"pygobject\": \"3.26.1\", \"pygments\": \"2.5.2\", \"jupyter-console\": \"5.2.0\", \"prompt-toolkit\": \"1.0.18\", \"pexpect\": \"4.8.0\", \"backports-abc\": \"0.5\", \"powerline-status\": \"2.6\", \"typing\": \"3.7.4.1\", \"python-dotenv\": \"0.12.0\", \"testpath\": \"0.4.4\", \"certifi\": \"2018.1.18\", \"numpy\": \"1.16.4\", \"pyzmq\": \"19.0.0\", \"sqlalchemy\": \"1.3.15\", \"simplejson\": \"3.13.2\", \"widgetsnbextension\": \"3.5.1\", \"subprocess32\": \"3.5.4\", \"powerline-shell\": \"0.7.0\", \"pytz\": \"2019.1\", \"jupyter-core\": \"4.6.3\", \"functools32\": \"3.2.3.post2\", \"python-dateutil\": \"2.8.1\", \"jupyterlab\": \"0.33.12\", \"pycrypto\": \"2.6.1\", \"pyrsistent\": \"0.15.7\", \"chardet\": \"3.0.4\", \"setuptools\": \"44.0.0\", \"flask-cors\": \"3.0.8\", \"configobj\": \"5.0.6\", \"ipykernel\": \"4.10.1\", \"zope.interface\": \"4.3.2\", \"backports.functools-lru-cache\": \"1.5\", \"singledispatch\": \"3.4.0.3\", \"pip\": \"20.0.2\", \"configparser\": \"4.0.2\", \"cryptography\": \"2.1.4\", \"six\": \"1.14.0\", \"click\": \"7.1.1\", \"nbconvert\": \"5.6.1\", \"lazr.restfulclient\": \"0.13.5\", \"webencodings\": \"0.5.1\", \"wheel\": \"0.30.0\", \"tornado\": \"5.1.1\", \"urllib3\": \"1.22\", \"notebook\": \"5.7.8\", \"ipaddress\": \"1.0.23\", \"launchpadlib\": \"1.10.6\", \"argparse\": \"1.2.1\", \"jupyter\": \"1.0.0\", \"bzr\": \"2.8.0.dev1\", \"psycopg2-binary\": \"2.8.4\", \"enum34\": \"1.1.9\", \"futures\": \"3.3.0\", \"keyring\": \"10.6.0\", \"pyopenssl\": \"17.5.0\", \"idna\": \"2.6\", \"nltk\": \"3.4.3\", \"scandir\": \"1.10.0\"}, \"contexts\": {\"runtime\": {\"version\": \"2.7.17\", \"name\": \"CPython\", \"build\": \"2.7.17 (default, Nov  7 2019, 10:07:09) \\n[GCC 7.4.0]\"}}, \"platform\": \"python\", \"breadcrumbs\": [], \"sdk\": {\"version\": \"0.14.2\", \"name\": \"sentry.python\", \"packages\": [{\"version\": \"0.14.2\", \"name\": \"pypi:sentry-sdk\"}], \"integrations\": [\"argv\", \"atexit\", \"dedupe\", \"excepthook\", \"logging\", \"modules\", \"stdlib\", \"threading\"]
      }
-
 }
+
+```
+MODIFIED_DSN_SAVE = ''.join([KEY,'@',SENTRY,'/3'])
+MODIFIED_DSN_SAVE = '{KEY}@{PROXY}/3'.format(KEY=KEY,PROXY=PROXY)
+```
