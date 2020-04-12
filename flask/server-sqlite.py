@@ -52,7 +52,7 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 # psycopg2.extensions.register_type(BYTEA2BYTES)
 
 # DATABASE - SQLITE
-# TODO from .env
+# TODO 2 from .env
 path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
 
 # Functions from getsentry/sentry-python

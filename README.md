@@ -36,10 +36,10 @@ could do make command here...
 
 ## Run
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
-1. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000
-3. `make proxy` runs Flask server
-4. `python app.py` creates an event, hit's the /save endpoint
-5. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
+1. `make proxy` runs Flask server
+2. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000.... TODO 3 path to your docker-compose.yaml...? via Makefile
+3. `python app.py` creates an event, hit's the /save endpoint
+4. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
 or
 6. `make events` to run go program for sending events / set the crontab job...
 7. Sentry OnPrem to see your event, it's at `localhost:9000`, if you did load-and-forward. 

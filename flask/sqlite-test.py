@@ -31,20 +31,11 @@ try:
     with conn:
         cur = conn.cursor()
 
-        # TODO test this without the sql creation...
-        # TODO test wiping out the db...
-        # CREATE TABLE
-        # cur.execute(sql_table_events)
-        print('DONE')
-
-        # READ
         cur.execute("SELECT * FROM events")
  
         rows = cur.fetchall()
         print('TOTAL ROWS: ', len(rows))
 
-        # for row in rows:
-        #     print(row)
 
         test = rows[-1]
         test = list(test)
@@ -53,7 +44,6 @@ try:
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
         buffer = test[3]
-
 
         #  Print a Sample
         # print('type(buffer)', type(buffer))
