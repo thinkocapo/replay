@@ -1,38 +1,17 @@
-import os
-import datetime
-from flask import Flask, request, json, abort
-from flask_cors import CORS
-import gzip
-import uuid
-import json
-import requests
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
-import sqlalchemy
-from sqlalchemy import create_engine
-import io
-from six import BytesIO
-from gzip import GzipFile
-import urllib3
-http = urllib3.PoolManager()
-
-import psycopg2
-import string
-import psycopg2.extras
-
-# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=759bf0ad07984bb3941e677b35a13d2c&sentry_version=7"
-
-app = Flask(__name__)
-CORS(app)
+# 04/08/2020 from master
 
 # Database
 HOST='localhost'
+# For docker-compose:
+HOST='db'
+
+DATABASE - POSTGRES
 DATABASE='postgres'
 USERNAME='admin'
 PASSWORD='admin'
 db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
 
+# sometimes needed in endpoint
 # Database - set typecasting so psycopg2 returns bytea type as 'bytes' and not 'MemoryView'
 # def bytea2bytes(value, cur):
 #     m = psycopg2.BINARY(value, cur)
@@ -41,27 +20,6 @@ db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':
 # BYTEA2BYTES = psycopg2.extensions.new_type(
 #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
 # psycopg2.extensions.register_type(BYTEA2BYTES)
-
-# Functions from getsentry/sentry-python
-def decompress_gzip(bytes_encoded_data):
-    try:
-        fp = BytesIO(bytes_encoded_data)
-        try:
-            f = GzipFile(fileobj=fp)
-            return f.read().decode("utf-8")
-        finally:
-            f.close()
-    except Exception as e:
-        raise e
-
-def compress_gzip(dict_body):
-    try:
-        body = io.BytesIO()
-        with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(dict_body, allow_nan=False).encode("utf-8"))
-    except Exception as e:
-        raise e
-    return body
 
 ########################  STEP 1  #########################
 
@@ -84,7 +42,7 @@ def forward():
         print('LOCAL EXCEPTION', err)
 
     return 'event was impersonated to Sentry'
-
+    
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
@@ -103,6 +61,7 @@ def save():
     print("created event in postgres")
     return 'response not read by client sdk'
 
+
 # MODIFIED_DSN_SAVE_AND_FORWARD
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
@@ -116,9 +75,13 @@ def save_and_forward():
     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
+    # the try/except here has not been tested yet
+    try:
+        with db.connect() as conn:
+            conn.execute(insert_query, record)
+            conn.close()
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
 
     # Forward
     try:
@@ -130,6 +93,8 @@ def save_and_forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
+
+
 ########################  STEP 2  #########################
 
 # Loads a saved event's payload+headers from database and forwards to Sentry instance 
@@ -137,7 +102,15 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-
+    # TODO 'If it's of class type memoryview then run this'
+    # sometimes needed
+    # def bytea2bytes(value, cur):
+    #     m = psycopg2.BINARY(value, cur)
+    #     if m is not None:
+    #         return m.tobytes()
+    # BYTEA2BYTES = psycopg2.extensions.new_type(
+    #     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+    # psycopg2.extensions.register_type(BYTEA2BYTES)
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:
@@ -168,40 +141,3 @@ def load_and_forward(pk):
         print('LOCAL EXCEPTION', err)
 
     return 'loaded and forwarded to Sentry'
-
-##########################  TESTING  ###############################
-
-# STEP1 - TESTING w/ database. send body {"foo": "bar"} from Postman
-@app.route('/save-event', methods=['POST'])
-def event_bytea_post():
-
-    request_headers = {}
-    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-        request_headers[key] = request.headers.get(key)
-    print('request_headers', request_headers)
-
-    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
-    record = ('python', 'example', request.data, json.dumps(request_headers))
-
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
-    return 'successfull bytea'
-
-# STEP 2 - TESTING w/ database. loads that event's bytes+headers from database
-@app.route('/load-event', defaults={'pk':0}, methods=['GET'])
-@app.route('/load-event/<pk>', methods=['GET'])
-def event_bytea_get():
-
-    if pk==0:
-        query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
-    else:      # bytes_io_body.getvalue() is for reading the bytes
-        query = "SELECT * FROM events WHERE pk={};".format(pk)
-
-    with db.connect() as conn:
-        results = conn.execute(query).fetchall()
-        conn.close()
-        row_proxy = results[0]
-
-        return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
-        # return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
