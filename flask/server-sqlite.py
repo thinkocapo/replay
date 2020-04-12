@@ -21,6 +21,16 @@ import psycopg2
 import string
 import psycopg2.extras
 
+print("\n~~~~~~~~~~~~~~ Welcome To The ~~~~~~~~~~~~~~ ")
+print("""
+  _   _   _   _   ____    _____   ____    _____      _      _  __  _____   ____  
+ | | | | | \ | | |  _ \  | ____| |  _ \  |_   _|    / \    | |/ / | ____| |  _ \ 
+ | | | | |  \| | | | | | |  _|   | |_) |   | |     / _ \   | ' /  |  _|   | |_) |
+ | |_| | | |\  | | |_| | | |___  |  _ <    | |    / ___ \  | . \  | |___  |  _ < 
+  \___/  |_| \_| |____/  |_____| |_| \_\   |_|   /_/   \_\ |_|\_\ |_____| |_| \_\
+                                                                                 
+""")
+
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
@@ -29,7 +39,10 @@ CORS(app)
 
 # if path is outside of directory, must use absolute path like /home/user/database.db
 # path_to_database = r"../sqlite.db"
-path_to_database = r"/home/wcap/thinkocapo/event-maker/sqlite.db"
+
+# thepath = "/home/wcap/thinkocapo/event-maker/sqlite.db"
+# path_to_database = "/home/wcap/thinkocapo/event-maker/sqlite.db"
+path_to_database = os.getcwd() + "/sqlite.db"
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -140,8 +153,10 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
+
     print('\n pk ', pk)
     # TODO use pk again
+    
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
     else:

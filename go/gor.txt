@@ -1,0 +1,14 @@
+
+## Gor Middleware
+There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
+
+#### Install
+If using middleware.go then you need gor (goreplay)
+
+1. download gor executable and put to cwd or add it to your $PATH  
+https://github.com/buger/goreplay/releases/tag/v1.0.0
+2.
+```
+go get github.com/buger/goreplay/proto  
+go get github.com/buger/jsonparser
+```

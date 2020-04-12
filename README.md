@@ -25,7 +25,9 @@ go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
 
-## Install / Setup
+## Setup
+
+put your DSN in app.py
 
 could do make command here...  
 ` make flask_prep`
@@ -64,23 +66,6 @@ PIII
 - send sentry-javascript events
 - db column for fingerprint so never end up with duplicates
 
-## Gor Middleware
-There is a `middleware.go` in this project that's for for sniffing events traffic on the port that Sentry is listening on. It is not a proxy. It is not fully working yet.
-
-#### Install
-If using middleware.go then you need gor (goreplay)
-
-1. download gor executable and put to cwd or add it to your $PATH  
-https://github.com/buger/goreplay/releases/tag/v1.0.0
-2.
-```
-go get github.com/buger/goreplay/proto  
-go get github.com/buger/jsonparser
-```
-
-and
-
-install -r requirements.txt
 
 #### Run
 Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
