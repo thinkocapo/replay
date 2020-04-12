@@ -17,8 +17,10 @@ def decompress_gzip(bytes_encoded_data):
 
 
 # Full Path???
-# TODO try with local ./database.db
-path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
+# TODO 1 try with local ./database.db
+# path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
+path_to_database = r"database.db"
+
 conn = sqlite3.connect(path_to_database)
 
 sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
