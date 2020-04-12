@@ -1,30 +1,32 @@
 import os
 import datetime
 from dotenv import load_dotenv
-load_dotenv()
 from flask import Flask, request, json, abort
 from flask_cors import CORS
 import gzip
-import uuid
+from gzip import GzipFile
+import io
 import json
 import requests
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from six import BytesIO
 import sqlalchemy
 from sqlalchemy import create_engine
 import sqlite3
-import io
-from six import BytesIO
-from gzip import GzipFile
+import string
 import urllib3
+import uuid
+
+load_dotenv()
+
+app = Flask(__name__)
+CORS(app)
+
 http = urllib3.PoolManager()
 
-import psycopg2
-import string
-import psycopg2.extras
-
-print("\n~~~~~~~~~~~~~~ Welcome To The ~~~~~~~~~~~~~~ ")
 print("""
+                               Welcome To The
   _   _   _   _   ____    _____   ____    _____      _      _  __  _____   ____  
  | | | | | \ | | |  _ \  | ____| |  _ \  |_   _|    / \    | |/ / | ____| |  _ \ 
  | | | | |  \| | | | | | |  _|   | |_) |   | |     / _ \   | ' /  |  _|   | |_) |
@@ -33,17 +35,24 @@ print("""
                                                                                  
 """)
 
-# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+# SENTRY - Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
-app = Flask(__name__)
-CORS(app)
-
-# Must be full absolute path to sqlite database file
+# DATABASE - Must be full absolute path to sqlite database file
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
-
-print("database", database)
+print(" > database", database)
+with sqlite3.connect(database) as conn:
+    cur = conn.cursor()
+    sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
+                                            id integer PRIMARY KEY,
+                                            name text,
+                                            type text,
+                                            data BLOB,
+                                            headers BLOB
+                                        ); """
+    cur.execute(sql_table_events)
+    cur.close()
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -80,8 +89,8 @@ def forward():
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
         )
-        print('type(request.data)', type(request.data))
-        print("%s RESPONSE and event_id %s" % (response.status, response.data))
+        print('> type(request.data)', type(request.data))
+        print("> RESPONSE and event_id %s" % (response.status, response.data))
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION', err)
@@ -89,7 +98,7 @@ def forward():
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
-    print('~~~~~~~~~~~~ SAVING ~~~~~~~~~~~~~~')
+    print('> SAVING')
     # type(request.data) is <class 'bytes'>
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -113,7 +122,6 @@ def save():
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
 
-    # Save
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
@@ -127,7 +135,7 @@ def save_and_forward():
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(insert_query, record)
-            print('\n sqlite3 ID', cur.lastrowid)
+            print('> sqlite3 ID', cur.lastrowid)
             cur.close()
     except Exception as err:
         print("LOCAL EXCEPTION SAVE", err)
@@ -136,7 +144,7 @@ def save_and_forward():
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
         )
-        print("%s RESPONSE and event_id %s" % (response.status, response.data))
+        print("> RESPONSE and event_id %s" % (response.status, response.data))
         return 'response not read by client sdk'
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
@@ -148,9 +156,6 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-
-    print('\n pk ', pk)
-    # TODO use pk again
     
     if pk==0:
         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
@@ -174,8 +179,8 @@ def load_and_forward(pk):
     dict_body = json.loads(json_body)
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-    print(dict_body['event_id'])
-    print(dict_body['timestamp'])
+    print('> event_id', dict_body['event_id'])
+    print('> timestamp', dict_body['timestamp'])
     bytes_io_body = compress_gzip(dict_body)
         
     try:
@@ -191,41 +196,5 @@ def load_and_forward(pk):
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-    return("FINISH")
-
-##########################  TESTING  ###############################
-
-# STEP1 - TESTING w/ database. send body {"foo": "bar"} from Postman
-# @app.route('/save-event', methods=['POST'])
-# def event_bytea_post():
-
-#     request_headers = {}
-#     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-#         request_headers[key] = request.headers.get(key)
-#     print('request_headers', request_headers)
-
-#     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
-#     record = ('python', 'example', request.data, json.dumps(request_headers))
-
-#     with db.connect() as conn:
-#         conn.execute(insert_query, record)
-#         conn.close()
-#     return 'successfull bytea'
-
-# STEP 2 - TESTING w/ database. loads that event's bytes+headers from database
-# @app.route('/load-event', defaults={'pk':0}, methods=['GET'])
-# @app.route('/load-event/<pk>', methods=['GET'])
-# def event_bytea_get():
-
-#     if pk==0:
-#         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
-#     else:      # bytes_io_body.getvalue() is for reading the bytes
-#         query = "SELECT * FROM events WHERE pk={};".format(pk)
-
-#     with db.connect() as conn:
-#         results = conn.execute(query).fetchall()
-#         conn.close()
-#         row_proxy = results[0]
-
-#         return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
+    return("> FINISH")
 

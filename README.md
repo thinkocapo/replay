@@ -1,12 +1,6 @@
-# event-maker
+# Undertaker
 ## Goal
-Test data automation.
-
-Sending diverse events from multiple sdk types to a Sentry Organization on a regular basis.
-
-Use a proxy API (Flask) and database to do this for you.
-
-Keep 1 app running (STEP2) instead of 1 app for every platform's sdk.
+Test data automation. Have 1 app send events for all sdk's rather than 1 app per sdk. Prepare these events ahead of time in a database, by intercepting or "undertake them" on their way to Sentry using the proxy API (Flask) in this repo and storing them to sqlite.
 
 
 ## What's Happening
@@ -27,12 +21,11 @@ sentry-sdk==0.14.2
 
 ## Setup
 
-put your DSN in app.py
+1. put your DSN in app.py
 
-could do make command here...  
-` make flask_prep`
+2. pip install -r ./flask/requirements.txt
 
-`make db_prep`
+3.  `make db_prep` (do i really need this?)
 
 `git clone getsentry/onpremise` and `install.sh` in it
 
@@ -55,10 +48,11 @@ Workflow:
 
 ## TODO
 PI  
-- test flask_prep virtualenv and make all
-- database path in .env
-- use pk optionally again or decommission the endpoint their, in favor of Go script
+- 
+- Makefile - make event_to_sentry
 - parameterize sql queries
+
+- use pk optionally again or decommission the endpoint their, in favor of Go script
 - update README
 - golang scripts, see README
 
@@ -70,6 +64,7 @@ PIII
 - send sentry-javascript events
 - db column for fingerprint so never end up with duplicates
 - raise Exception('big problem')
+- function for checking data types / classes
 
 
 #### Run
