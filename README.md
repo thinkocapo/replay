@@ -55,8 +55,8 @@ Workflow:
 
 ## TODO
 PI  
-- Makefile commands. maybe docker for flask/sqlit3. or virtualenv
-- Docker DB initiation script. make all, or single command.
+- DONE Makefile commands. maybe docker for flask/sqlit3. or virtualenv
+- DONE Docker DB initiation script. make all, or single command.
 
 PII  
 - golang script for grabbing x events of type y from DB and send to Sentry,io
@@ -65,6 +65,7 @@ PII
 PIII  
 - send sentry-javascript events
 - db column for fingerprint so never end up with duplicates
+- raise Exception('big problem')
 
 
 #### Run
@@ -159,4 +160,7 @@ If you think you messed up your database, delete database.db and re-create the f
      }
 }
 
-sudo snap start docker
+```
+MODIFIED_DSN_SAVE = ''.join([KEY,'@',SENTRY,'/3'])
+MODIFIED_DSN_SAVE = '{KEY}@{PROXY}/3'.format(KEY=KEY,PROXY=PROXY)
+```
