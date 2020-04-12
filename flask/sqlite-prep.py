@@ -16,6 +16,8 @@ def decompress_gzip(bytes_encoded_data):
         raise e
 
 
+# Full Path???
+# TODO try with local ./database.db
 path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
 conn = sqlite3.connect(path_to_database)
 
