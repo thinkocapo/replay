@@ -12,7 +12,7 @@ Keep 1 app running (STEP2) instead of 1 app for every platform's sdk.
 ## What's Happening
 <img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-STEP1 - Sentry sdk's send events to the API defined in /flask/server.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
+STEP1 - Sentry sdk's send events to the API defined in /flask/server-sqlite.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
 
 STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry thinks they're coming from live apps.
 
@@ -83,8 +83,8 @@ The `DSN` that you use in your `app.py` determine what the proxy will do. They a
 
 ## TODO
 PI  
-- 1 Docker container w/ Flask+Sqlite3 volume mount
-- Docker DB initiation script
+- Makefile commands. maybe docker for flask/sqlit3. or virtualenv
+- Docker DB initiation script. make all, or single command.
 
 PII  
 - golang script for grabbing x events of type y from DB and send to Sentry,io
