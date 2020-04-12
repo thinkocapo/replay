@@ -1,5 +1,5 @@
 all:
-	FLASK_APP=./flask/server.py FLASK_ENV=development flask run -p 3001
+	FLASK_APP=./flask/server-sqlite.py FLASK_ENV=development flask run -p 3001
 
 gore:
 	go build middleware.go
