@@ -1,5 +1,7 @@
 import os
 import datetime
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, request, json, abort
 from flask_cors import CORS
 import gzip
@@ -37,12 +39,11 @@ SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0
 app = Flask(__name__)
 CORS(app)
 
-# if path is outside of directory, must use absolute path like /home/user/database.db
-# path_to_database = r"../sqlite.db"
+# Must be full absolute path to sqlite database file
+SQLITE = os.getenv('SQLITE')
+database = SQLITE or os.getcwd() + "/sqlite.db"
 
-# thepath = "/home/wcap/thinkocapo/event-maker/sqlite.db"
-# path_to_database = "/home/wcap/thinkocapo/event-maker/sqlite.db"
-path_to_database = os.getcwd() + "/sqlite.db"
+print("database", database)
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -99,10 +100,10 @@ def save():
     record = ('python1', 'python', request.data, json.dumps(request_headers))
    
     try:
-        with sqlite3.connect(path_to_database) as conn:
+        with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(insert_query, record)
-            print('\n sqlite3 ID', cur.lastrowid)
+            print('sqlite3 row ID', cur.lastrowid)
             cur.close()
             return str(cur.lastrowid)
     except Exception as err:
@@ -123,7 +124,7 @@ def save_and_forward():
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
     try:
-        with sqlite3.connect(path_to_database) as conn:
+        with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(insert_query, record)
             print('\n sqlite3 ID', cur.lastrowid)
@@ -156,7 +157,7 @@ def load_and_forward(pk):
     else:
         query = "SELECT * FROM events WHERE pk={};".format(pk)
 
-    with sqlite3.connect(path_to_database) as conn:
+    with sqlite3.connect(database) as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
         rows = cur.fetchall()

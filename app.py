@@ -1,9 +1,8 @@
 import argparse
-import os
-import sentry_sdk
-
 from dotenv import load_dotenv
 load_dotenv()
+import os
+import sentry_sdk
 
 # DSN is like "https://<key>@<organization>.ingest.sentry.io/<project>"
 DSN = os.getenv('DSN')
