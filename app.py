@@ -1,9 +1,13 @@
 import argparse
 import os
 import sentry_sdk
-import requests
-# from dotenv import load_dotenv
-# load_dotenv()
+
+from dotenv import load_dotenv
+load_dotenv()
+
+DSN = os.getenv('DSN')
+print('MY DSN....', DSN)
+
 
 SENTRY = 'localhost:9000'
 # FLASK = 'localhost:3001'
@@ -22,7 +26,7 @@ MODIFIED_DSN_SAVE = 'http://09aa0d909232457a8a6dfff118bac658@' + FLASK + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = 'http://09aa0d909232457a8a6dfff118bac658@'+ FLASK + '/4'
 
 def app():
-    sentry_sdk.capture_exception(Exception("stringobject"))
+    sentry_sdk.capture_exception(Exception("april12time..."))
     # raise Exception('big problem')
 
 def initialize_sentry():
@@ -31,4 +35,4 @@ def initialize_sentry():
     
 if __name__ == '__main__':
     initialize_sentry()
-    app()
+    # app()
