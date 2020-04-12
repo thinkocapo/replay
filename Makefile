@@ -1,7 +1,7 @@
 all:
 	flask_prep db_prep proxy
 
-TODO
+# TODO
 flask_prep:
 	cd flask && virtualenv .virtualenv && source ./flask/.virtualenv/bin/activate && pip install -r requirements.txt
 
@@ -14,8 +14,8 @@ proxy:
 event_to_db:
 	python app.py
 
-event_to_sentry:
-	TODO
+# event_to_sentry: or db_to_sentry
+# 	TODO
 
 goreplay:
 	go build middleware.go

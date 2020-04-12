@@ -85,11 +85,10 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-    return 'event was impersonated to Sentry'
-
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
+    print('~~~~~~~~~~~~ SAVING ~~~~~~~~~~~~~~')
     # type(request.data) is <class 'bytes'>
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
@@ -109,8 +108,6 @@ def save():
     except Exception as err:
         print("LOCAL EXCEPTION", err)
 
-    return 'response not read by client sdk'
-
 # MODIFIED_DSN_SAVE_AND_FORWARD
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
@@ -119,7 +116,6 @@ def save_and_forward():
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
-    print('request_headers', request_headers)
 
     # insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     insert_query = ''' INSERT INTO events(name,type,data,headers)
@@ -135,8 +131,6 @@ def save_and_forward():
     except Exception as err:
         print("LOCAL EXCEPTION SAVE", err)
 
-    print('request.data', request.data)
-    # Forward
     try:
         response = http.request(
             "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
