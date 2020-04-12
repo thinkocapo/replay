@@ -55,8 +55,12 @@ Workflow:
 
 ## TODO
 PI  
-- DONE Makefile commands. maybe docker for flask/sqlit3. or virtualenv
-- DONE Docker DB initiation script. make all, or single command.
+- test flask_prep virtualenv and make all
+- database path in .env
+- use pk optionally again or decommission the endpoint their, in favor of Go script
+- parameterize sql queries
+- update README
+- golang scripts, see README
 
 PII  
 - golang script for grabbing x events of type y from DB and send to Sentry,io
