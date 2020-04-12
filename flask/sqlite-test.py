@@ -31,33 +31,34 @@ try:
     with conn:
         cur = conn.cursor()
 
+        # TODO test this without the sql creation...
+        # TODO test wiping out the db...
         # CREATE TABLE
-        cur.execute(sql_table_events)
+        # cur.execute(sql_table_events)
         print('DONE')
 
         # READ
         cur.execute("SELECT * FROM events")
  
         rows = cur.fetchall()
-        print('LENGTH', len(rows))
+        print('TOTAL ROWS: ', len(rows))
 
         # for row in rows:
         #     print(row)
 
-        # test = rows[len(rows) - 1]
         test = rows[-1]
         test = list(test)
-        print('Last Item ID', test[0])
-
-        buffer = test[3]
+        print('ID OF LATEST ROW', test[0])
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
-        print('type(buffer)', type(buffer))
+        buffer = test[3]
 
-        json_body = decompress_gzip(str(buffer))
-        dict_body = json.loads(json_body)
 
+        #  Print a Sample
+        # print('type(buffer)', type(buffer))
+        # json_body = decompress_gzip(str(buffer))
+        # dict_body = json.loads(json_body)
         # print('dict_body', dict_body)
 
 

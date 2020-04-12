@@ -25,61 +25,31 @@ go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
 
-## Install
+## Install / Setup
 
-install -r requirements.txt
+could do make command here...  
+` make flask_prep`
 
-## Database
-1.
-sudo lsof -i -P -n  
-sudo service postgresql stop  
-```
-docker run -it --rm \
-    --name db-postgres \
-    -e POSTGRES_PASSWORD=admin \
-    -e POSTGRES_USER=admin \
-    -p 5432:5432 \
-    postgres
-```
+`make db_prep`
 
-
-
-2.
-`docker exec -it db-postgres psql -U admin`  
-\c postgres  
-3.
-```
-CREATE TABLE events(
-   pk SERIAL PRIMARY KEY,
-   type varchar(40) NOT NULL,
-   name varchar(40) NOT NULL,
-   data bytea,
-   headers jsonb
-);
-```
-
-create user admin with login password 'admin';
+`git clone getsentry/onpremise` and `install.sh` in it
 
 ## Run
-
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
-1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
-2. `docker run...` the database
-3. `make` runs Flask server
-4. `python app.py`
-5. Postman for hitting the STEP2 endpoints in Flask, which send the events to Sentry.
-6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.
+1. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000
+3. `make proxy` runs Flask server
+4. `python app.py` creates an event, hit's the /save endpoint
+5. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
+or
+6. `make events` to run go program for sending events / set the crontab job...
+7. Sentry OnPrem to see your event, it's at `localhost:9000`, if you did load-and-forward. 
 
 Workflow:  
-`python app.py` sdk sends event to the intercetpor.
-
-The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
-
-`localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
-
-'STEP1' endpoints require a sdk (app.py) to send events to
-
-'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
+- `python app.py` sdk sends event to the intercetpor
+- The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
+- `localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
+- 'STEP1' endpoints require a sdk (app.py) to send events to
+- 'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
 
 ## TODO
 PI  
@@ -187,6 +157,8 @@ https://stackoverflow.com/questions/2047814/is-it-possible-to-store-python-class
 you may have to `sudo service postgresql stop` to free up 5432 on your machine
 
 Troubleshoot - compare len(bytes) on the way in as when it came out...
+
+If you think you messed up your database, delete database.py and re-create the file, run db_prep again to set the schema on it.
 
 {\"exception\": 
     {
