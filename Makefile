@@ -1,20 +1,13 @@
 all:
 	flask_prep db_prep proxy
 
-# TODO
-flask_prep:
-	cd flask && virtualenv .virtualenv && source ./flask/.virtualenv/bin/activate && pip install -r requirements.txt
-
-db_prep:
-	python sqlite-prep.py
-
 proxy:
 	FLASK_APP=./flask/server-sqlite.py FLASK_ENV=development flask run -p 3001
 
 event_to_db:
 	python app.py
 
-# event_to_sentry: or db_to_sentry
+event_to_sentry:
 # 	TODO
 
 goreplay:
