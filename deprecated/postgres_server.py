@@ -1,5 +1,26 @@
 # 04/08/2020 from master
 
+# Database
+HOST='localhost'
+# For docker-compose:
+HOST='db'
+
+DATABASE - POSTGRES
+DATABASE='postgres'
+USERNAME='admin'
+PASSWORD='admin'
+db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
+
+# sometimes needed in endpoint
+# Database - set typecasting so psycopg2 returns bytea type as 'bytes' and not 'MemoryView'
+# def bytea2bytes(value, cur):
+#     m = psycopg2.BINARY(value, cur)
+#     if m is not None:
+#         return m.tobytes()
+# BYTEA2BYTES = psycopg2.extensions.new_type(
+#     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
+# psycopg2.extensions.register_type(BYTEA2BYTES)
+
 ########################  STEP 1  #########################
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance

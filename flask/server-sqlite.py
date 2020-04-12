@@ -21,39 +21,15 @@ import psycopg2
 import string
 import psycopg2.extras
 
-from db import create_connection, create_table, sql_table_events, create_project, create_task
-# from db import create_connection
-
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 app = Flask(__name__)
 CORS(app)
 
-# Database
-HOST='localhost'
-# for docker-compose:
-# HOST='db'
-
-# DATABASE - POSTGRES
-DATABASE='postgres'
-USERNAME='admin'
-PASSWORD='admin'
-db = create_engine('postgresql://' + USERNAME + ':' + PASSWORD + '@' + HOST + ':5432/' + DATABASE)
-
-# sometimes needed in endpoint
-# Database - set typecasting so psycopg2 returns bytea type as 'bytes' and not 'MemoryView'
-# def bytea2bytes(value, cur):
-#     m = psycopg2.BINARY(value, cur)
-#     if m is not None:
-#         return m.tobytes()
-# BYTEA2BYTES = psycopg2.extensions.new_type(
-#     psycopg2.BINARY.values, 'BYTEA2BYTES', bytea2bytes)
-# psycopg2.extensions.register_type(BYTEA2BYTES)
-
-# DATABASE - SQLITE
-# TODO 2 from .env
-path_to_database = r"/home/wcap/tmp/mypythonsqlite.db"
+# if path is outside of directory, must use absolute path like /home/user/database.db
+# path_to_database = r"../sqlite.db"
+path_to_database = r"/home/wcap/thinkocapo/event-maker/sqlite.db"
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -210,36 +186,36 @@ def load_and_forward(pk):
 ##########################  TESTING  ###############################
 
 # STEP1 - TESTING w/ database. send body {"foo": "bar"} from Postman
-@app.route('/save-event', methods=['POST'])
-def event_bytea_post():
+# @app.route('/save-event', methods=['POST'])
+# def event_bytea_post():
 
-    request_headers = {}
-    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-        request_headers[key] = request.headers.get(key)
-    print('request_headers', request_headers)
+#     request_headers = {}
+#     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+#         request_headers[key] = request.headers.get(key)
+#     print('request_headers', request_headers)
 
-    insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
-    record = ('python', 'example', request.data, json.dumps(request_headers))
+#     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+#     record = ('python', 'example', request.data, json.dumps(request_headers))
 
-    with db.connect() as conn:
-        conn.execute(insert_query, record)
-        conn.close()
-    return 'successfull bytea'
+#     with db.connect() as conn:
+#         conn.execute(insert_query, record)
+#         conn.close()
+#     return 'successfull bytea'
 
 # STEP 2 - TESTING w/ database. loads that event's bytes+headers from database
-@app.route('/load-event', defaults={'pk':0}, methods=['GET'])
-@app.route('/load-event/<pk>', methods=['GET'])
-def event_bytea_get():
+# @app.route('/load-event', defaults={'pk':0}, methods=['GET'])
+# @app.route('/load-event/<pk>', methods=['GET'])
+# def event_bytea_get():
 
-    if pk==0:
-        query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
-    else:      # bytes_io_body.getvalue() is for reading the bytes
-        query = "SELECT * FROM events WHERE pk={};".format(pk)
+#     if pk==0:
+#         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
+#     else:      # bytes_io_body.getvalue() is for reading the bytes
+#         query = "SELECT * FROM events WHERE pk={};".format(pk)
 
-    with db.connect() as conn:
-        results = conn.execute(query).fetchall()
-        conn.close()
-        row_proxy = results[0]
+#     with db.connect() as conn:
+#         results = conn.execute(query).fetchall()
+#         conn.close()
+#         row_proxy = results[0]
 
-        return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
-        # return { "data": row_proxy.data.decode("utf-8"), "headers": row_proxy.headers }
+#         return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
+

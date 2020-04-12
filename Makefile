@@ -2,10 +2,10 @@ all:
 	flask_prep db_prep proxy
 
 flask_prep:
-	cd flask && pip install -r requirements.txt
+	cd flask && virtualenv .virtualenv && source ./flask/.virtualenv/bin/activate && pip install -r requirements.txt
 
 db_prep:
-	python flask/sqlite-prep.py
+	python sqlite-prep.py
 
 proxy:
 	FLASK_APP=./flask/server-sqlite.py FLASK_ENV=development flask run -p 3001
