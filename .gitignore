@@ -4,6 +4,7 @@
 *.pyc
 **.pyc
 
+app
 gor
 dump-request
 decode-request
@@ -13,6 +14,8 @@ sqlite.db
 
 /flask/__pycache__
 /flask/.virtualenv
+
+go/app
 go/middleware
 go/result.csv
 go/dump-request
