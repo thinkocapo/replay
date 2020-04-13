@@ -19,15 +19,24 @@ go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
 
+```
+$ flask --version
+Python 3.6.9
+```
+
+use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string instead of bytes
+
 ## Setup
 
 1. put your DSN in app.py
 
-2. pip install -r ./flask/requirements.txt
+2. `pip install -r ./flask/requirements.txt`
 
 3.  `make db_prep` (do i really need this?)
 
 `git clone getsentry/onpremise` and `install.sh` in it
+
+
 
 ## Run
 Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
@@ -48,7 +57,6 @@ Workflow:
 
 ## TODO
 PI  
-- event_to_sentry
 - parameterize sql queries
 - golang scripts, see README
 - gzip compression/decompression to its own module

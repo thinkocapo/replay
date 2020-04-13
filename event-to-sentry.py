@@ -9,7 +9,6 @@ import json
 # from sentry_sdk.integrations.flask import FlaskIntegration
 from six import BytesIO
 import sqlite3
-import string # ?
 import urllib3
 import uuid
 load_dotenv()
@@ -64,17 +63,13 @@ with sqlite3.connect(database) as conn:
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print('> event_id', dict_body['event_id'])
     print('> timestamp', dict_body['timestamp'])
-    print('DICT', type(dict_body))
     bytes_io_body = compress_gzip(dict_body)
         
 try:
     print('type(bytes_io_body)', type(bytes_io_body))
     print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
     
-    # print('VALUE', bytes_io_body.getvalue())
-    
     # bytes_io_body.getvalue() is for reading the bytes
-    # WORKS on python3
     response = http.request(
         # "POST", str(SENTRY), body=bytearray(bytes_io_body.getvalue()), headers=request_headers
         "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
