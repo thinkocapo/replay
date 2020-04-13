@@ -59,24 +59,28 @@ Note - `python sqlite-test.py` a fast way to check that your event saved in the 
 
 ## TODO
 PI  
-- event-to-sentry.py takes an arg 'id', then decommission load-and-forward
 - test go w/ sqlite
-- Tour of Go
-- golang scripts. x events y type. release as Day.
 - 'python app.py' should check if proxy is running...
 
+
 PII  
-- improve many variable names. e.g. `request.data` as `request_data_bytes`
+- Tour of Go
+- golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 
 PIII  
-- consider package https://docs.python.org/3/tutorial/modules.html#packages
-- send sentry-javascript events
+- improve many variable names. e.g. `request.data` as `request_data_bytes`
+- Flask response object handling, show status of response and ...'created in Sentry'
+- Javascript events
 - raise Exception('big problem')
+- python3 function/class for checking data types  
+https://docs.python.org/3/library/typing.html  
+https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
+- before/after hook on Flask endpoint for logging name of endpoint
+- better package https://docs.python.org/3/tutorial/modules.html#packages
 - new visual
 - db column for fingerprint so never end up with duplicates
-- function for checking data types / classes
 
 ## Notes
 https://flask.palletsprojects.com/en/1.1.x/api/  

@@ -26,7 +26,7 @@ SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff11
 with sqlite3.connect(database) as db:
 
     cursor = db.cursor()
-
+    # _id = None, # is, is not
     _id = sys.argv[1] if len(sys.argv) > 1 else None
     if _id==None:
         cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
@@ -35,11 +35,9 @@ with sqlite3.connect(database) as db:
     rows = cursor.fetchall()
     row = rows[0]
     row = list(row) # ?
-    body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
+    body_bytes_buffer = row[3]  
     request_headers = json.loads(row[4])
-    # print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
 
-    # call it 'bytes_buffer_body'
     # update event_id/timestamp so Sentry will accept the event again
     json_body = decompress_gzip(body_bytes_buffer)
     dict_body = json.loads(json_body)
@@ -51,12 +49,8 @@ with sqlite3.connect(database) as db:
     bytes_io_body = compress_gzip(dict_body)
         
 try:
-    print('type(bytes_io_body)', type(bytes_io_body))
-    print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
-    
     # bytes_io_body.getvalue() is for reading the bytes
     response = http.request(
-        # "POST", str(SENTRY), body=bytearray(bytes_io_body.getvalue()), headers=request_headers
         "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
     )
     response.close()

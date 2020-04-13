@@ -31,10 +31,10 @@ print("""
 SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 # DATABASE - Must be full absolute path to sqlite database file
-SQLITE = os.getenv('SQLITE')
 # sqlite.db will get created if doesn't exist
+SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
-print(" > database", database)
+print("> database", database)
 with sqlite3.connect(database) as db:
     cursor = db.cursor()
     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
@@ -51,7 +51,7 @@ with sqlite3.connect(database) as db:
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
-
+    print('> FORWARD')
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
@@ -63,7 +63,8 @@ def forward():
         response = http.request(
             "POST", str(SENTRY), body=request.data, headers=request_headers 
         )
-        # print("> RESPONSE and event_id %s" % (response.status, response.data))
+
+        print('> nothing saved to sqlite database')
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION', err)
@@ -72,7 +73,7 @@ def forward():
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     print('> SAVING')
-    # type(request.data) is <class 'bytes'>
+
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
@@ -85,7 +86,7 @@ def save():
         with sqlite3.connect(database) as db:
             cursor = db.cursor()
             cursor.execute(insert_query, record)
-            print('sqlite3 row ID', cursor.lastrowid)
+            print('> Id in Sqlite', cursor.lastrowid)
             cursor.close()
             return str(cursor.lastrowid)
     except Exception as err:
@@ -99,7 +100,6 @@ def save_and_forward():
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
 
-    # insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
@@ -117,54 +117,52 @@ def save_and_forward():
         response = http.request(
             "POST", str(SENTRY), body=request.data, headers=request_headers 
         )
-        print("> RESPONSE and event_id %s" % (response.status, response.data))
-        return 'response not read by client sdk'
+        return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
 
-# see event-to-sentry.py
 ########################  STEP 2  #########################
-
+# see event-to-sentry.py for same functionality
 # Loads a saved event's payload+headers from database and forwards to Sentry instance 
 # if no id ID is provided then query selects most recent event
-@app.route('/load-and-forward', defaults={'_id':0}, methods=['GET'])
-@app.route('/load-and-forward/<_id>', methods=['GET'])
-def load_and_forward(_id):
+# bytes_io_body.getvalue()
+# @app.route('/load-and-forward', defaults={'_id':0}, methods=['GET'])
+# @app.route('/load-and-forward/<_id>', methods=['GET'])
+# def load_and_forward(_id):
     
-    with sqlite3.connect(database) as db:
-        cursor = db.cursor()
-        if _id==0:
-            cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
-        else:
-            cursor.execute("SELECT * FROM events WHERE id=?", [_id])
-        rows = cursor.fetchall()
-        row = rows[0]
-        row = list(row)
-        # 'bytes' not 'buffer' like in db_prep.py
-        body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)
-        request_headers = json.loads(row[4])
-        # print('\n type(body_bytes_buffer)', type(body_bytes_buffer))
+#     with sqlite3.connect(database) as db:
+#         cursor = db.cursor()
+#         if _id==0:
+#             cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+#         else:
+#             cursor.execute("SELECT * FROM events WHERE id=?", [_id])
+#         rows = cursor.fetchall()
+#         row = rows[0]
+#         row = list(row)
+#         # 'bytes' not 'buffer' like in db_prep.py
+#         body_bytes_buffer = row[3]
+#         request_headers = json.loads(row[4])
 
-    # call it 'bytes_buffer_body'
-    # update event_id/timestamp so Sentry will accept the event again
-    json_body = decompress_gzip(body_bytes_buffer)
-    dict_body = json.loads(json_body)
-    dict_body['event_id'] = uuid.uuid4().hex
-    dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-    print('> event_id', dict_body['event_id'])
-    print('> timestamp', dict_body['timestamp'])
-    bytes_io_body = compress_gzip(dict_body)
+#     # call it 'bytes_buffer_body'
+#     # update event_id/timestamp so Sentry will accept the event again
+#     json_body = decompress_gzip(body_bytes_buffer)
+#     dict_body = json.loads(json_body)
+#     dict_body['event_id'] = uuid.uuid4().hex
+#     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
+#     print('> event_id', dict_body['event_id'])
+#     print('> timestamp', dict_body['timestamp'])
+#     bytes_io_body = compress_gzip(dict_body)
         
-    try:
-        print('type(request_headers)', type(request_headers))
-        print('type(bytes_io_body)', type(bytes_io_body))
-        print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
+#     try:
+#         print('type(request_headers)', type(request_headers))
+#         print('type(bytes_io_body)', type(bytes_io_body))
+#         print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
 
-        response = http.request(
-            "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
-        )
-    except Exception as err:
-        print('LOCAL EXCEPTION', err)
+#         response = http.request(
+#             "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
+#         )
+#     except Exception as err:
+#         print('LOCAL EXCEPTION', err)
 
-    return("> FINISH")
+#     return("> FINISH")
 
