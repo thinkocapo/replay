@@ -28,32 +28,34 @@ use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string
 
 ## Setup
 
-1. put your DSN in app.py
+1. put your DSN in `.env`
 
 2. `pip install -r ./flask/requirements.txt`
 
-3.  `make db_prep` (do i really need this?)
-
-`git clone getsentry/onpremise` and `install.sh` in it
+3. `git clone getsentry/onpremise` and `install.sh`
 
 
 
 ## Run
-Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
-1. `make proxy` runs Flask server
-2. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000.... TODO 3 path to your docker-compose.yaml...? via Makefile
-3. `python app.py` creates an event, hit's the /save endpoint
-4. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
-or
-6. `make events` to run go program for sending events / set the crontab job...
-7. Sentry OnPrem to see your event, it's at `localhost:9000`, if you did load-and-forward. 
+Get proxy and Sentry running/listening:
+```
+# Flask
+make proxy
 
-Workflow:  
-- `python app.py` sdk sends event to the intercetpor
-- The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
-- `localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
-- 'STEP1' endpoints require a sdk (app.py) to send events to
-- 'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
+# getsentry/onpremise
+docker-compose up
+```
+Start sending events to the proxy and then to Sentry
+```
+# creates an event, hits an endpoint in Flask, saves event to database
+python app.py
+
+# script gets event from database and sends to Sentry
+python event-to-sentry.py
+```
+See your event in Sentry at `localhost:9000`
+
+Note - The `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
 
 ## TODO
 PI  
