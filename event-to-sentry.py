@@ -7,42 +7,20 @@ import io
 import json
 # import sentry_sdk
 # from sentry_sdk.integrations.flask import FlaskIntegration
+from services import compress_gzip, decompress_gzip
 from six import BytesIO
 import sqlite3
 import urllib3
 import uuid
 load_dotenv()
-
 http = urllib3.PoolManager()
-
-SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 # DATABASE
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print('> database', database)
 
-
-# Functions from getsentry/sentry-python
-def decompress_gzip(bytes_encoded_data):
-    try:
-        fp = BytesIO(bytes_encoded_data)
-        try:
-            f = GzipFile(fileobj=fp)
-            return f.read().decode("utf-8")
-        finally:
-            f.close()
-    except Exception as e:
-        raise e
-
-def compress_gzip(dict_body):
-    try:
-        body = io.BytesIO()
-        with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(dict_body, allow_nan=False).encode("utf-8"))
-    except Exception as e:
-        raise e
-    return body
+SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 with sqlite3.connect(database) as db:
 
