@@ -63,6 +63,7 @@ PI
 - test go w/ sqlite
 - Tour of Go
 - golang scripts. x events y type. release as Day.
+- 'python app.py' should check if proxy is running...
 
 PII  
 - improve many variable names. e.g. `request.data` as `request_data_bytes`
