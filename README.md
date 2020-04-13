@@ -59,10 +59,10 @@ Note - `python sqlite-test.py` a fast way to check that your event saved in the 
 
 ## TODO
 PI  
-- go, send a simple error
-- test go w/ sqlite
-- golang scripts
 - event-to-sentry.py takes an arg 'id', then decommission load-and-forward
+- test go w/ sqlite
+- Tour of Go
+- golang scripts. x events y type. release as Day.
 
 PII  
 - improve many variable names. e.g. `request.data` as `request_data_bytes`
