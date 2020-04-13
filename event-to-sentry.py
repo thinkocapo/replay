@@ -10,6 +10,7 @@ import json
 from services import compress_gzip, decompress_gzip
 from six import BytesIO
 import sqlite3
+import sys
 import urllib3
 import uuid
 load_dotenv()
@@ -25,7 +26,12 @@ SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff11
 with sqlite3.connect(database) as db:
 
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+
+    _id = sys.argv[1] if len(sys.argv) > 1 else None
+    if _id==None:
+        cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+    else:
+        cursor.execute("SELECT * FROM events WHERE id=?", [_id])
     rows = cursor.fetchall()
     row = rows[0]
     row = list(row) # ?
@@ -37,6 +43,7 @@ with sqlite3.connect(database) as db:
     # update event_id/timestamp so Sentry will accept the event again
     json_body = decompress_gzip(body_bytes_buffer)
     dict_body = json.loads(json_body)
+    print('dict_body value', dict_body['exception']['values'][0]['value'])
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print('> event_id', dict_body['event_id'])

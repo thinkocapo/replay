@@ -136,7 +136,7 @@ def load_and_forward(_id):
         if _id==0:
             cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
         else:
-            cursor.execute("SELECT * FROM events WHERE id=?", _id)
+            cursor.execute("SELECT * FROM events WHERE id=?", [_id])
         rows = cursor.fetchall()
         row = rows[0]
         row = list(row)
