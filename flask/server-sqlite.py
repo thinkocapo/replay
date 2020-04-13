@@ -188,6 +188,8 @@ def load_and_forward(pk):
         print('type(bytes_io_body)', type(bytes_io_body))
         print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
 
+        print('VALUE', bytes_io_body.getvalue())
+
         response = http.request(
             "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
         )

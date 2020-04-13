@@ -25,10 +25,10 @@ MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
 def app():
-    sentry_sdk.capture_exception(Exception("april 533"))
+    sentry_sdk.capture_exception(Exception("605"))
 
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_FORWARD }
+    params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
