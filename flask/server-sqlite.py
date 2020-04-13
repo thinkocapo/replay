@@ -7,17 +7,13 @@ import gzip
 from gzip import GzipFile
 import io
 import json
-import requests
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
+# import sentry_sdk
+# from sentry_sdk.integrations.flask import FlaskIntegration
 from six import BytesIO
-import sqlalchemy
-from sqlalchemy import create_engine
 import sqlite3
-import string
+import string # ?
 import urllib3
 import uuid
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -36,10 +32,11 @@ print("""
 """)
 
 # SENTRY - Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-SENTRY_API_STORE_ONPREMISE ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 # DATABASE - Must be full absolute path to sqlite database file
 SQLITE = os.getenv('SQLITE')
+# sqlite.db will get created if doesn't exist
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print(" > database", database)
 with sqlite3.connect(database) as conn:
@@ -85,11 +82,13 @@ def forward():
         request_headers[key] = request.headers.get(key)
     
     try:
-        response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
-        )
         print('> type(request.data)', type(request.data))
-        print("> RESPONSE and event_id %s" % (response.status, response.data))
+        print('> type(request_headers)', type(request_headers))
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+        # print("> RESPONSE and event_id %s" % (response.status, response.data))
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION', err)
@@ -141,7 +140,7 @@ def save_and_forward():
 
     try:
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=request.data, headers=request_headers 
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
         )
         print("> RESPONSE and event_id %s" % (response.status, response.data))
         return 'response not read by client sdk'
@@ -180,17 +179,17 @@ def load_and_forward(pk):
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print('> event_id', dict_body['event_id'])
     print('> timestamp', dict_body['timestamp'])
+    print('DICT', type(dict_body))
+
     bytes_io_body = compress_gzip(dict_body)
         
     try:
-        # print('type(request_headers)', type(request_headers))
-        # print('type(bytes_io_body)', type(bytes_io_body))
-        # print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
+        print('type(request_headers)', type(request_headers))
+        print('type(bytes_io_body)', type(bytes_io_body))
+        print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
 
-        # TODO function for checking data types
-        # bytes_io_body.getvalue() is for reading the bytes
         response = http.request(
-            "POST", str(SENTRY_API_STORE_ONPREMISE), body=bytes_io_body.getvalue(), headers=request_headers
+            "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
         )
     except Exception as err:
         print('LOCAL EXCEPTION', err)
