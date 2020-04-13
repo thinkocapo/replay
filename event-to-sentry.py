@@ -46,7 +46,7 @@ def compress_gzip(dict_body):
     return body
 
 with sqlite3.connect(database) as conn:
-    print('11111111111111111')
+
     cur = conn.cursor()
     cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
     rows = cur.fetchall()
@@ -66,19 +66,19 @@ with sqlite3.connect(database) as conn:
     print('> timestamp', dict_body['timestamp'])
     print('DICT', type(dict_body))
     bytes_io_body = compress_gzip(dict_body)
-    print('222222222222222')
-
-    print('headers\n', request_headers)
         
 try:
-    print('type(request_headers)', type(request_headers))
     print('type(bytes_io_body)', type(bytes_io_body))
-    print('type(bytes_io_body)', type(bytes_io_body.getvalue()))
-    thebytes = bytes_io_body.read()
+    print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
+    
+    # print('VALUE', bytes_io_body.getvalue())
     
     # bytes_io_body.getvalue() is for reading the bytes
+    # WORKS on python3
     response = http.request(
+        # "POST", str(SENTRY), body=bytearray(bytes_io_body.getvalue()), headers=request_headers
         "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
     )
+    response.close()
 except Exception as err:
     print('LOCAL EXCEPTION', err)
