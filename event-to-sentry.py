@@ -44,11 +44,11 @@ def compress_gzip(dict_body):
         raise e
     return body
 
-with sqlite3.connect(database) as conn:
+with sqlite3.connect(database) as db:
 
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
-    rows = cur.fetchall()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+    rows = cursor.fetchall()
     row = rows[0]
     row = list(row) # ?
     body_bytes_buffer = row[3] # not row_proxy.data, because sqlite returns tuple (not row_proxy)

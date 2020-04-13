@@ -34,8 +34,6 @@ use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string
 
 3. `git clone getsentry/onpremise` and `install.sh`
 
-
-
 ## Run
 Get proxy and Sentry running/listening:
 ```
@@ -55,7 +53,9 @@ python event-to-sentry.py
 ```
 See your event in Sentry at `localhost:9000`
 
-Note - The `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
+Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
+
+Note - `python sqlite-test.py` a fast way to check that your event saved in the database
 
 ## TODO
 PI  
