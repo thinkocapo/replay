@@ -44,14 +44,13 @@ database = SQLITE or os.getcwd() + "/sqlite.db"
 print(" > database", database)
 with sqlite3.connect(database) as conn:
     cur = conn.cursor()
-    sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
+    cur.execute(""" CREATE TABLE IF NOT EXISTS events (
                                             id integer PRIMARY KEY,
                                             name text,
                                             type text,
                                             data BLOB,
                                             headers BLOB
-                                        ); """
-    cur.execute(sql_table_events)
+                                        ); """)
     cur.close()
 
 # Functions from getsentry/sentry-python

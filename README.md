@@ -48,12 +48,8 @@ Workflow:
 
 ## TODO
 PI  
-- 
-- Makefile - make event_to_sentry
+- event_to_sentry
 - parameterize sql queries
-
-- use pk optionally again or decommission the endpoint their, in favor of Go script
-- update README
 - golang scripts, see README
 
 PII  
@@ -62,37 +58,10 @@ PII
 
 PIII  
 - send sentry-javascript events
-- db column for fingerprint so never end up with duplicates
 - raise Exception('big problem')
+- new visual
+- db column for fingerprint so never end up with duplicates
 - function for checking data types / classes
-
-
-#### Run
-Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
-1. `docker-compose up`
-2. `go build middleware.go`
-3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
-3. `python3 app.py` using ORIGINAL_DSN
-
-and
-
-https://github.com/getsentry/sentry-python  
-https://github.com/getsentry/sentry-go  
-https://github.com/getsentry/onpremise  
-Borrowed code from https://github.com/getsentry/gor-middleware/blob/master/auth.go
-
-https://github.com/buger/jsonparser
-
-I used this as my 'middleware.go' and removed what I didn't need:  
-https://github.com/buger/goreplay/blob/master/examples/middleware/token_modifier.go
-
-About the middleware technique  
-https://github.com/buger/goreplay/tree/master/middleware
-
-https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-outgoing-ef7fcdf87113
-https://golang.org/pkg/net/http/#Request  
-https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
-gor file-server 8000
 
 ## Notes
 https://flask.palletsprojects.com/en/1.1.x/api/  
