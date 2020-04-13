@@ -59,15 +59,17 @@ Note - `python sqlite-test.py` a fast way to check that your event saved in the 
 
 ## TODO
 PI  
-- parameterize sql queries
 - golang scripts, see README
-- gzip compression/decompression to its own module
+- test go to sqlite
+- event-to-sentry.py takes an arg 'id', then decommission load-and-forward
 
 PII  
+- improve many variable names. e.g. `request.data` as `request_data_bytes`
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 
 PIII  
+- consider package https://docs.python.org/3/tutorial/modules.html#packages
 - send sentry-javascript events
 - raise Exception('big problem')
 - new visual

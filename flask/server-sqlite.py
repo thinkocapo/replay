@@ -3,23 +3,19 @@ import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, json, abort
 from flask_cors import CORS
-import gzip
-from gzip import GzipFile
-import io
 import json
 # import sentry_sdk
 # from sentry_sdk.integrations.flask import FlaskIntegration
-from six import BytesIO
+from ..services import compress_gzip, decompress_gzip
 import sqlite3
 import string # ?
 import urllib3
 import uuid
 load_dotenv()
+http = urllib3.PoolManager()
 
 app = Flask(__name__)
 CORS(app)
-
-http = urllib3.PoolManager()
 
 print("""
                                Welcome To The
@@ -49,27 +45,6 @@ with sqlite3.connect(database) as db:
                                             headers BLOB
                                         ); """)
     cursor.close()
-
-# Functions from getsentry/sentry-python
-def decompress_gzip(bytes_encoded_data):
-    try:
-        fp = BytesIO(bytes_encoded_data)
-        try:
-            f = GzipFile(fileobj=fp)
-            return f.read().decode("utf-8")
-        finally:
-            f.close()
-    except Exception as e:
-        raise e
-
-def compress_gzip(dict_body):
-    try:
-        body = io.BytesIO()
-        with gzip.GzipFile(fileobj=body, mode="w") as f:
-            f.write(json.dumps(dict_body, allow_nan=False).encode("utf-8"))
-    except Exception as e:
-        raise e
-    return body
 
 ########################  STEP 1  #########################
 
