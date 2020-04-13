@@ -51,6 +51,7 @@ PI
 - event_to_sentry
 - parameterize sql queries
 - golang scripts, see README
+- gzip compression/decompression to its own module
 
 PII  
 - golang script for grabbing x events of type y from DB and send to Sentry,io
