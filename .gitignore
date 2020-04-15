@@ -20,4 +20,7 @@ go/middleware
 go/result.csv
 go/dump-request
 
+sqlite-test
+test
+
 result-csv
