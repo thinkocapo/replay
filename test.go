@@ -2,10 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"bytes"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-
+	"compress/gzip"
 	"strconv"
+
+	"github.com/buger/jsonparser"
+	"io/ioutil"
 	// "encoding/json"
 	// "io/ioutil"
 	// "log"
@@ -76,7 +80,23 @@ func main() {
 		var body []byte
 		var headers []byte
 		rows.Scan(&id, &name, &typee, &body, &headers)
-		fmt.Println("id", strconv.Itoa(id), name)
+		
+		r, err := gzip.NewReader(bytes.NewReader(body))
+		if err != nil {
+			fmt.Println(err)
+		}
+		body, err = ioutil.ReadAll(r)
+		if err != nil {
+			fmt.Println(err)
+		}
+		
+		// Sentry Event - String Types
+		event_id, err := jsonparser.GetString(body, "event_id")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("id", strconv.Itoa(id), event_id)
+
 	}
 
 	// fmt.Println("LENGTH", len(rows))
