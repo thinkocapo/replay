@@ -33,12 +33,16 @@ try:
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
-        buffer = test[3]
+        # buffer = test[3]
+        buffer = test[4]
+        print('UBB', buffer)
 
         #  Print a Sample
         # print('type(buffer)', type(buffer))
         json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
-        print('dict_body', dict_body['event_id'])
+        print('dict_body', dict_body)
+
+        # print('dict_body', dict_body['event_id'])
 except Exception as e:
     print('EXCEPTION', e)
