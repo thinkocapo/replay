@@ -2,14 +2,16 @@ package main
 
 import (
 	"database/sql"
-	"bytes"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	
+	"bytes"
 	"compress/gzip"
-	"strconv"
-
-	"github.com/buger/jsonparser"
 	"io/ioutil"
+	
+	"strconv"
+	"github.com/buger/jsonparser"
+
 	// "encoding/json"
 	// "io/ioutil"
 	// "log"
@@ -19,47 +21,6 @@ import (
 	// "github.com/getsentry/sentry-go"
 	// sentryhttp "github.com/getsentry/sentry-go/http"
 )
-
-// type Event struct {
-// 	id         int
-// 	name   string
-// 	// type    string
-// 	payload []byte
-// 	headers []byte
-// }
-
-// func getEvent(db *sql.DB, id2 int) User {
-// 	rows, err := db.Query("select * from testTable")
-// 	checkError(err)
-// 	for rows.Next() {
-// 	  var tempUser User
-// 	  err =
-// 		rows.Scan(&tempUser.id, &tempUser.username, &tempUser.surname, &tempUser.age, &tempUser.university)
-// 	  checkError(err)
-// 	  if tempUser.id == id2 {
-// 		return tempUser
-// 	  }
-// 	}
-// 	return User{}
-// }
-
-// function getEvent(sql.rows rows) int {
-// 	for rows.Next() {
-// 		// var event Event
-// 		var id int
-// 		// var name string
-// 		// var body []bytes
-// 		// var headers []bytes
-
-// 		err =
-// 			  rows.Scan(&id)
-// 		// checkError(err)
-// 		// if tempUser.id == id2 {
-// 		// 	return tempUser
-// 		// }
-// 		return id
-// 	}
-// }
 
 func main() {
 
@@ -76,11 +37,14 @@ func main() {
 	for rows.Next() {
 		var id int
 		var name string
-		var typee string
+		var _type string
 		var body []byte
-		var headers []byte
-		rows.Scan(&id, &name, &typee, &body, &headers)
-		
+		var headers string
+		rows.Scan(&id, &name, &_type, &body, &headers)
+
+		fmt.Println(headers)
+
+		// only for body (Gzipped)
 		r, err := gzip.NewReader(bytes.NewReader(body))
 		if err != nil {
 			fmt.Println(err)
@@ -90,8 +54,8 @@ func main() {
 			fmt.Println(err)
 		}
 		
-		// Sentry Event - String Types
 		event_id, err := jsonparser.GetString(body, "event_id")
+
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -104,3 +68,11 @@ func main() {
 }
 // https://dev.to/fevziomurtekin/using-sqlite-in-go-programming-3g2c
 // https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
+
+// type Event struct {
+// 	id         int
+// 	name   string
+// 	// type    string
+// 	payload []byte
+// 	headers []byte
+// }
