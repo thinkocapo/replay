@@ -9,6 +9,7 @@ event_to_db:
 
 event_to_sentry:
 	python event-to-sentry.py
+	# TODO ./event-to-sentry <-- Go executable
 
 goreplay:
 	go build middleware.go

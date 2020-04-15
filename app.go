@@ -1,5 +1,5 @@
 package main
-
+// This is for sending an Event directly to your Sentry instance. does not use proxy. tesing purposes.
 import (
 	// "encoding/json"
 	"fmt"

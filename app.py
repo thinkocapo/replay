@@ -45,4 +45,4 @@ def initialize_sentry():
 if __name__ == '__main__':
     proxy_connection_check()
     initialize_sentry()
-    # app()
+    app()
