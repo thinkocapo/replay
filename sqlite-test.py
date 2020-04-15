@@ -29,7 +29,7 @@ try:
 
         test = rows[-1]
         test = list(test)
-        print('ID OF LATEST ROW', test[0])
+        print('ID OF LATEST ROW', test[1])
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
@@ -37,8 +37,8 @@ try:
 
         #  Print a Sample
         # print('type(buffer)', type(buffer))
-        # json_body = decompress_gzip(str(buffer))
-        # dict_body = json.loads(json_body)
-        # print('dict_body', dict_body)
+        json_body = decompress_gzip(str(buffer))
+        dict_body = json.loads(json_body)
+        # print('dict_body', dict_body['type'])
 except Exception as e:
     print('EXCEPTION', e)
