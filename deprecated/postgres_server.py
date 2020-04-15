@@ -141,3 +141,43 @@ def load_and_forward(pk):
         print('LOCAL EXCEPTION', err)
 
     return 'loaded and forwarded to Sentry'
+
+
+
+
+##########################  TESTING  ###############################
+
+# STEP1 - TESTING w/ database. send body {"foo": "bar"} from Postman
+# @app.route('/save-event', methods=['POST'])
+# def event_bytea_post():
+
+#     request_headers = {}
+#     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+#         request_headers[key] = request.headers.get(key)
+#     print('request_headers', request_headers)
+
+#     insert_query = """ INSERT INTO events (type, name, data, headers) VALUES (%s,%s,%s,%s)"""
+#     record = ('python', 'example', request.data, json.dumps(request_headers))
+
+#     with db.connect() as conn:
+#         conn.execute(insert_query, record)
+#         conn.close()
+#     return 'successfull bytea'
+
+
+# STEP 2 - TESTING w/ database. loads that event's bytes+headers from database
+# @app.route('/load-event', defaults={'pk':0}, methods=['GET'])
+# @app.route('/load-event/<pk>', methods=['GET'])
+# def event_bytea_get():
+
+#     if pk==0:
+#         query = "SELECT * FROM events ORDER BY pk DESC LIMIT 1;"
+#     else:      # bytes_io_body.getvalue() is for reading the bytes
+#         query = "SELECT * FROM events WHERE pk={};".format(pk)
+
+#     with db.connect() as conn:
+#         results = conn.execute(query).fetchall()
+#         conn.close()
+#         row_proxy = results[0]
+
+#         return { "data": decompress_gzip(row_proxy.data), "headers": row_proxy.headers }
