@@ -58,12 +58,12 @@ Note - The modified `DSN` variant that you use when initializing Sentry will det
 Note - `python sqlite-test.py` a fast way to check that your event saved in the database
 
 ## TODO
-PI
-- test go w/ sqlite
 
-
-PII  
+PI  
 - Tour of Go
+- Go - send event to Sentry Instance
+
+PII
 - golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
