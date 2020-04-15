@@ -39,6 +39,6 @@ try:
         # print('type(buffer)', type(buffer))
         json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
-        # print('dict_body', dict_body['type'])
+        print('dict_body', dict_body['event_id'])
 except Exception as e:
     print('EXCEPTION', e)
