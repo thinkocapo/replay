@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 import sentry_sdk
+import socket
 
 # DSN is like "https://<key>@<organization>.ingest.sentry.io/<project>"
 DSN = os.getenv('DSN')
@@ -27,13 +28,21 @@ MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 def app():
     sentry_sdk.capture_exception(Exception("1018"))
 
-def proxy_check():
-    print('> prxy_check')
+def proxy_connection_check():
+    HOST,PORT = PROXY.split(':')
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((HOST, int(PORT)))
+    except Exception as exception:
+        print("> proxy not running")
+    finally:
+        s.close()
     
 def initialize_sentry():
     params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
+    proxy_connection_check()
     initialize_sentry()
-    app()
+    # app()
