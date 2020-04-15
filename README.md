@@ -59,8 +59,8 @@ Note - `python sqlite-test.py` a fast way to check that your event saved in the 
 
 ## TODO
 PI  
-- test go w/ sqlite
 - 'python app.py' should check if proxy is running...
+- test go w/ sqlite
 
 
 PII  
