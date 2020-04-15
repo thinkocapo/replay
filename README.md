@@ -35,23 +35,27 @@ use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string
 3. `git clone getsentry/onpremise` and `install.sh`
 
 ## Run
-Get proxy and Sentry running/listening:
+Get proxy running (and Sentry running/listening), Send some events to Database via the proxy:
 ```
 # Flask
 make proxy
 
-# getsentry/onpremise
-docker-compose up
-```
-Start sending events to the proxy and then to Sentry
-```
+
 # creates an event, hits an endpoint in Flask, saves event to database
 python app.py
+```
+
+Get Sentry running, Load events from DB and send to Sentry
+```
+# getsentry/onpremise
+docker-compose up
 
 # script gets event from database and sends to Sentry
 python event-to-sentry.py
+go run event-to-sentry.go
+
+# See your event in Sentry at `localhost:9000`
 ```
-See your event in Sentry at `localhost:9000`
 
 Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
 
