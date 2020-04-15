@@ -22,5 +22,6 @@ go/dump-request
 
 sqlite-test
 test
+event-to-sentry
 
 result-csv

@@ -41,3 +41,7 @@ https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-ou
 https://golang.org/pkg/net/http/#Request  
 https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
 gor file-server 8000
+
+
+https://dev.to/fevziomurtekin/using-sqlite-in-go-programming-3g2c
+https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
