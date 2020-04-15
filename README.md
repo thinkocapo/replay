@@ -58,8 +58,7 @@ Note - The modified `DSN` variant that you use when initializing Sentry will det
 Note - `python sqlite-test.py` a fast way to check that your event saved in the database
 
 ## TODO
-PI  
-- 'python app.py' should check if proxy is running...
+PI
 - test go w/ sqlite
 
 
