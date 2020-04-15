@@ -1,12 +1,6 @@
-# event-maker
+# Undertaker
 ## Goal
-Test data automation.
-
-Sending diverse events from multiple sdk types to a Sentry Organization on a regular basis.
-
-Use a proxy API (Flask) and database to do this for you.
-
-Keep 1 app running (STEP2) instead of 1 app for every platform's sdk.
+Test data automation. Have 1 app send events for all sdk's rather than 1 app per sdk. Prepare these events ahead of time in a database, by intercepting or "undertake them" on their way to Sentry using the proxy API (Flask) in this repo and storing them to sqlite.
 
 
 ## What's Happening
@@ -25,75 +19,67 @@ go version go1.12.9 linux/amd64
 
 sentry-sdk==0.14.2
 
+```
+$ flask --version
+Python 3.6.9
+```
+
+use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string instead of bytes
+
 ## Setup
 
-put your DSN in app.py
+1. put your DSN in `.env`
 
-could do make command here...  
-` make flask_prep`
+2. `pip install -r ./flask/requirements.txt`
 
-`make db_prep`
-
-`git clone getsentry/onpremise` and `install.sh` in it
+3. `git clone getsentry/onpremise` and `install.sh`
 
 ## Run
-Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then sends them to Sentry On-premise
-1. `make proxy` runs Flask server
-2. `docker-compose up` runs your getsentry/onpremise, it defaults to localhost:9000.... TODO 3 path to your docker-compose.yaml...? via Makefile
-3. `python app.py` creates an event, hit's the /save endpoint
-4. Postman for hitting the STEP2 endpoint load-and-forward in Flask, which send the events to Sentry.  
-or
-6. `make events` to run go program for sending events / set the crontab job...
-7. Sentry OnPrem to see your event, it's at `localhost:9000`, if you did load-and-forward. 
+Get proxy and Sentry running/listening:
+```
+# Flask
+make proxy
 
-Workflow:  
-- `python app.py` sdk sends event to the intercetpor
-- The `DSN` that you use in your `app.py` determine what the proxy will do. They are mapped to different endpoints in `flask/app.py`.
-- `localhost:3001/load-and-forward` will load an event from the database and forward it to your Sentry instance.
-- 'STEP1' endpoints require a sdk (app.py) to send events to
-- 'STEP2' endpoints (Flask) you can hit yourself from Postman, work getting event from DB and sending to Sentry
+# getsentry/onpremise
+docker-compose up
+```
+Start sending events to the proxy and then to Sentry
+```
+# creates an event, hits an endpoint in Flask, saves event to database
+python app.py
+
+# script gets event from database and sends to Sentry
+python event-to-sentry.py
+```
+See your event in Sentry at `localhost:9000`
+
+Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
+
+Note - `python sqlite-test.py` a fast way to check that your event saved in the database
 
 ## TODO
-PI  
-- DONE Makefile commands. maybe docker for flask/sqlit3. or virtualenv
-- DONE Docker DB initiation script. make all, or single command.
+PI
+- test go w/ sqlite
+
 
 PII  
+- Tour of Go
+- golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 
 PIII  
-- send sentry-javascript events
-- db column for fingerprint so never end up with duplicates
+- improve many variable names. e.g. `request.data` as `request_data_bytes`
+- Flask response object handling, show status of response and ...'created in Sentry'
+- Javascript events
 - raise Exception('big problem')
-
-
-#### Run
-Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
-1. `docker-compose up`
-2. `go build middleware.go`
-3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
-3. `python3 app.py` using ORIGINAL_DSN
-
-and
-
-https://github.com/getsentry/sentry-python  
-https://github.com/getsentry/sentry-go  
-https://github.com/getsentry/onpremise  
-Borrowed code from https://github.com/getsentry/gor-middleware/blob/master/auth.go
-
-https://github.com/buger/jsonparser
-
-I used this as my 'middleware.go' and removed what I didn't need:  
-https://github.com/buger/goreplay/blob/master/examples/middleware/token_modifier.go
-
-About the middleware technique  
-https://github.com/buger/goreplay/tree/master/middleware
-
-https://rominirani.com/golang-tip-capturing-http-client-requests-incoming-and-outgoing-ef7fcdf87113
-https://golang.org/pkg/net/http/#Request  
-https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body using encoding/json instead of buger/jsonparser  
-gor file-server 8000
+- python3 function/class for checking data types  
+https://docs.python.org/3/library/typing.html  
+https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
+- before/after hook on Flask endpoint for logging name of endpoint
+- better package https://docs.python.org/3/tutorial/modules.html#packages
+- new visual
+- db column for fingerprint so never end up with duplicates
 
 ## Notes
 https://flask.palletsprojects.com/en/1.1.x/api/  
