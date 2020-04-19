@@ -7,10 +7,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"net/http"
+
+	// "github.com/buger/jsonparser"
 	// "strconv"
+	
 	"strings"
 	"time"
 )
@@ -73,11 +76,33 @@ func main() {
 		data["timestamp"] = former + latter
 		fmt.Println(data["timestamp"])
 
+		// TODO
 		// CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip
 
+		// HTTP EXAMPLE - works...
+		resp, err := http.Get("http://example.com/")
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer resp.Body.Close()
+		responseBodyBytes, err := ioutil.ReadAll(resp.Body)
+		fmt.Println(string(responseBodyBytes))
+		
+		// TODO
 		// SEND to Sentry via HTTP
 			// URL string with sentry key
 			// w/ headers, payload
+		
+		// POST
+		// resp, err := http.Post("http://example.com/upload", "image/jpeg", &buf)
+		
+		// req, err := http.NewRequest("GET", "http://example.com", nil)
+		// // ...
+		// req.Header.Add("If-None-Match", `W/"wyzzy"`)
+		// resp, err := client.Do(req)
+		
+		// need this? because not reading a bytes object from database anymore
+		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	}
 
 	rows.Close()
