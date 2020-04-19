@@ -64,13 +64,15 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- Tour of Go
 - Go - send event to Sentry Instance
+- Tour of Go
 
 PII
+- logger rin python
 - golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
+- name it 'Transport' ? python, go
 
 PIII  
 - improve many variable names. e.g. `request.data` as `request_data_bytes`
