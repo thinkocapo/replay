@@ -7,11 +7,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/buger/jsonparser"
+	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"io/ioutil"
-	"strconv"
+	// "strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -44,54 +45,45 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		
-		event_id, err := jsonparser.GetString(body, "event_id")
 
-		if err != nil {
-			fmt.Println(err)
-		}
-		
-		fmt.Println("id", strconv.Itoa(id), event_id)
-
-		var dat map[string]interface{}
-		if err := json.Unmarshal(body, &dat); err != nil {
+		var data map[string]interface{}
+		if err := json.Unmarshal(body, &data); err != nil {
 			panic(err)
 		}
+
+		// EVENT ID
 		// is the json
-		// fmt.Println(dat)
-		fmt.Println(dat["event_id"])
+		fmt.Println(data["event_id"])
 
 		// need uuid4
 		var _uuid = uuid.New().String()
 
 		_uuid = strings.ReplaceAll(_uuid, "-", "") 
-		dat["event_id"] = _uuid
+		data["event_id"] = _uuid
 
-		fmt.Println(dat["event_id"])
+		fmt.Println(data["event_id"])
 
+		// TIMESTAMP in format 2020-04-18T23:31:48.710876Z
+		currentTime := time.Now()
+		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
 
+		timestamp := data["timestamp"].(string)
+		latter := timestamp[19:]
+		
+		data["timestamp"] = former + latter
+		fmt.Println(data["timestamp"])
+
+		// CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip
+
+		// SEND to Sentry via HTTP
+			// URL string with sentry key
+			// w/ headers, payload
 	}
 
 	rows.Close()
 
-	// TODO - Send Event to Sentry Instance
-	// 1. get '1' when there's multiple rows available
-	// 2. jsonparser.GetString(body, "event_id") to make new event_id + timestamp
-	// 3. somehow encode+gzip again
-	// 4. http request to Sentry,io. 
-		// URL string with sentry key
-		// w/ headers, payload
+	// TODO get '1' when there's multiple rows available
 }
-
-
-
-
-
-
-
-
-
-
 
 
 // type Event struct {
@@ -101,3 +93,9 @@ func main() {
 // 	payload []byte
 // 	headers []byte
 // }
+
+// event_id, err := jsonparser.GetString(body, "event_id")
+// if err != nil {
+// 	fmt.Println(err)
+// }
+// fmt.Println("id", strconv.Itoa(id), event_id)

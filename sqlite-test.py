@@ -40,7 +40,9 @@ try:
         json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
         print('dict_body', dict_body['event_id'])
-        for key in dict_body:
-            print(key, type(dict_body[key]))
+        print('dict_body', dict_body['timestamp'])
+
+        # for key in dict_body:
+        #     print(key, type(dict_body[key]))
 except Exception as e:
     print('EXCEPTION', e)
