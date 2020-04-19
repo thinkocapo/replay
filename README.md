@@ -138,3 +138,6 @@ https://gobyexample.com/json
 
 Good Marshall Unmarshall examples
 https://www.dotnetperls.com/json-go
+
+UUID google package
+https://godoc.org/github.com/google/uuid
