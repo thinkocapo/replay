@@ -1,0 +1,37 @@
+		// tried _uuid.String()
+		// tried uuid.String()
+		// tt := uuid.String(_uuid)
+
+		// uuidString := _uuid.String()
+		// _uuid = strings.ReplaceAll(uuidString, "-", "") 
+		
+		// stringy := uuid.UUID.String(_uuid)
+		// _uuid = strings.ReplaceAll(stringy, "-", "") 
+
+
+
+
+
+        		// string1 := dat["event_id"]
+		// dat["event_id"] = strings.ReplaceAll(string1, "-", "") 
+
+
+
+
+		// newbody, err := jsonparser.Set(body, []byte("1111aaaaaaaaabbbbbbbbb2222222"), "event_id")
+		// var newdat map[string]interface{}
+		// if err := json.Unmarshal(newbody, &newdat); err != nil {
+		// 	panic(err)
+		// }
+		// is the json
+		// fmt.Println(newdat)
+
+
+
+
+        		// dat["event_id"] = "1111aaaabbbbcccddd2222"
+		
+		// var _uuid, err1 = uuid.NewRandom()
+		// if err1 != nil {
+		// 	fmt.Println(err1)
+		// }

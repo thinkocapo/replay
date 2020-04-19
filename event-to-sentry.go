@@ -1,25 +1,17 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
-	
-	"strconv"
-	"github.com/buger/jsonparser"
-
+	"database/sql"
 	"encoding/json"
-	// "io/ioutil"
-	// "log"
-	// "net/http"
-	// "os"
-	// "time"
-	// "github.com/getsentry/sentry-go"
-	// sentryhttp "github.com/getsentry/sentry-go/http"
+	"fmt"
+	"github.com/buger/jsonparser"
+	"github.com/google/uuid"
+	"io/ioutil"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -39,9 +31,9 @@ func main() {
 		var body []byte
 		var headers string
 		rows.Scan(&id, &name, &_type, &body, &headers)
+		
 		// fmt.Println("LENGTH", len(rows))
-
-		fmt.Println(headers)
+		// fmt.Println(headers)
 
 		// only for body (Gzipped)
 		r, err := gzip.NewReader(bytes.NewReader(body))
@@ -69,17 +61,15 @@ func main() {
 		// fmt.Println(dat)
 		fmt.Println(dat["event_id"])
 
-		dat["event_id"] = "1111aaaabbbbcccddd2222"
+		// need uuid4
+		var _uuid = uuid.New().String()
+
+		_uuid = strings.ReplaceAll(_uuid, "-", "") 
+		dat["event_id"] = _uuid
+
 		fmt.Println(dat["event_id"])
 
 
-		// newbody, err := jsonparser.Set(body, []byte("1111aaaaaaaaabbbbbbbbb2222222"), "event_id")
-		// var newdat map[string]interface{}
-		// if err := json.Unmarshal(newbody, &newdat); err != nil {
-		// 	panic(err)
-		// }
-		// is the json
-		// fmt.Println(newdat)
 	}
 
 	rows.Close()
