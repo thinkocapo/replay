@@ -76,8 +76,10 @@ func main() {
 		data["timestamp"] = former + latter
 		fmt.Println(data["timestamp"])
 
-		// TODO
+		// TODO.....
 		// CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip
+		postBody, errPostBody := json.Marshal(data)
+		// ioutil writer and gzip?
 
 		// HTTP EXAMPLE - works...
 		resp, err := http.Get("http://example.com/")
