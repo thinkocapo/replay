@@ -52,69 +52,51 @@ func main() {
 			fmt.Println(err)
 		}
 
-		var data map[string]interface{}
-		if err := json.Unmarshal(body, &data); err != nil {
+		var bodyGoInterface map[string]interface{}
+		if err := json.Unmarshal(body, &bodyGoInterface); err != nil {
 			panic(err)
 		}
 
 		// EVENT ID
 		// is the json
-		fmt.Println(data["event_id"])
+		fmt.Println(bodyGoInterface["event_id"])
 
 		// need uuid4
 		var _uuid = uuid.New().String()
 
 		_uuid = strings.ReplaceAll(_uuid, "-", "") 
-		data["event_id"] = _uuid
+		bodyGoInterface["event_id"] = _uuid
 
-		fmt.Println(data["event_id"])
+		fmt.Println(bodyGoInterface["event_id"])
 
 		// TIMESTAMP in format 2020-04-18T23:31:48.710876Z
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
 
-		timestamp := data["timestamp"].(string)
+		timestamp := bodyGoInterface["timestamp"].(string)
 		latter := timestamp[19:]
 		
-		data["timestamp"] = former + latter
-		fmt.Println(data["timestamp"])
+		bodyGoInterface["timestamp"] = former + latter
+		fmt.Println(bodyGoInterface["timestamp"])
 
 		// TODO.....
-		// CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip
-		postBody, errPostBody := json.Marshal(data)
-		// ioutil writer and gzip?
-		postBodyEncoded := encode(postBody)
-		
-		
-		// HTTP EXAMPLE - works...
-		// resp, err := http.Get("http://example.com/")
-		// if err != nil {
-			// 	fmt.Println(err)
-			// }
-			// defer resp.Body.Close()
-			// responseBodyBytes, err := ioutil.ReadAll(resp.Body)
-			// fmt.Println(string(responseBodyBytes))
-			
-			// TODO
-			// SEND to Sentry via HTTP
-			// URL string with sentry key
-			// w/ headers, payload
-		// POST
-		SENTRY := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
-
-		buffy := bytes.NewBuffer(postBody)
-		resp, errPost := http.Post(SENTRY, "image/jpeg", buffy)
+		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_URL_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+		postBody, errPostBody := json.Marshal(bodyGoInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
+		postBodyEncoded := encode(postBody) // ioutil writer and gzip?
+		buffer := bytes.NewBuffer(postBody)
 
 		// *[]byte does not implement io.Reader (missing Read method)
 		// resp, err := http.Post(SENTRY, "image/jpeg", &postBodyEncoded)
 		
-		reqObject, errNewRequest := http.NewRequest("POST", SENTRY, buffy)
+		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, buffer)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
 		client := &http.Client{
 			// CheckRedirect: redirectPolicyFunc,
 		}
+		// TODO - add abunch of these
 		reqObject.Header.Add("If-None-Match", `W/"wyzzy"`)
+		// ...
 		resp1, err1 := client.Do(reqObject)
 		
 		// need this? because not reading a bytes object from database anymore
@@ -125,7 +107,7 @@ func main() {
 
 	rows.Close()
 
-	// TODO get '1' when there's multiple rows available
+	
 }
 
 func encode(buf []byte) []byte {
@@ -138,7 +120,19 @@ func encode(buf []byte) []byte {
 
 
 
+// HTTP EXAMPLE - works...
+// resp, err := http.Get("http://example.com/")
+// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// defer resp.Body.Close()
+	// responseBodyBytes, err := ioutil.ReadAll(resp.Body)
+	// fmt.Println(string(responseBodyBytes))
 
+
+// https://golang.org/pkg/net/http/#Client
+// https://medium.com/@masnun/making-http-requests-in-golang-dd123379efe7
+// resp, errPost := http.Post(SENTRY_URL, "image/jpeg", buffy)
 
 // type Event struct {
 // 	id         int
