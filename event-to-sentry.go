@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	// "github.com/buger/jsonparser"
@@ -18,6 +20,7 @@ import (
 	"time"
 )
 
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages
 func main() {
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
@@ -80,37 +83,61 @@ func main() {
 		// CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip
 		postBody, errPostBody := json.Marshal(data)
 		// ioutil writer and gzip?
-
-		// HTTP EXAMPLE - works...
-		resp, err := http.Get("http://example.com/")
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer resp.Body.Close()
-		responseBodyBytes, err := ioutil.ReadAll(resp.Body)
-		fmt.Println(string(responseBodyBytes))
+		postBodyEncoded := encode(postBody)
 		
-		// TODO
-		// SEND to Sentry via HTTP
+		
+		// HTTP EXAMPLE - works...
+		// resp, err := http.Get("http://example.com/")
+		// if err != nil {
+			// 	fmt.Println(err)
+			// }
+			// defer resp.Body.Close()
+			// responseBodyBytes, err := ioutil.ReadAll(resp.Body)
+			// fmt.Println(string(responseBodyBytes))
+			
+			// TODO
+			// SEND to Sentry via HTTP
 			// URL string with sentry key
 			// w/ headers, payload
-		
 		// POST
-		// resp, err := http.Post("http://example.com/upload", "image/jpeg", &buf)
+		SENTRY := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+
+		buffy := bytes.NewBuffer(postBody)
+		resp, errPost := http.Post(SENTRY, "image/jpeg", buffy)
+
+		// *[]byte does not implement io.Reader (missing Read method)
+		// resp, err := http.Post(SENTRY, "image/jpeg", &postBodyEncoded)
 		
-		// req, err := http.NewRequest("GET", "http://example.com", nil)
-		// // ...
-		// req.Header.Add("If-None-Match", `W/"wyzzy"`)
-		// resp, err := client.Do(req)
+		reqObject, errNewRequest := http.NewRequest("POST", SENTRY, buffy)
+		if errNewRequest != nil { log.Fatalln(errNewRequest) }
+
+		client := &http.Client{
+			// CheckRedirect: redirectPolicyFunc,
+		}
+		reqObject.Header.Add("If-None-Match", `W/"wyzzy"`)
+		resp1, err1 := client.Do(reqObject)
 		
 		// need this? because not reading a bytes object from database anymore
 		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
+
+		// might need a Transport for compression...
 	}
 
 	rows.Close()
 
 	// TODO get '1' when there's multiple rows available
 }
+
+func encode(buf []byte) []byte {
+	dst := make([]byte, len(buf)*2+1)
+	hex.Encode(dst, buf)
+	dst[len(dst)-1] = '\n'
+
+	return dst
+}
+
+
+
 
 
 // type Event struct {
