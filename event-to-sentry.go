@@ -41,6 +41,7 @@ func main() {
 		var body []byte
 		var headers string
 		rows.Scan(&id, &name, &_type, &body, &headers)
+		// fmt.Println("LENGTH", len(rows))
 
 		fmt.Println(headers)
 
@@ -59,15 +60,31 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		
 		fmt.Println("id", strconv.Itoa(id), event_id)
-
 	}
 
-	// fmt.Println("LENGTH", len(rows))
 	rows.Close()
 
 	// TODO - Send Event to Sentry Instance
+	// 1. get '1' when there's multiple rows available
+	// 2. jsonparser.GetString(body, "event_id") to make new event_id + timestamp
+	// 3. somehow encode+gzip again
+	// 4. http request to Sentry,io. 
+		// URL string with sentry key
+		// w/ headers, payload
 }
+
+
+
+
+
+
+
+
+
+
+
 
 // type Event struct {
 // 	id         int
