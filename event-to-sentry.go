@@ -39,9 +39,7 @@ func main() {
 		var headers string
 		rows.Scan(&id, &name, &_type, &body, &headers)
 		
-		// fmt.Println("LENGTH", len(rows))
-		// fmt.Println(headers)
-
+		// DECODE DATA FROM DB
 		// only for body (Gzipped)
 		r, err := gzip.NewReader(bytes.NewReader(body))
 		if err != nil {
@@ -52,34 +50,28 @@ func main() {
 			fmt.Println(err)
 		}
 
+		// UNMARSHAL THE BYTES INTO OBJECT
 		var bodyGoInterface map[string]interface{}
 		if err := json.Unmarshal(body, &bodyGoInterface); err != nil {
 			panic(err)
 		}
 
 		// EVENT ID
-		// is the json
 		fmt.Println(bodyGoInterface["event_id"])
-
-		// need uuid4
-		var _uuid = uuid.New().String()
-
+		var _uuid = uuid.New().String() // uuid4
 		_uuid = strings.ReplaceAll(_uuid, "-", "") 
 		bodyGoInterface["event_id"] = _uuid
-
 		fmt.Println(bodyGoInterface["event_id"])
 
-		// TIMESTAMP in format 2020-04-18T23:31:48.710876Z
+		// TIMESTAMP format 2020-04-18T23:31:48.710876Z
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
-
 		timestamp := bodyGoInterface["timestamp"].(string)
 		latter := timestamp[19:]
-		
 		bodyGoInterface["timestamp"] = former + latter
 		fmt.Println(bodyGoInterface["timestamp"])
 
-		// TODO.....
+		// HTTP TO SENTRY
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_URL_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		postBody, errPostBody := json.Marshal(bodyGoInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
 		postBodyEncoded := encode(postBody) // ioutil writer and gzip?
@@ -103,6 +95,7 @@ func main() {
 		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 
 		// might need a Transport for compression...
+		// might need gzipEncoder gzip.NewWriter...buf.Bytes()
 	}
 
 	rows.Close()
