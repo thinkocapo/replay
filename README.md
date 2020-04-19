@@ -67,6 +67,8 @@ PI
 - Go - send event to Sentry Instance
 - Tour of Go
 
+- Get 1 record since multiple will be available
+
 PII
 - logger rin python
 - golang scripts. x events y type. release as Day.
