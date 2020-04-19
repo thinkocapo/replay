@@ -59,7 +59,7 @@ go run event-to-sentry.go
 
 Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
 
-Note - `python sqlite-test.py` a fast way to check that your event saved in the database
+Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent event from the database
 
 ## TODO
 
