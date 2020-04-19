@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"github.com/buger/jsonparser"
 
-	// "encoding/json"
+	"encoding/json"
 	// "io/ioutil"
 	// "log"
 	// "net/http"
@@ -24,8 +24,6 @@ import (
 
 func main() {
 
-
-	fmt.Println("Let's connect Sqlite")
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	fmt.Println("Let's connect Sqlite", db)
 
@@ -62,6 +60,14 @@ func main() {
 		}
 		
 		fmt.Println("id", strconv.Itoa(id), event_id)
+
+		var dat map[string]interface{}
+		if err := json.Unmarshal(body, &dat); err != nil {
+			panic(err)
+		}
+
+		// is the json
+		fmt.Println(dat)
 	}
 
 	rows.Close()
