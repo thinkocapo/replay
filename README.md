@@ -133,4 +133,8 @@ MODIFIED_DSN_SAVE = ''.join([KEY,'@',SENTRY,'/3'])
 MODIFIED_DSN_SAVE = '{KEY}@{PROXY}/3'.format(KEY=KEY,PROXY=PROXY)
 ```
 
+Unmarshall
 https://gobyexample.com/json
+
+Good Marshall Unmarshall examples
+https://www.dotnetperls.com/json-go

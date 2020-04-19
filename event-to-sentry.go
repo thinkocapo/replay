@@ -65,9 +65,21 @@ func main() {
 		if err := json.Unmarshal(body, &dat); err != nil {
 			panic(err)
 		}
-
 		// is the json
-		fmt.Println(dat)
+		// fmt.Println(dat)
+		fmt.Println(dat["event_id"])
+
+		dat["event_id"] = "1111aaaabbbbcccddd2222"
+		fmt.Println(dat["event_id"])
+
+
+		// newbody, err := jsonparser.Set(body, []byte("1111aaaaaaaaabbbbbbbbb2222222"), "event_id")
+		// var newdat map[string]interface{}
+		// if err := json.Unmarshal(newbody, &newdat); err != nil {
+		// 	panic(err)
+		// }
+		// is the json
+		// fmt.Println(newdat)
 	}
 
 	rows.Close()
