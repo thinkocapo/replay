@@ -21,6 +21,7 @@ def compress_gzip(dict_body):
     try:
         body = io.BytesIO()
         with gzip.GzipFile(fileobj=body, mode="w") as f:
+            # print('dict_body', dict_body) loks good
             f.write(json.dumps(dict_body, allow_nan=False).encode("utf-8"))
     except Exception as e:
         raise e
