@@ -40,11 +40,22 @@ func main() {
 		rows.Scan(&id, &name, &_type, &bodyBytes, &headers)
 
 		fmt.Println("\n------------- HEADERS ------------")
-		fmt.Println("\n++++++", headers["Host"])
+
+		headersBytes := []byte(headers)
+		var headerInterface map[string]interface{}
+		if err := json.Unmarshal(headersBytes, &headerInterface); err != nil {
+			panic(err)
+		}
+		fmt.Println("--------- headerInterface", headerInterface["Host"].(string))
+		fmt.Println("--------- headerInterface", headerInterface["Accept-Encoding"].(string))
+		fmt.Println("--------- headerInterface", headerInterface["Content-Length"].(string))
+		fmt.Println("--------- headerInterface", headerInterface["Content-Encoding"].(string))
+		fmt.Println("--------- headerInterface", headerInterface["Content-Type"].(string))
+		fmt.Println("--------- headerInterface", headerInterface["User-Agent"].(string))
+
 
 		// DECODE DATA FROM DB
-		// only for body (Gzipped)
-		bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
+		bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes)) // only for body (Gzipped)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -54,33 +65,32 @@ func main() {
 		}
 
 		// UNMARSHAL THE BYTES INTO OBJECT
-		var bodyGoInterface map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &bodyGoInterface); err != nil {
+		var bodyInterface map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
 			panic(err)
 		}
 		
-		// PREPARE THE OBJECT....
+		// PREPARE THE OBJECT's
 		// EVENT ID
-		fmt.Println(bodyGoInterface["event_id"])
+		fmt.Println(bodyInterface["event_id"])
 		var _uuid = uuid.New().String() // uuid4
 		_uuid = strings.ReplaceAll(_uuid, "-", "") 
-		bodyGoInterface["event_id"] = _uuid
-		fmt.Println(bodyGoInterface["event_id"])
-
+		bodyInterface["event_id"] = _uuid
+		fmt.Println(bodyInterface["event_id"])
 		// TIMESTAMP format 2020-04-18T23:31:48.710876Z
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
-		timestamp := bodyGoInterface["timestamp"].(string)
+		timestamp := bodyInterface["timestamp"].(string)
 		latter := timestamp[19:]
-		bodyGoInterface["timestamp"] = former + latter
-		fmt.Println(bodyGoInterface["timestamp"])
+		bodyInterface["timestamp"] = former + latter
+		fmt.Println(bodyInterface["timestamp"])
 
 		// HTTP TO SENTRY
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_URL_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
-		postBody, errPostBody := json.Marshal(bodyGoInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
+		postBody, errPostBody := json.Marshal(bodyInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
 		if errPostBody != nil { fmt.Println(errPostBody)}
-		postBodyEncoded := encode(postBody) // ioutil writer and gzip?
-		buffer := bytes.NewBuffer(postBodyEncoded) // Note - used to take postBody
+		postBodyEncoded := encode(postBody) // ioutil writer and gzip????
+		buffer := bytes.NewBuffer(postBodyEncoded) // Note - used to take postBody????
 		
 		// might be missing zip...
 		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, buffer)
@@ -90,12 +100,14 @@ func main() {
 			// CheckRedirect: redirectPolicyFunc,
 		}
 		// TODO - HEADERS.....
-		reqObject.Header.Add("Host", "")
-		reqObject.Header.Add("Accept-Encoding", "")
-		reqObject.Header.Add("Content-Length", "")
-		reqObject.Header.Add("Content-Encoding", "")
-		reqObject.Header.Add("Content-Type", "")
-		reqObject.Header.Add("User-Agent", "")
+		reqObject.Header.Add("Host", headerInterface["Host"].(string))
+		reqObject.Header.Add("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
+		reqObject.Header.Add("Content-Length", headerInterface["Content-Length"].(string))
+		reqObject.Header.Add("Content-Encoding", headerInterface["Content-Encoding"].(string))
+		reqObject.Header.Add("Content-Type", headerInterface["Content-Type"].(string))
+		reqObject.Header.Add("User-Agent", headerInterface["User-Agent"].(string))
+
+		// fmt.Println("\n************* reqObject \n", reqObject) // Note - what are the nulls on this
 
 		fmt.Println("\n************* client.Do *********** \n")
 		httpResponse, httpRequestError := client.Do(reqObject)
