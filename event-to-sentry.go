@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// sentry-go Transport layer https://github.com/getsentry/sentry-go/blob/db5e5daf4334b2c9b5341cfcb3bbd1535b923c18/transport.go
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages
 func main() {
 
@@ -86,38 +87,70 @@ func main() {
 		fmt.Println(bodyInterface["timestamp"])
 
 		// HTTP TO SENTRY
-		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_URL_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		postBody, errPostBody := json.Marshal(bodyInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
 		if errPostBody != nil { fmt.Println(errPostBody)}
-		postBodyEncoded := encode(postBody) // ioutil writer and gzip????
-		buffer := bytes.NewBuffer(postBodyEncoded) // Note - used to take postBody????
+		// postBodyEncoded := gzipEncoder(postBody) //(encode(postBody)) // encode(postBody) // ioutil writer and gzip????
+		buffer := bytes.NewBuffer(postBody) // Note - used to take postBody????
 		
+		// why doesn't this help??
+		result := gzipEncoder(buffer)
 		// might be missing zip...
-		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, buffer)
+		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, result) // buffer  io.Readre it wants? why notes []bytes??
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
 		client := &http.Client{
 			// CheckRedirect: redirectPolicyFunc,
 		}
 		// TODO - HEADERS.....
-		reqObject.Header.Add("Host", headerInterface["Host"].(string))
-		reqObject.Header.Add("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
-		reqObject.Header.Add("Content-Length", headerInterface["Content-Length"].(string))
-		reqObject.Header.Add("Content-Encoding", headerInterface["Content-Encoding"].(string))
-		reqObject.Header.Add("Content-Type", headerInterface["Content-Type"].(string))
-		reqObject.Header.Add("User-Agent", headerInterface["User-Agent"].(string))
+		reqObject.Header.Set("Host", headerInterface["Host"].(string))
+		reqObject.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
+		reqObject.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
+		reqObject.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
+		// reqObject.Header.Set("Content-Encoding", "none")
+		reqObject.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
+		reqObject.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
 
-		// fmt.Println("\n************* reqObject \n", reqObject) // Note - what are the nulls on this
+		fmt.Println("\n************* reqObject \n", reqObject) // Note - what are the nulls on this
+		// it might want zlib compression http://localhost:9000/organizations/sentry/discover/internal:bb2fc286a8594eec94efc7e81afe66b7/?field=title&field=event.type&field=project&field=user&field=timestamp&name=All+Events&query=&sort=-timestamp&statsPeriod=7d&widths=-1&widths=-1&widths=-1&widths=-1&widths=-1
+		httpResponse, httpRequestError := client.Do(reqObject)
+		if httpRequestError != nil { 
+			fmt.Println("ERRRRORRRRRR")
+			fmt.Println(httpRequestError)
+		}
+
+
+		fmt.Println("\n************* RESPONSE *********** \n")
+		fmt.Println(httpResponse)
 
 		fmt.Println("\n************* client.Do *********** \n")
-		httpResponse, httpRequestError := client.Do(reqObject)
-		if httpRequestError != nil { fmt.Println(httpRequestError)}
-		fmt.Println(httpResponse)
+
+
+
+
+
+
+
+		// request, _ := http.NewRequest(
+		// 	http.MethodPost,
+		// 	"http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7",//t.dsn.StoreAPIURL().String(),
+		// 	buffer, // bytes.NewBuffer(body)
+		// )
+		// resp, err := client.Do(request)	
+
+		// fmt.Println("\n************* client.Do Done1 *********** \n", request)
+		// fmt.Println("\n************* client.Do Done2 *********** \n", resp)
+		// fmt.Println("\n************* client.Do err *********** \n", err)
+
+		// works.....so comment out below, why won't above one appear anywhere??? no errors on headers...
+
+
+
+
+
+
 		// need this? because not reading a bytes object from database anymore
 		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
-
-		// might need a Transport for compression...
-		// might need gzipEncoder gzip.NewWriter...buf.Bytes()...
 	}
 
 	rows.Close()
@@ -131,6 +164,14 @@ func encode(buf []byte) []byte {
 	dst[len(dst)-1] = '\n'
 
 	return dst
+}
+
+func gzipEncoder(b []byte) []byte {
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	w.Write(b)
+	w.Close()
+	return buf.Bytes()
 }
 
 // *[]byte does not implement io.Reader (missing Read method)
