@@ -35,27 +35,31 @@ func main() {
 		var id int
 		var name string
 		var _type string
-		var body []byte
+		var bodyBytes []byte
 		var headers string
-		rows.Scan(&id, &name, &_type, &body, &headers)
-		
+		rows.Scan(&id, &name, &_type, &bodyBytes, &headers)
+
+		fmt.Println("\n------------- HEADERS ------------")
+		fmt.Println("\n++++++", headers["Host"])
+
 		// DECODE DATA FROM DB
 		// only for body (Gzipped)
-		r, err := gzip.NewReader(bytes.NewReader(body))
+		bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
 		if err != nil {
 			fmt.Println(err)
 		}
-		body, err = ioutil.ReadAll(r)
+		bodyBytes, err = ioutil.ReadAll(bodyReader)
 		if err != nil {
 			fmt.Println(err)
 		}
 
 		// UNMARSHAL THE BYTES INTO OBJECT
 		var bodyGoInterface map[string]interface{}
-		if err := json.Unmarshal(body, &bodyGoInterface); err != nil {
+		if err := json.Unmarshal(bodyBytes, &bodyGoInterface); err != nil {
 			panic(err)
 		}
-
+		
+		// PREPARE THE OBJECT....
 		// EVENT ID
 		fmt.Println(bodyGoInterface["event_id"])
 		var _uuid = uuid.New().String() // uuid4
@@ -74,28 +78,34 @@ func main() {
 		// HTTP TO SENTRY
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_URL_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		postBody, errPostBody := json.Marshal(bodyGoInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
+		if errPostBody != nil { fmt.Println(errPostBody)}
 		postBodyEncoded := encode(postBody) // ioutil writer and gzip?
-		buffer := bytes.NewBuffer(postBody)
-
-		// *[]byte does not implement io.Reader (missing Read method)
-		// resp, err := http.Post(SENTRY, "image/jpeg", &postBodyEncoded)
+		buffer := bytes.NewBuffer(postBodyEncoded) // Note - used to take postBody
 		
+		// might be missing zip...
 		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, buffer)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
 		client := &http.Client{
 			// CheckRedirect: redirectPolicyFunc,
 		}
-		// TODO - add abunch of these
-		reqObject.Header.Add("If-None-Match", `W/"wyzzy"`)
-		// ...
-		resp1, err1 := client.Do(reqObject)
-		
+		// TODO - HEADERS.....
+		reqObject.Header.Add("Host", "")
+		reqObject.Header.Add("Accept-Encoding", "")
+		reqObject.Header.Add("Content-Length", "")
+		reqObject.Header.Add("Content-Encoding", "")
+		reqObject.Header.Add("Content-Type", "")
+		reqObject.Header.Add("User-Agent", "")
+
+		fmt.Println("\n************* client.Do *********** \n")
+		httpResponse, httpRequestError := client.Do(reqObject)
+		if httpRequestError != nil { fmt.Println(httpRequestError)}
+		fmt.Println(httpResponse)
 		// need this? because not reading a bytes object from database anymore
 		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 
 		// might need a Transport for compression...
-		// might need gzipEncoder gzip.NewWriter...buf.Bytes()
+		// might need gzipEncoder gzip.NewWriter...buf.Bytes()...
 	}
 
 	rows.Close()
@@ -111,7 +121,8 @@ func encode(buf []byte) []byte {
 	return dst
 }
 
-
+// *[]byte does not implement io.Reader (missing Read method)
+// resp, err := http.Post(SENTRY, "image/jpeg", &postBodyEncoded)
 
 // HTTP EXAMPLE - works...
 // resp, err := http.Get("http://example.com/")
