@@ -64,32 +64,34 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- Go - send event to Sentry Instance
 - Tour of Go
-
 - Get 1 record since multiple will be available
 
+- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id?
+- import logger
+- raise Exception if no DSN key
+
++ verified that stack traces are showing, by using try/except handling an error
+
 PII
-- logger rin python
 - golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
-- name it 'Transport' ? python, go
+- naming Transport
 
 PIII  
-- improve many variable names. e.g. `request.data` as `request_data_bytes`
+- improve variable names. e.g. `request.data` as `request_data_bytes`
 - Flask response object handling, show status of response and ...'created in Sentry'
 - Javascript events
-- raise Exception('big problem')
 - python3 function/class for checking data types  
-https://docs.python.org/3/library/typing.html  
-https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
 - before/after hook on Flask endpoint for logging name of endpoint
-- better package https://docs.python.org/3/tutorial/modules.html#packages
+- better packaging https://docs.python.org/3/tutorial/modules.html#packages
 - new visual
 - db column for fingerprint so never end up with duplicates
 
 ## Notes
+If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
+
 https://flask.palletsprojects.com/en/1.1.x/api/  
 https://requests.readthedocs.io/en/master/  
 https://realpython.com/python-requests/#request-headers  
@@ -124,15 +126,12 @@ print('request.headers', request.headers) (K | V line separated)
 print('type(request.data)', type(request.data)) # <class 'bytes'>
 ```
 
-replaying the payload many times. grpc
+grpc
 
-
-
-Troubleshoot - compare len(bytes) on the way in as when it came out...
-
-If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
+comparing len(bodyBytes) before/after serialization
 
 ```
+# didn't look as nice
 MODIFIED_DSN_SAVE = ''.join([KEY,'@',SENTRY,'/3'])
 MODIFIED_DSN_SAVE = '{KEY}@{PROXY}/3'.format(KEY=KEY,PROXY=PROXY)
 ```
@@ -145,3 +144,6 @@ https://www.dotnetperls.com/json-go
 
 UUID google package
 https://godoc.org/github.com/google/uuid
+
+https://docs.python.org/3/library/typing.html  
+https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
