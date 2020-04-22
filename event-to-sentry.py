@@ -37,6 +37,7 @@ with sqlite3.connect(database) as db:
     row = list(row) # ?
     body_bytes_buffer = row[3]  
     request_headers = json.loads(row[4])
+    print('* REQUEST_HEADERS *\n', request_headers)
 
     # update event_id/timestamp so Sentry will accept the event again
     json_body = decompress_gzip(body_bytes_buffer)
