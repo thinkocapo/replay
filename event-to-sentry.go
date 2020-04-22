@@ -10,14 +10,14 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	// "io"
 	"log"
 	"net/http"
-
 	// "github.com/buger/jsonparser"
 	// "strconv"
-	
 	"strings"
 	"time"
+	// "compress/zlib"
 )
 
 // sentry-go Transport layer https://github.com/getsentry/sentry-go/blob/db5e5daf4334b2c9b5341cfcb3bbd1535b923c18/transport.go
@@ -64,21 +64,18 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println("\nLENGTH1", len(bodyBytes))
 
-		// UNMARSHAL THE BYTES INTO OBJECT
+		// UNMARSHAL THE BYTES INTO OBJECT, prepare the EventId&Timestamp
 		var bodyInterface map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
 			panic(err)
 		}
-		
-		// PREPARE THE OBJECT's
-		// EVENT ID
 		fmt.Println(bodyInterface["event_id"])
 		var _uuid = uuid.New().String() // uuid4
 		_uuid = strings.ReplaceAll(_uuid, "-", "") 
 		bodyInterface["event_id"] = _uuid
 		fmt.Println(bodyInterface["event_id"])
-		// TIMESTAMP format 2020-04-18T23:31:48.710876Z
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
 		timestamp := bodyInterface["timestamp"].(string)
@@ -86,34 +83,47 @@ func main() {
 		bodyInterface["timestamp"] = former + latter
 		fmt.Println(bodyInterface["timestamp"])
 
-		// HTTP TO SENTRY
-		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+		
 		postBody, errPostBody := json.Marshal(bodyInterface) // CONVERT 'data' from go object / json into (encoded) utf8 bytes w/ gzip?
 		if errPostBody != nil { fmt.Println(errPostBody)}
-		// postBodyEncoded := gzipEncoder(postBody) //(encode(postBody)) // encode(postBody) // ioutil writer and gzip????
-		buffer := bytes.NewBuffer(postBody) // Note - used to take postBody????
 		
-		// why doesn't this help??
-		result := gzipEncoder(buffer)
-		// might be missing zip...
-		reqObject, errNewRequest := http.NewRequest("POST", SENTRY_URL, result) // buffer  io.Readre it wants? why notes []bytes??
-		if errNewRequest != nil { log.Fatalln(errNewRequest) }
+		// TRANSPORT
+		var buf bytes.Buffer
+		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+		w := gzip.NewWriter(&buf)
+		w.Write(postBody)
+		w.Close()
+		// var b bytes.Buffer
+		// w1 := zlib.NewWriter(&b)
+		// w1.Write([]byte(postBody))
+		// // w1.Write([]byte(string(postBody)))
+		// w1.Close()
 
+		
+		fmt.Println("\nLENGTH2", len(buf.Bytes()))
+		
+		// REQUEST OBJECT
+		// TODO try passing bodyBytes (unmodified)
+		// buffer := bytes.NewBuffer(postBody)
+		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+		if errNewRequest != nil { log.Fatalln(errNewRequest) }
+		
+		// TODO - HEADERS.....
+		request.Header.Set("Host", headerInterface["Host"].(string))
+		request.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
+		request.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
+		// request.Header.Set("Content-Length", "1502")
+		request.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
+		request.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
+		request.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
+		
+		// fmt.Println("\n************* request \n", request)
+		
 		client := &http.Client{
 			// CheckRedirect: redirectPolicyFunc,
 		}
-		// TODO - HEADERS.....
-		reqObject.Header.Set("Host", headerInterface["Host"].(string))
-		reqObject.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
-		reqObject.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
-		reqObject.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
-		// reqObject.Header.Set("Content-Encoding", "none")
-		reqObject.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
-		reqObject.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
-
-		fmt.Println("\n************* reqObject \n", reqObject) // Note - what are the nulls on this
-		// it might want zlib compression http://localhost:9000/organizations/sentry/discover/internal:bb2fc286a8594eec94efc7e81afe66b7/?field=title&field=event.type&field=project&field=user&field=timestamp&name=All+Events&query=&sort=-timestamp&statsPeriod=7d&widths=-1&widths=-1&widths=-1&widths=-1&widths=-1
-		httpResponse, httpRequestError := client.Do(reqObject)
+		// EXECUTE HTTP REQUEST
+		httpResponse, httpRequestError := client.Do(request)
 		if httpRequestError != nil { 
 			fmt.Println("ERRRRORRRRRR")
 			fmt.Println(httpRequestError)
@@ -123,39 +133,20 @@ func main() {
 		fmt.Println("\n************* RESPONSE *********** \n")
 		fmt.Println(httpResponse)
 
-		fmt.Println("\n************* client.Do *********** \n")
-
-
-
-
-
-
-
 		// request, _ := http.NewRequest(
 		// 	http.MethodPost,
 		// 	"http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7",//t.dsn.StoreAPIURL().String(),
 		// 	buffer, // bytes.NewBuffer(body)
 		// )
 		// resp, err := client.Do(request)	
-
 		// fmt.Println("\n************* client.Do Done1 *********** \n", request)
 		// fmt.Println("\n************* client.Do Done2 *********** \n", resp)
 		// fmt.Println("\n************* client.Do err *********** \n", err)
-
 		// works.....so comment out below, why won't above one appear anywhere??? no errors on headers...
-
-
-
-
-
-
 		// need this? because not reading a bytes object from database anymore
 		// decodeBody(body, proto.Header(payload, HTTP_CONTENT_ENCODING))
 	}
-
 	rows.Close()
-
-	
 }
 
 func encode(buf []byte) []byte {
