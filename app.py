@@ -26,7 +26,7 @@ MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
 def app():
-    sentry_sdk.capture_exception(Exception("1018"))
+    sentry_sdk.capture_exception(Exception("421"))
 
 def proxy_connection_check():
     HOST,PORT = PROXY.split(':')

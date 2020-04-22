@@ -28,21 +28,21 @@ try:
         print('TOTAL ROWS: ', len(rows))
 
         test = rows[-1]
-        test = list(test)
-        print('ID OF LATEST ROW', test[1])
+        # test = list(test)
+        print('ID OF LATEST ROW', test[0])
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
-        # buffer = test[3]
-        buffer = test[4]
-        print('UBB', buffer)
-
-        #  Print a Sample
-        # print('type(buffer)', type(buffer))
+        buffer = test[3]
+    
+        #  type is 'buffer'
+        print('type(buffer)', type(buffer))
         json_body = decompress_gzip(str(buffer))
         dict_body = json.loads(json_body)
-        print('dict_body', dict_body)
+        print('dict_body', dict_body['event_id'])
+        print('dict_body', dict_body['timestamp'])
 
-        # print('dict_body', dict_body['event_id'])
+        # for key in dict_body:
+        #     print(key, type(dict_body[key]))
 except Exception as e:
     print('EXCEPTION', e)
