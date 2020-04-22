@@ -5,16 +5,18 @@ import os
 import sentry_sdk
 import socket
 
-# DSN is like "https://<key>@<organization>.ingest.sentry.io/<project>"
+# DSN is like 
+# "https://<key>@<organization>.ingest.sentry.io/<project>"
+# http://09aa0d909232457a8a6dfff118bac658@localhost:9000/2
 DSN = os.getenv('DSN')
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
 KEY = DSN.split('@')[0]
-SENTRY = 'localhost:9000'
+# SENTRY = 'localhost:9000'
 PROXY = 'localhost:3001'
 
 # event skips the proxy and goes directly to Sentry. DSN in its original form from Sentry
-ORIGINAL_DSN = KEY + '@' + SENTRY + '/2'
+# ORIGINAL_DSN = KEY + '@' + SENTRY + '/2'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
 MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
@@ -25,8 +27,18 @@ MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 # proxy saves the event to database and forwards it on to Sentry
 MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
+# has stack trace
+def thingy():
+    try:
+        # for sure
+        1 / 0
+    except Exception as err:
+        sentry_sdk.capture_exception(err)
+    # sentry_sdk.capture_exception(Exception("WhatTimeIsIt"))
+
 def app():
-    sentry_sdk.capture_exception(Exception("421"))
+    thingy()
+    # sentry_sdk.capture_exception(Exception("This won't have a stack trace"))
 
 def proxy_connection_check():
     HOST,PORT = PROXY.split(':')
