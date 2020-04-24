@@ -64,30 +64,34 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- Tour of Go
-- Get 1 record since multiple will be available
-
-- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id?
-- import logger
+- options for Send All vs Send Latest (vs send1)
 - raise Exception if no DSN key
-
+- for header in headers: print(header)
+- use gzipEncoder function again
+- use gzipDecoder function, make it
+- print the created event_id on the httpResponse
+- try "github.com/buger/jsonparser"?
+- log types of significant data objects
+- import logger for python
+- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 + verified that stack traces are showing, by using try/except handling an error
 
 PII
+- Tour of Go
 - golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 - naming Transport
 
 PIII  
+- new visual
+- sqlite3 db column for fingerprint so never end up with duplicates
 - improve variable names. e.g. `request.data` as `request_data_bytes`
 - Flask response object handling, show status of response and ...'created in Sentry'
 - Javascript events
 - python3 function/class for checking data types  
 - before/after hook on Flask endpoint for logging name of endpoint
 - better packaging https://docs.python.org/3/tutorial/modules.html#packages
-- new visual
-- db column for fingerprint so never end up with duplicates
 
 ## Notes
 If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
@@ -147,3 +151,5 @@ https://godoc.org/github.com/google/uuid
 
 https://docs.python.org/3/library/typing.html  
 https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
+
+CONVERT 'data' from go object / json into (encoded) ,utf8,bytes,
