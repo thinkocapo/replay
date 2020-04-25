@@ -74,3 +74,10 @@ if err != nil {
 	fmt.Println(err)
 }
 fmt.Println("id", strconv.Itoa(id), event_id)
+
+request.Header.Set("Host", headerInterface["Host"].(string))
+request.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
+request.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
+request.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
+request.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
+request.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
