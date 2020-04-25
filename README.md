@@ -64,7 +64,6 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- default Sends Latest (vs send1) vs --all sends all
 - raise Exception if no DSN key
 - for header in headers: print(header)
 - use gzipEncoder function again
@@ -73,7 +72,7 @@ PI
 - try "github.com/buger/jsonparser"?
 - log the types of significant data objects
 
-+ verified that stack traces are showing, by using try/except handling an error
+
 
 PII
 - Tour of Go
