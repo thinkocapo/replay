@@ -40,7 +40,11 @@ def app():
     thingy()
     # sentry_sdk.capture_exception(Exception("This won't have a stack trace"))
 
-def proxy_connection_check():
+def dsn_and_proxy_connection_check():
+    if DSN=='':
+        print('> no DSN')
+        exit()
+
     HOST,PORT = PROXY.split(':')
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -55,6 +59,6 @@ def initialize_sentry():
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
-    proxy_connection_check()
+    dsn_and_proxy_connection_check()
     initialize_sentry()
     app()
