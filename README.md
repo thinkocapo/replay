@@ -64,13 +64,9 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- use gzipEncoder function again
-- use gzipDecoder function, make it
 - print the created event_id on the httpResponse
 - try "github.com/buger/jsonparser"?
-- log the types of significant data objects
-
-
+- log the type/class of significant data objects
 
 PII
 - Tour of Go
