@@ -28,20 +28,25 @@ use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string
 
 ## Setup
 
-1. put your DSN in `.env`
+1. get a DSN from Sentry on localhost:9000 and put it in `.env`
 
-2. `pip install -r ./flask/requirements.txt`
-
+2. `pip3 install -r ./flask/requirements.txt`
+```
+virtualenv -p /usr/bin/python3 .virtualenv
+source .virtualenv/bin/activate
+```
 3. `git clone getsentry/onpremise` and `install.sh`
 
-## Run
-Get proxy running (and Sentry running/listening), Send some events to Database via the proxy:
+4. 
 ```
-# Flask
+go get github.com/google/uuid
+go get github.com/mattn/go-sqlite3
+```
+## Run
+sends an event to proxy (Flask) and saves it to sqlite database.
+```
 make proxy
 
-
-# creates an event, hits an endpoint in Flask, saves event to database
 python app.py
 ```
 
@@ -50,15 +55,13 @@ Get Sentry running, Load events from DB and send to Sentry
 # getsentry/onpremise
 docker-compose up
 
-# script gets event from database and sends to Sentry
-python event-to-sentry.py
+# script gets event from database and sends to Sentry. go works more consistently.
 go run event-to-sentry.go
-
-# See your event in Sentry at `localhost:9000`
+python event-to-sentry.py
 ```
+See your event in Sentry at `localhost:9000`
 
-Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
-
+Note - The modified `DSN` variant that you use when initializing Sentry in app.py will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`  
 Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent event from the database
 
 ## TODO
@@ -149,3 +152,6 @@ https://docs.python.org/3/library/typing.html
 https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
 
 CONVERT 'data' from go object / json into (encoded) ,utf8,bytes,
+
+
+sqlalchemy==1.3.15

@@ -59,7 +59,7 @@ func main() {
 		postBody, errPostBody := json.Marshal(bodyInterface) 
 		if errPostBody != nil { fmt.Println(errPostBody)}
 		buf := encodeGzip(postBody)
-
+		// TODO	-parameterize
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
