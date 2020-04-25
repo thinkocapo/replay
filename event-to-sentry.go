@@ -19,6 +19,9 @@ import (
 
 var sendOne = flag.Bool("all", true, "send all events or 1 event from database")
 
+var httpClient = &http.Client{
+	// CheckRedirect: redirectPolicyFunc,
+}
 func main() {
 	flag.Parse()
 	fmt.Println("sendOne", *sendOne)
@@ -50,11 +53,10 @@ func main() {
 		fmt.Println("after ",bodyInterface["event_id"])
 		
 		fmt.Println("before",bodyInterface["timestamp"])
-		currentTime := time.Now()
-		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
-		timestamp := bodyInterface["timestamp"].(string)
-		latter := timestamp[19:]
-		bodyInterface["timestamp"] = former + latter
+		timestamp := time.Now()
+		oldTimestamp := bodyInterface["timestamp"].(string)
+		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
+		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
 		fmt.Println("after ",bodyInterface["timestamp"])
 		
 		postBody, errPostBody := json.Marshal(bodyInterface) 
@@ -67,9 +69,9 @@ func main() {
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
 		// check go sdk for how/where (class) headers object is managed
-		headersBytes := []byte(headers)
+		// headersBytes := []byte(headers)
 		var headerInterface map[string]interface{}
-		if err := json.Unmarshal(headersBytes, &headerInterface); err != nil {
+		if err := json.Unmarshal([]byte(headers), &headerInterface); err != nil {
 			panic(err)
 		}
 		
@@ -79,19 +81,13 @@ func main() {
 			request.Header.Set(key, headerInterface[key].(string))
 		}
 
-		client := &http.Client{
-			// CheckRedirect: redirectPolicyFunc,
-		}
-
-		response, requestErr := client.Do(request)
-		if requestErr != nil { 
-			fmt.Println(requestErr)
-		}
+		// response, requestErr := &http.Client{}.Do(request)
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil { fmt.Println(requestErr) }
 
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		if responseDataErr != nil {
-			log.Fatal(responseDataErr)
-		}
+		if responseDataErr != nil { log.Fatal(responseDataErr) }
+		
 		fmt.Println(string(responseData))
 
 		if *sendOne {
