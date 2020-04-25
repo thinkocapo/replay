@@ -35,3 +35,49 @@
 		// if err1 != nil {
 		// 	fmt.Println(err1)
 		// }
+
+--------------------------------------------------------------------------------------------------------
+
+
+// sentry-go Transport layer https://github.com/getsentry/sentry-go/blob/db5e5daf4334b2c9b5341cfcb3bbd1535b923c18/transport.go
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages
+
+--------------------------------------------------------------------------------------------------------
+
+*[]byte does not implement io.Reader (missing Read method)
+resp, err := http.Post(SENTRY, "image/jpeg", &postBodyEncoded)
+
+HTTP EXAMPLE - works...
+resp, err := http.Get("http://example.com/")
+if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	responseBodyBytes, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(responseBodyBytes))
+
+
+https://golang.org/pkg/net/http/#Client
+https://medium.com/@masnun/making-http-requests-in-golang-dd123379efe7
+resp, errPost := http.Post(SENTRY_URL, "image/jpeg", buffy)
+
+type Event struct {
+	id         int
+	name   string
+	// type    string
+	payload []byte
+	headers []byte
+}
+
+event_id, err := jsonparser.GetString(body, "event_id")
+if err != nil {
+	fmt.Println(err)
+}
+fmt.Println("id", strconv.Itoa(id), event_id)
+
+request.Header.Set("Host", headerInterface["Host"].(string))
+request.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
+request.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
+request.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
+request.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
+request.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
