@@ -17,14 +17,14 @@ import (
 	"time"
 )
 
-var sendOne = flag.Bool("all", true, "send all events or 1 event from database")
+var all = flag.Bool("all", false, "send all events or 1 event from database")
 
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 func main() {
 	flag.Parse()
-	fmt.Println("sendOne", *sendOne)
+	fmt.Println("all", *all)
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	rows, err := db.Query("SELECT * FROM events")
@@ -61,36 +61,32 @@ func main() {
 		
 		postBody, errPostBody := json.Marshal(bodyInterface) 
 		if errPostBody != nil { fmt.Println(errPostBody)}
-
 		buf := encodeGzip(postBody)
+
 
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		// check go sdk for how/where (class) headers object is managed
-		// headersBytes := []byte(headers)
 		var headerInterface map[string]interface{}
 		if err := json.Unmarshal([]byte(headers), &headerInterface); err != nil {
 			panic(err)
 		}
-		
 		headerKeys := [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"}
 		for i:=0; i < len(headerKeys); i++ {
 			key := headerKeys[i]
 			request.Header.Set(key, headerInterface[key].(string))
 		}
 
-		// response, requestErr := &http.Client{}.Do(request)
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil { fmt.Println(requestErr) }
 
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil { log.Fatal(responseDataErr) }
-		
+
 		fmt.Println(string(responseData))
 
-		if *sendOne {
+		if !*all {
 			rows.Close()
 		}
 	}
