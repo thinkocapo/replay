@@ -64,9 +64,7 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- print the created event_id on the httpResponse
-- try "github.com/buger/jsonparser"?
-- log the type/class of significant data objects
+- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
 
 PII
 - Tour of Go
@@ -82,9 +80,13 @@ Python
 PIII  
 - new visual
 - sqlite3 db column for fingerprint so never end up with duplicates
+
+- optional since go is statically typed - log the type/class of significant data objects
+
 - improve variable names. e.g. `request.data` as `request_data_bytes`
-- Flask response object handling, show status of response and ...'created in Sentry'
-- Javascript events
+- Add Javascript and Node events
+
+Python
 - python3 function/class for checking data types  
 - before/after hook on Flask endpoint for logging name of endpoint
 - better packaging https://docs.python.org/3/tutorial/modules.html#packages

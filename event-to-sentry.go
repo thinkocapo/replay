@@ -37,13 +37,6 @@ func main() {
 		
 		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
 
-		// check go sdk for how/where (class) headers object is managed
-		headersBytes := []byte(headers)
-		var headerInterface map[string]interface{}
-		if err := json.Unmarshal(headersBytes, &headerInterface); err != nil {
-			panic(err)
-		}
-
 		bodyBytes := decodeGzip(bodyBytesCompressed)
 
 		var bodyInterface map[string]interface{}
@@ -51,18 +44,18 @@ func main() {
 			panic(err)
 		}
 
-		fmt.Println(bodyInterface["event_id"], "before")
+		fmt.Println("before",bodyInterface["event_id"])
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 		bodyInterface["event_id"] = uuid4
-		fmt.Println(bodyInterface["event_id"], "after")
+		fmt.Println("after ",bodyInterface["event_id"])
 		
-		fmt.Println(bodyInterface["timestamp"], "before")
+		fmt.Println("before",bodyInterface["timestamp"])
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
 		timestamp := bodyInterface["timestamp"].(string)
 		latter := timestamp[19:]
 		bodyInterface["timestamp"] = former + latter
-		fmt.Println(bodyInterface["timestamp"], "after")
+		fmt.Println("after ",bodyInterface["timestamp"])
 		
 		postBody, errPostBody := json.Marshal(bodyInterface) 
 		if errPostBody != nil { fmt.Println(errPostBody)}
@@ -72,6 +65,13 @@ func main() {
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
+
+		// check go sdk for how/where (class) headers object is managed
+		headersBytes := []byte(headers)
+		var headerInterface map[string]interface{}
+		if err := json.Unmarshal(headersBytes, &headerInterface); err != nil {
+			panic(err)
+		}
 		
 		headerKeys := [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"}
 		for i:=0; i < len(headerKeys); i++ {
