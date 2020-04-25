@@ -22,9 +22,10 @@ var all = flag.Bool("all", false, "send all events or 1 event from database")
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
+// https://gobyexample.com/string-formatting %T for type
 func main() {
 	flag.Parse()
-	fmt.Println("all", *all)
+	fmt.Println("FLAG: all", *all)
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	rows, err := db.Query("SELECT * FROM events")
@@ -33,15 +34,11 @@ func main() {
 	}
 	for rows.Next() {
 		var id int
-		var name string
-		var _type string
+		var name, _type, headers string
 		var bodyBytesCompressed []byte
-		var headers string
-		
 		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
 
 		bodyBytes := decodeGzip(bodyBytesCompressed)
-
 		var bodyInterface map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
 			panic(err)
@@ -72,10 +69,9 @@ func main() {
 		if err := json.Unmarshal([]byte(headers), &headerInterface); err != nil {
 			panic(err)
 		}
-		headerKeys := [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"}
-		for i:=0; i < len(headerKeys); i++ {
-			key := headerKeys[i]
-			request.Header.Set(key, headerInterface[key].(string))
+
+		for index, value := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+			request.Header.Set(value, headerInterface[value].(string))
 		}
 
 		response, requestErr := httpClient.Do(request)
