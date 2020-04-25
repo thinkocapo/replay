@@ -64,27 +64,24 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
+- Tour of Go
+- Classes. Client, Transport
+- gloang script on a crontab (macbook cronjob) every hour
 
 PII
-- Tour of Go
-- golang scripts. x events y type. release as Day.
-- golang script for grabbing x events of type y from DB and send to Sentry,io
-- gloang script on a crontab (macbook cronjob) every hour
-- Classes. Client, Transport
+- javascript events
+- golang script x events y type
 
-Python
-- import logger for python
-- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
+- python. import logger for python
+- python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
 - "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
 - new visual
 - sqlite3 db column for fingerprint so never end up with duplicates
-
-- optional since go is statically typed - log the type/class of significant data objects
+- for non-static languages, log/check the type/class of significant data objects?
 
 - improve variable names. e.g. `request.data` as `request_data_bytes`
-- Add Javascript and Node events
 
 Python
 - python3 function/class for checking data types  
