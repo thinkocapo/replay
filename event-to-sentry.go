@@ -21,16 +21,13 @@ var sendOne = flag.Bool("all", true, "send all events or 1 event from database")
 
 func main() {
 	flag.Parse()
-	fmt.Println("FLAG", *sendOne)
+	fmt.Println("sendOne", *sendOne)
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
-	fmt.Println("Let's connect Sqlite", db)
-
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
 		fmt.Println("We got Error", err)
 	}
-	
 	for rows.Next() {
 		var id int
 		var name string
@@ -54,18 +51,18 @@ func main() {
 			panic(err)
 		}
 
-		fmt.Println(bodyInterface["event_id"])
-		var uuid4 = uuid.New().String()
-		uuid4 = strings.ReplaceAll(uuid4, "-", "") 
+		fmt.Println(bodyInterface["event_id"], "before")
+		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 		bodyInterface["event_id"] = uuid4
-		fmt.Println(bodyInterface["event_id"])
+		fmt.Println(bodyInterface["event_id"], "after")
 		
+		fmt.Println(bodyInterface["timestamp"], "before")
 		currentTime := time.Now()
 		former := currentTime.Format("2006-01-02") + "T" + currentTime.Format("15:04:05")
 		timestamp := bodyInterface["timestamp"].(string)
 		latter := timestamp[19:]
 		bodyInterface["timestamp"] = former + latter
-		fmt.Println(bodyInterface["timestamp"])
+		fmt.Println(bodyInterface["timestamp"], "after")
 		
 		postBody, errPostBody := json.Marshal(bodyInterface) 
 		if errPostBody != nil { fmt.Println(errPostBody)}
@@ -86,17 +83,18 @@ func main() {
 			// CheckRedirect: redirectPolicyFunc,
 		}
 
-		httpResponse, httpRequestError := client.Do(request)
-		if httpRequestError != nil { 
-			fmt.Println("ERRRRORRRRRR")
-			fmt.Println(httpRequestError)
+		response, requestErr := client.Do(request)
+		if requestErr != nil { 
+			fmt.Println(requestErr)
 		}
 
-		fmt.Println("\n************* RESPONSE *********** \n")
-		fmt.Println(httpResponse)
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil {
+			log.Fatal(responseDataErr)
+		}
+		fmt.Println(string(responseData))
 
 		if *sendOne {
-			fmt.Println("ONLY ONCE BUDDY\n")
 			rows.Close()
 		}
 	}
