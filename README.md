@@ -64,8 +64,8 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- raise Exception if no DSN key
 - for header in headers: print(header)
+
 - use gzipEncoder function again
 - use gzipDecoder function, make it
 - print the created event_id on the httpResponse

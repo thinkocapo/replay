@@ -17,10 +17,11 @@ import (
 	"time"
 )
 
-var sendOne = flag.Bool("all", false, "send all events or 1 event from database")
+var sendOne = flag.Bool("all", true, "send all events or 1 event from database")
 
 func main() {
 	flag.Parse()
+	fmt.Println("FLAG", *sendOne)
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	fmt.Println("Let's connect Sqlite", db)
@@ -84,12 +85,11 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 		
-		request.Header.Set("Host", headerInterface["Host"].(string))
-		request.Header.Set("Accept-Encoding", headerInterface["Accept-Encoding"].(string))
-		request.Header.Set("Content-Length", headerInterface["Content-Length"].(string))
-		request.Header.Set("Content-Encoding", headerInterface["Content-Encoding"].(string))
-		request.Header.Set("Content-Type", headerInterface["Content-Type"].(string))
-		request.Header.Set("User-Agent", headerInterface["User-Agent"].(string))
+		headerKeys := [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"}
+		for i:=0; i < len(headerKeys); i++ {
+			key := headerKeys[i]
+			request.Header.Set(key, headerInterface[key].(string))
+		}
 
 		client := &http.Client{
 			// CheckRedirect: redirectPolicyFunc,
@@ -104,7 +104,6 @@ func main() {
 		fmt.Println("\n************* RESPONSE *********** \n")
 		fmt.Println(httpResponse)
 
-		// if not -all
 		if *sendOne {
 			fmt.Println("ONLY ONCE BUDDY\n")
 			rows.Close()
