@@ -20,7 +20,7 @@ http = urllib3.PoolManager()
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print('> database', database)
-
+# TODO - parameterize
 SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 with sqlite3.connect(database) as db:
