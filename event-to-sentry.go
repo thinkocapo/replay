@@ -23,6 +23,19 @@ var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 
+func unmarshalJSON(bodyBytes []byte) map[string]interface{} {
+	var bodyInterface map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
+		panic(err)
+	}
+	return bodyInterface
+}
+func marshalJSON(bodyInterface map[string]interface{}) []byte {
+	postBody, errPostBody := json.Marshal(bodyInterface) 
+	if errPostBody != nil { fmt.Println(errPostBody)}
+	return postBody
+}
+
 func main() {
 	flag.Parse()
 	fmt.Println("FLAG: all", *all)
@@ -39,16 +52,15 @@ func main() {
 		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
 
 		bodyBytes := decodeGzip(bodyBytesCompressed)
-		var bodyInterface map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
-			panic(err)
-		}
+		bodyInterface := unmarshalJSON(bodyBytes)
 
+		// body = replaceEventId(bodyInterface)
 		fmt.Println("before",bodyInterface["event_id"])
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 		bodyInterface["event_id"] = uuid4
 		fmt.Println("after ",bodyInterface["event_id"])
 		
+		// body = replaceTimestamp(bodyInterface)
 		fmt.Println("before",bodyInterface["timestamp"])
 		timestamp := time.Now()
 		oldTimestamp := bodyInterface["timestamp"].(string)
@@ -56,9 +68,9 @@ func main() {
 		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
 		fmt.Println("after ",bodyInterface["timestamp"])
 		
-		postBody, errPostBody := json.Marshal(bodyInterface) 
-		if errPostBody != nil { fmt.Println(errPostBody)}
+		postBody := marshalJSON(bodyInterface)
 		buf := encodeGzip(postBody)
+
 		// TODO	-parameterize
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
@@ -69,7 +81,7 @@ func main() {
 			panic(err)
 		}
 
-		for i, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
 		}
 
