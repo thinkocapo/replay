@@ -35,26 +35,20 @@ func main() {
 		var id int
 		var name string
 		var _type string
-		var bodyBytes []byte
+		var bodyBytesCompressed []byte
 		var headers string
-		rows.Scan(&id, &name, &_type, &bodyBytes, &headers)
+		
+		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
+
 		// check go sdk for how/where (class) headers object is managed
 		headersBytes := []byte(headers)
 		var headerInterface map[string]interface{}
 		if err := json.Unmarshal(headersBytes, &headerInterface); err != nil {
 			panic(err)
 		}
-		fmt.Println("--------- headerInterface", headerInterface["Host"].(string))
-		// decodeGzip
-		bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes)) // only for body (Gzipped)
-		if err != nil {
-			fmt.Println(err)
-		}
-		bodyBytes, err = ioutil.ReadAll(bodyReader)
-		if err != nil {
-			fmt.Println(err)
-		}
-		// go object
+
+		bodyBytes := decodeGzip(bodyBytesCompressed)
+
 		var bodyInterface map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
 			panic(err)
@@ -75,12 +69,9 @@ func main() {
 		
 		postBody, errPostBody := json.Marshal(bodyInterface) 
 		if errPostBody != nil { fmt.Println(errPostBody)}
-		// "encodeGzip" should include ^ ?
-		var buf bytes.Buffer
-		w := gzip.NewWriter(&buf)
-		w.Write(postBody)
-		w.Close()
-		// 
+
+		buf := encodeGzip(postBody)
+
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
@@ -112,10 +103,24 @@ func main() {
 	rows.Close()
 }
 
-func gzipEncoder(b []byte) []byte {
+// decode gzip compression
+func decodeGzip(bodyBytes []byte) []byte {
+	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes)) // only for body (Gzipped)
+	if err != nil {
+		fmt.Println(err)
+	}
+	bodyBytes, err = ioutil.ReadAll(bodyReader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return bodyBytes
+}
+// encode gzip compression
+func encodeGzip(b []byte) bytes.Buffer {
 	var buf bytes.Buffer
 	w := gzip.NewWriter(&buf)
 	w.Write(b)
 	w.Close()
-	return buf.Bytes()
+	// return buf.Bytes()
+	return buf
 }
