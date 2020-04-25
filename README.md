@@ -64,20 +64,20 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
 
 PII
 - Tour of Go
 - golang scripts. x events y type. release as Day.
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
-- naming Transport
+- Classes. Client, Transport
 
 Python
 - import logger for python
 - can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
+- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
 - new visual
 - sqlite3 db column for fingerprint so never end up with duplicates
 
