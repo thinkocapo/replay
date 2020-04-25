@@ -64,16 +64,15 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 ## TODO
 
 PI  
-- options for Send All vs Send Latest (vs send1)
+- default Sends Latest (vs send1) vs --all sends all
 - raise Exception if no DSN key
 - for header in headers: print(header)
 - use gzipEncoder function again
 - use gzipDecoder function, make it
 - print the created event_id on the httpResponse
 - try "github.com/buger/jsonparser"?
-- log types of significant data objects
-- import logger for python
-- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
+- log the types of significant data objects
+
 + verified that stack traces are showing, by using try/except handling an error
 
 PII
@@ -82,6 +81,10 @@ PII
 - golang script for grabbing x events of type y from DB and send to Sentry,io
 - gloang script on a crontab (macbook cronjob) every hour
 - naming Transport
+
+Python
+- import logger for python
+- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
 - new visual

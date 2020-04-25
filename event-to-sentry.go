@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
@@ -16,7 +17,11 @@ import (
 	"time"
 )
 
+var sendOne = flag.Bool("all", false, "send all events or 1 event from database")
+
 func main() {
+	flag.Parse()
+
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	fmt.Println("Let's connect Sqlite", db)
 
@@ -98,6 +103,12 @@ func main() {
 
 		fmt.Println("\n************* RESPONSE *********** \n")
 		fmt.Println(httpResponse)
+
+		// if not -all
+		if *sendOne {
+			fmt.Println("ONLY ONCE BUDDY\n")
+			rows.Close()
+		}
 	}
 	rows.Close()
 }
