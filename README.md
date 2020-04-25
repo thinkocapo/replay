@@ -65,6 +65,7 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 
 PI  
 - Tour of Go
+- Struct/Interface methods for making bodyInterface and updating eventId, timestamp? print %T's after reading from db. Marshal/Unmarshaling and final httpClient.Do(request)
 - Classes. Client, Transport
 - gloang script on a crontab (macbook cronjob) every hour
 

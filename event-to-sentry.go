@@ -22,7 +22,7 @@ var all = flag.Bool("all", false, "send all events or 1 event from database")
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
-// https://gobyexample.com/string-formatting %T for type
+
 func main() {
 	flag.Parse()
 	fmt.Println("FLAG: all", *all)
@@ -60,7 +60,6 @@ func main() {
 		if errPostBody != nil { fmt.Println(errPostBody)}
 		buf := encodeGzip(postBody)
 
-
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
@@ -70,8 +69,8 @@ func main() {
 			panic(err)
 		}
 
-		for index, value := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
-			request.Header.Set(value, headerInterface[value].(string))
+		for i, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+			request.Header.Set(v, headerInterface[v].(string))
 		}
 
 		response, requestErr := httpClient.Do(request)
