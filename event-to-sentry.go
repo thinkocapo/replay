@@ -9,8 +9,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
+	"os"
 	"net/http"
 	// "github.com/buger/jsonparser"
 	"strings"
@@ -24,10 +26,20 @@ var httpClient = &http.Client{
 }
 
 
-
 func main() {
 	flag.Parse()
-	fmt.Println("FLAG: all", *all)
+	fmt.Println("> --all", *all)
+
+	if err := godotenv.Load(); err != nil {
+        log.Print("No .env file found")
+    }
+	DSN, _ := os.LookupEnv("DSN")
+
+	// DSN := os.Getenv("DSN")
+	fmt.Println("> DSN", DSN)
+	KEY := strings.Split(DSN, "@")[0][7:]
+	SENTRY_URL := strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+	fmt.Println("> SENTRY_URL", SENTRY_URL)
 
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	rows, err := db.Query("SELECT * FROM events")
@@ -38,6 +50,8 @@ func main() {
 		var id int
 		var name, _type, headers string
 		var bodyBytesCompressed []byte
+		
+		// TODO	- Struct?
 		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
 
 		bodyBytes := decodeGzip(bodyBytesCompressed)
@@ -49,8 +63,6 @@ func main() {
 		bodyBytesPost := marshalJSON(bodyInterface)
 		buf := encodeGzip(bodyBytesPost)
 
-		// TODO	-parameterize
-		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
@@ -62,7 +74,7 @@ func main() {
 
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil { fmt.Println(requestErr) }
-		
+
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
@@ -76,7 +88,7 @@ func main() {
 }
 
 func decodeGzip(bodyBytes []byte) []byte {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes)) // only for body (Gzipped)
+	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
 	if err != nil {
 		fmt.Println(err)
 	}
