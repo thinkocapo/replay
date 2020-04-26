@@ -79,7 +79,7 @@ func main() {
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-		fmt.Println(string(responseData))
+		fmt.Printf("> event %v\n", string(responseData))
 
 		if !*all {
 			rows.Close()
