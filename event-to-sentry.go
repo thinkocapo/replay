@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 )
-// all these need to go in init in order for dsn to work?
-var all = flag.Bool("all", false, "send all events or 1 event from database")
 
+var all *bool
+var db *sql.DB
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
@@ -41,12 +41,14 @@ func init() {
 	KEY := strings.Split(DSN, "@")[0][7:]
 	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
 
+	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
 	fmt.Printf("> --all= %v\n", *all)
+	
+	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
 
 func main() {
-	db, _ := sql.Open("sqlite3", "sqlite.db")
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
 		fmt.Println("We got Error", err)
