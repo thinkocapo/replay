@@ -20,13 +20,15 @@ http = urllib3.PoolManager()
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print('> database', database)
-# TODO - parameterize
-SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+
+DSN = os.getenv('DSN')
+KEY = DSN.split('@')[0][7:]
+SENTRY ="http://localhost:9000/api/2/store/?sentry_key={}&sentry_version=7".format(KEY)
+print('> Sentry', SENTRY)
 
 with sqlite3.connect(database) as db:
 
     cursor = db.cursor()
-    # _id = None, # is, is not
     _id = sys.argv[1] if len(sys.argv) > 1 else None
     if _id==None:
         cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
@@ -37,12 +39,11 @@ with sqlite3.connect(database) as db:
     row = list(row) # ?
     body_bytes_buffer = row[3]  
     request_headers = json.loads(row[4])
-    print('* REQUEST_HEADERS *\n', request_headers)
 
     # update event_id/timestamp so Sentry will accept the event again
     json_body = decompress_gzip(body_bytes_buffer)
     dict_body = json.loads(json_body)
-    print('dict_body value', dict_body['exception']['values'][0]['value'])
+    print('dict_body value:', dict_body['exception']['values'][0]['value'])
     dict_body['event_id'] = uuid.uuid4().hex
     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
     print('> event_id', dict_body['event_id'])

@@ -20,7 +20,7 @@
 	// for key, value := range req.Form {
 	// 	fmt.Printf("%s = %s\n", key, value)
 	// }
-	// TODO run against a struct to type check it here
+	// run against a struct to type check it here
 	// Looks like all are arrays
 	/*
 		$ ./dump-request 
