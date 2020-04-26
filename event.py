@@ -12,19 +12,25 @@ DSN = os.getenv('DSN')
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
 KEY = DSN.split('@')[0]
-# SENTRY = 'localhost:9000'
 PROXY = 'localhost:3001'
+# SENTRY = 'localhost:9000'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
-MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+# MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
 
 # proxy saves the event to database. Doesn't send to Senry.
-MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
+# MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 
 # proxy saves the event to database and forwards it on to Sentry
-MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
+# MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
-# has stack trace
+def dsn(string):
+    return KEY + '@'+ PROXY + string
+MODIFIED_DSN_FORWARD = dsn('/2')
+MODIFIED_DSN_SAVE = dsn('/3')
+MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/4')
+print('******MOD*******', MODIFIED_DSN_SAVE_AND_FORWARD)
+
 def stacktrace():
     try:
         1 / 0
