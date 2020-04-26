@@ -71,6 +71,7 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 
 PI  
 - Tour of Go
+- func init
 - Struct for rows.Scan
 - gloang script on a crontab (macbook cronjob) every hour
 
