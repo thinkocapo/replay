@@ -102,7 +102,7 @@ def save_and_forward():
 @app.route('/load-and-forward', defaults={'pk':0}, methods=['GET'])
 @app.route('/load-and-forward/<pk>', methods=['GET'])
 def load_and_forward(pk):
-    # TODO 'If it's of class type memoryview then run this'
+    # 'If it's of class type memoryview then run this'
     # sometimes needed
     # def bytea2bytes(value, cur):
     #     m = psycopg2.BINARY(value, cur)

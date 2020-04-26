@@ -1,15 +1,5 @@
-all:
-	flask_prep db_prep proxy
-
 proxy:
 	FLASK_APP=./flask/server-sqlite.py FLASK_ENV=development flask run -p 3001
-
-event_to_db:
-	python app.py
-
-event_to_sentry:
-	python event-to-sentry.py
-	# TODO ./event-to-sentry <-- Go executable
 
 goreplay:
 	go build middleware.go

@@ -28,20 +28,26 @@ use Python3 for event-to-sentry.py or else BytesIo.getvalue() will return string
 
 ## Setup
 
-1. put your DSN in `.env`
+1. get a DSN from Sentry on localhost:9000 and put it in `.env`
 
-2. `pip install -r ./flask/requirements.txt`
-
+2. `pip3 install -r ./flask/requirements.txt`
+```
+virtualenv -p /usr/bin/python3 .virtualenv
+source .virtualenv/bin/activate
+```
 3. `git clone getsentry/onpremise` and `install.sh`
 
-## Run
-Get proxy running (and Sentry running/listening), Send some events to Database via the proxy:
+4. 
 ```
-# Flask
+go get github.com/google/uuid
+go get github.com/mattn/go-sqlite3
+go get github.com/joho/godotenv
+```
+## Run
+sends an event to proxy (Flask) and saves it to sqlite database.
+```
 make proxy
 
-
-# creates an event, hits an endpoint in Flask, saves event to database
 python app.py
 ```
 
@@ -50,46 +56,42 @@ Get Sentry running, Load events from DB and send to Sentry
 # getsentry/onpremise
 docker-compose up
 
-# script gets event from database and sends to Sentry
-python event-to-sentry.py
+# script gets event from database and sends to Sentry. go works more consistently.
 go run event-to-sentry.go
-
-# See your event in Sentry at `localhost:9000`
+go run event-to-sentry.go --all
+python event-to-sentry.py
+python event-to-sentry.py <id>
 ```
+See your event in Sentry at `localhost:9000`
 
-Note - The modified `DSN` variant that you use when initializing Sentry will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`
-
+Note - The modified `DSN` variant that you use when initializing Sentry in app.py will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`  
 Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent event from the database
 
 ## TODO
 
 PI  
-- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
+- Tour of Go
+- func init
+- Struct for rows.Scan
+- gloang script on a crontab (macbook cronjob) every hour
 
 PII
-- Tour of Go
-- golang scripts. x events y type. release as Day.
-- golang script for grabbing x events of type y from DB and send to Sentry,io
-- gloang script on a crontab (macbook cronjob) every hour
-- naming Transport
+- javascript events
+- golang script x events y type
 
-Python
-- import logger for python
-- can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
+- python. import logger for python
+- python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
 - new visual
+- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me)
+- a check to see if Sentry is running? check port:9000 if it's on-premise
 - sqlite3 db column for fingerprint so never end up with duplicates
-
-- optional since go is statically typed - log the type/class of significant data objects
-
+- for non-static languages, log/check the type/class of significant data objects? annotate data type to variable name
 - improve variable names. e.g. `request.data` as `request_data_bytes`
-- Add Javascript and Node events
-
-Python
 - python3 function/class for checking data types  
-- before/after hook on Flask endpoint for logging name of endpoint
-- better packaging https://docs.python.org/3/tutorial/modules.html#packages
+- before/after hook on Flask endpoint for logging things...name of endpoint
+- https://docs.python.org/3/tutorial/modules.html#packages
 
 ## Notes
 If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
@@ -151,3 +153,11 @@ https://docs.python.org/3/library/typing.html
 https://medium.com/@ageitgey/learn-how-to-use-static-type-checking-in-python-3-6-in-10-minutes-12c86d72677b  
 
 CONVERT 'data' from go object / json into (encoded) ,utf8,bytes,
+
+
+sqlalchemy==1.3.15
+
+
+removed flask/.env which had `SQLITE=` in it
+
+https://en.wikipedia.org/wiki/Marshalling_(computer_science)

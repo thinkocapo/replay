@@ -5,8 +5,8 @@ import os
 import sentry_sdk
 import socket
 
-# DSN is like 
-# "https://<key>@<organization>.ingest.sentry.io/<project>"
+# Unmodified DSN will send event directly to Sentry
+# https://<key>@<organization>.ingest.sentry.io/<project>
 # http://09aa0d909232457a8a6dfff118bac658@localhost:9000/2
 DSN = os.getenv('DSN')
 
@@ -14,9 +14,6 @@ DSN = os.getenv('DSN')
 KEY = DSN.split('@')[0]
 # SENTRY = 'localhost:9000'
 PROXY = 'localhost:3001'
-
-# event skips the proxy and goes directly to Sentry. DSN in its original form from Sentry
-# ORIGINAL_DSN = KEY + '@' + SENTRY + '/2'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
 MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'

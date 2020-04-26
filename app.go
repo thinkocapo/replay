@@ -14,7 +14,7 @@ import (
 )
 
 
-// TODO - generate Go exceptions and capture via sentry sdk
+// generate Go exceptions and capture via sentry sdk
 
 // use cli args for # of errors sent. cap it at 100
 func main() {
