@@ -71,8 +71,6 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 
 PI  
 - Tour of Go
-- func init
-- Struct for rows.Scan
 - gloang script on a crontab (macbook cronjob) every hour
 
 PII
@@ -161,3 +159,10 @@ sqlalchemy==1.3.15
 removed flask/.env which had `SQLITE=` in it
 
 https://en.wikipedia.org/wiki/Marshalling_(computer_science)
+
+
+
+Go package tests often provide clues as to ways of doing things
+
+
+For example, from database/sql/sql_test.go,

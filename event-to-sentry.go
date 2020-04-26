@@ -8,13 +8,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
-	"os"
 	"net/http"
-	// "github.com/buger/jsonparser"
+	"os"
 	"strings"
 	"time"
 )
@@ -28,6 +28,12 @@ var httpClient = &http.Client{
 var DSN string
 var SENTRY_URL string
 var exists bool
+
+type Event struct {
+	id int
+	name, _type, headers string
+	bodyBytesCompressed []byte
+}
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -54,14 +60,10 @@ func main() {
 		fmt.Println("We got Error", err)
 	}
 	for rows.Next() {
-		var id int
-		var name, _type, headers string
-		var bodyBytesCompressed []byte
-		
-		// TODO	- Struct?
-		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
+		var event Event
+		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
 
-		bodyBytes := decodeGzip(bodyBytesCompressed)
+		bodyBytes := decodeGzip(event.bodyBytesCompressed)
 		bodyInterface := unmarshalJSON(bodyBytes)
 
 		bodyInterface = replaceEventId(bodyInterface)
@@ -73,7 +75,7 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		headerInterface := unmarshalJSON([]byte(headers))
+		headerInterface := unmarshalJSON([]byte(event.headers))
 
 		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
