@@ -44,19 +44,20 @@ go get github.com/mattn/go-sqlite3
 go get github.com/joho/godotenv
 ```
 ## Run
-sends an event to proxy (Flask) and saves it to sqlite database.
+**STEP1**
+run the proxy (Flask) then send an event to it. proxy's default behavior is to save the event in Sqlite
 ```
 make proxy
 
-python app.py
+python event.py
 ```
-
-Get Sentry running, Load events from DB and send to Sentry
+**STEP2**
+Get Sentry running, then load event(s) from Sqlite and send to Sentry
 ```
 # getsentry/onpremise
 docker-compose up
 
-# script gets event from database and sends to Sentry. go works more consistently.
+# Go works more consistently
 go run event-to-sentry.go
 go run event-to-sentry.go --all
 python event-to-sentry.py
@@ -64,18 +65,16 @@ python event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
-Note - The modified `DSN` variant that you use when initializing Sentry in app.py will determine what the proxy will do. They are mapped to different endpoints in `flask/server-sqlite.py`  
-Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent event from the database
+## Notes
+The "modified" DSN you initialize sentry_sdk with in event.py will determine which endpoint gets hit in `flask/proxy.py`
+
+`python test.py` and `go run test.go` or for showing the most recent event saved in the database, and total row count.
 
 ## TODO
 
 PI  
 - Tour of Go
 - gloang script on a crontab (macbook cronjob) every hour
-
-- `event.py` instead of `app.py`. so event.py then event-to-sentry.py
-- `python sentry.py` `go run sentry.go` and `make pysentry` `make gosentry`
-
 
 PII
 - javascript events
@@ -85,6 +84,7 @@ PII
 - python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
+- "save_event" "load_event" or "make pysentry" "make gosentry" and/or "python sentry.py" "go run sentry.go"
 - new visual
 - "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me)
 - a check to see if Sentry is running? check port:9000 if it's on-premise

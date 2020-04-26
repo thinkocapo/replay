@@ -4,24 +4,25 @@
 *.pyc
 **.pyc
 
+/flask/__pycache__
+/flask/.virtualenv
+
 app
 gor
 dump-request
 decode-request
 middleware
 
-sqlite.db
-
-/flask/__pycache__
-/flask/.virtualenv
+event-to-sentry
+sqlite-test
+test
 
 go/app
+go/gor
 go/middleware
 go/result.csv
 go/dump-request
 
-sqlite-test
-test
-event-to-sentry
-
 result-csv
+
+sqlite.db
