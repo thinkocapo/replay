@@ -3,6 +3,8 @@ import json
 from six import BytesIO
 import sqlite3
 
+"""This tests how many records are in your Sqlite database"""
+
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
     try:

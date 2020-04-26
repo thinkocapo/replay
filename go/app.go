@@ -1,5 +1,4 @@
 package main
-// This is for sending an Event directly to your Sentry instance. does not use proxy. tesing purposes.
 import (
 	// "encoding/json"
 	"fmt"
@@ -8,15 +7,12 @@ import (
 	"log"
 	"net/http"
 	"time"
-
 	"github.com/getsentry/sentry-go"
 	// sentryhttp "github.com/getsentry/sentry-go/http"
 )
 
-
+// This is for sending an Event directly to your Sentry instance. does not use proxy yet
 // generate Go exceptions and capture via sentry sdk
-
-// use cli args for # of errors sent. cap it at 100
 func main() {
 
 	// _ = sentry.Init(sentry.ClientOptions{

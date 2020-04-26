@@ -4,7 +4,7 @@ import io
 import json
 from six import BytesIO
 
-# Functions from getsentry/sentry-python
+""" Functions from getsentry/sentry-python"""
 
 def decompress_gzip(bytes_encoded_data):
     try:

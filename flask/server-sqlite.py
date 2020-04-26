@@ -121,48 +121,6 @@ def save_and_forward():
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
 
-########################  STEP 2  #########################
-# see event-to-sentry.py for same functionality
-# Loads a saved event's payload+headers from database and forwards to Sentry instance 
-# if no id ID is provided then query selects most recent event
-# bytes_io_body.getvalue()
 # @app.route('/load-and-forward', defaults={'_id':0}, methods=['GET'])
 # @app.route('/load-and-forward/<_id>', methods=['GET'])
 # def load_and_forward(_id):
-    
-#     with sqlite3.connect(database) as db:
-#         cursor = db.cursor()
-#         if _id==0:
-#             cursor.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
-#         else:
-#             cursor.execute("SELECT * FROM events WHERE id=?", [_id])
-#         rows = cursor.fetchall()
-#         row = rows[0]
-#         row = list(row)
-#         # 'bytes' not 'buffer' like in db_prep.py
-#         body_bytes_buffer = row[3]
-#         request_headers = json.loads(row[4])
-
-#     # call it 'bytes_buffer_body'
-#     # update event_id/timestamp so Sentry will accept the event again
-#     json_body = decompress_gzip(body_bytes_buffer)
-#     dict_body = json.loads(json_body)
-#     dict_body['event_id'] = uuid.uuid4().hex
-#     dict_body['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
-#     print('> event_id', dict_body['event_id'])
-#     print('> timestamp', dict_body['timestamp'])
-#     bytes_io_body = compress_gzip(dict_body)
-        
-#     try:
-#         print('type(request_headers)', type(request_headers))
-#         print('type(bytes_io_body)', type(bytes_io_body))
-#         print('type(bytes_io_body.getvalue())', type(bytes_io_body.getvalue()))
-
-#         response = http.request(
-#             "POST", str(SENTRY), body=bytes_io_body.getvalue(), headers=request_headers
-#         )
-#     except Exception as err:
-#         print('LOCAL EXCEPTION', err)
-
-#     return("> FINISH")
-

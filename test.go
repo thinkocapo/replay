@@ -22,6 +22,7 @@ import (
 	// sentryhttp "github.com/getsentry/sentry-go/http"
 )
 
+// This tests how many records are in your sqlite database
 func main() {
 
 
