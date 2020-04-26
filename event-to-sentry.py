@@ -26,8 +26,6 @@ KEY = DSN.split('@')[0][7:]
 SENTRY ="http://localhost:9000/api/2/store/?sentry_key={}&sentry_version=7".format(KEY)
 print('> Sentry', SENTRY)
 
-"""the final http request to Sentry here hangs sometimes. haven't figured out why. event-to-sentry.go works more consistently"""
-
 with sqlite3.connect(database) as db:
 
     cursor = db.cursor()
