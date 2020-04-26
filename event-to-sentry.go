@@ -29,6 +29,8 @@ var DSN string
 var SENTRY_URL string
 var exists bool
 
+// TODO could []byte force-type headers into bytes? wouldn't have to []byte(event.headers) later
+// initializer function here too much work?
 type Event struct {
 	id int
 	name, _type, headers string
@@ -57,7 +59,7 @@ func init() {
 func main() {
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
-		fmt.Println("We got Error", err)
+		fmt.Println("Failed to load rows", err)
 	}
 	for rows.Next() {
 		var event Event

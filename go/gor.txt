@@ -16,11 +16,11 @@ go get github.com/buger/jsonparser
 
 
 #### Run
-Send events using app.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
+Send events using event.py to your on-prem instance. the middleware.go sniffs the events and doesn't interrupt them like a proxy does.   
 1. `docker-compose up`
 2. `go build middleware.go`
 3. `sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store`
-3. `python3 app.py` using ORIGINAL_DSN
+3. `python3 event.py` using ORIGINAL_DSN
 
 and
 

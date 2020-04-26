@@ -12,32 +12,37 @@ DSN = os.getenv('DSN')
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
 KEY = DSN.split('@')[0]
-# SENTRY = 'localhost:9000'
 PROXY = 'localhost:3001'
+# SENTRY = 'localhost:9000'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
-MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+# MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
 
 # proxy saves the event to database. Doesn't send to Senry.
-MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
+# MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 
 # proxy saves the event to database and forwards it on to Sentry
-MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
+# MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
-# has stack trace
-def thingy():
+def dsn(string):
+    return KEY + '@'+ PROXY + string
+MODIFIED_DSN_FORWARD = dsn('/2')
+MODIFIED_DSN_SAVE = dsn('/3')
+MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/4')
+print('******MOD*******', MODIFIED_DSN_SAVE_AND_FORWARD)
+
+def stacktrace():
     try:
-        # for sure
         1 / 0
     except Exception as err:
         sentry_sdk.capture_exception(err)
-    # sentry_sdk.capture_exception(Exception("WhatTimeIsIt"))
+        # sentry_sdk.capture_exception(Exception("ThisWillHaveAStacktrace?"))
 
 def app():
-    thingy()
+    stacktrace()
     # sentry_sdk.capture_exception(Exception("This won't have a stack trace"))
 
-def dsn_and_proxy_connection_check():
+def dsn_and_proxy_check():
     if DSN=='':
         print('> no DSN')
         exit()
@@ -56,6 +61,6 @@ def initialize_sentry():
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
-    dsn_and_proxy_connection_check()
+    dsn_and_proxy_check()
     initialize_sentry()
     app()
