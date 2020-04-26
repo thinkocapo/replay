@@ -73,6 +73,10 @@ PI
 - Tour of Go
 - gloang script on a crontab (macbook cronjob) every hour
 
+- `event.py` instead of `app.py`. so event.py then event-to-sentry.py
+- `python sentry.py` `go run sentry.go` and `make pysentry` `make gosentry`
+
+
 PII
 - javascript events
 - golang script x events y type
