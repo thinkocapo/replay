@@ -48,7 +48,7 @@ with sqlite3.connect(database) as db:
 
 ########################  STEP 1  #########################
 
-# MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in app.py, and then sends it to a Sentry instance
+# MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
     print('> FORWARD')

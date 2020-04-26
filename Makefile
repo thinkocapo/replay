@@ -1,10 +1,13 @@
 proxy:
 	FLASK_APP=./flask/proxy.py FLASK_ENV=development flask run -p 3001
 
-go:
+event:
+	go run event.go
+
+gotosentry:
 	go run event-to-sentry.go
 
-py:
+pythontosentry:
 	python3 event-to-sentry.py
 
 goreplay:

@@ -106,7 +106,7 @@ Sentry sdk sends events to a Flask API (like a proxy or interceptor) which then 
 1. `docker-compose up` your getsentry/onpremise, it defaults to localhost:9000
 2. `docker run...` the database
 3. `make` runs Flask server
-4. `python app.py`
+4. `python event.py`
 5. Postman for hitting the STEP2 endpoints in Flask, which send the events to Sentry.
 6. `localhost:9000` to see your Sentry onprem event, if you used forwarding.
 
