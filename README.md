@@ -4,9 +4,7 @@
 ## What's Happening
 <img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-Apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future. This can run on a scheduled job. Sentry thinks they're coming from live apps.
-
-**GOAL** Test data automation. (crontab) Have 1 app send events for all sdk's rather than 1 app per sdk. Prepare these events ahead of time in a database, by intercepting or "undertake them" on their way to Sentry using the proxy API (Flask) in this repo and storing them to sqlite.
+Intercept or "undertake" events on their way to Sentry using the proxy API (Flask) and store them in Sqlite. 1 app sends loads them from database and sends to SEntry. Good for test data automation (cronjob below). Apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events
 
 [example payload structure](./img/payload-structure.png) from a sentry sdk event:  
 
@@ -63,10 +61,10 @@ python event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
-Cronjob & Crontab (Mac)
+Cronjob
 ```
 # crontab -e
-1-59 * * * * /home/wcap/thinkocapo/event-maker
+1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
 # crontab -l
 ```
 ## Notes
@@ -80,9 +78,12 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 
 PI  
 - gloang script on a crontab (macbook cronjob) every hour
+
+- event-to-sentry.go parameterize the DATABASE_PATH
+- event.go in go
+- event.go DSN as Struct with stringify method?
+- event-to-sentry.go in go
 - Tour of Go
-- event-to-sentry.go parameterize the SQLITE_DATABASE path
-- make DSN into a Struct
 
 PII
 - javascript events
