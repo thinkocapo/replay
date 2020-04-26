@@ -77,8 +77,6 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 ## TODO
 
 PI  
-- gloang script on a crontab (macbook cronjob) every hour
-
 - event-to-sentry.go parameterize the DATABASE_PATH
 - event.go in go
 - event.go DSN as Struct with stringify method?
