@@ -1,14 +1,10 @@
 # Undertaker
-## Goal
-Test data automation. Have 1 app send events for all sdk's rather than 1 app per sdk. Prepare these events ahead of time in a database, by intercepting or "undertake them" on their way to Sentry using the proxy API (Flask) in this repo and storing them to sqlite.
-
+(image)
 
 ## What's Happening
 <img src="./img/workflow-diagram.jpeg" width="450" height="300">  
 
-STEP1 - Sentry sdk's send events to the API defined in /flask/server-sqlite.py. It acts like a proxy that intercept the events before they hit Sentry. It saves copies of them in a database. This is useful because apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events. Events are instead saved in a database for replaying in the future.
-
-STEP2 - Events do not have to be created because they're alread stored in a database. Load the events from the database and send them to Sentry. This can run on a scheduled job. Sentry thinks they're coming from live apps.
+Intercept or "undertake" events on their way to Sentry using the proxy API (Flask) and store them in Sqlite. 1 app sends loads them from database and sends to SEntry. Good for test data automation (cronjob below). Apps w/ sdk's do not have to stay running on a scheduled job to keep creating more errors and events
 
 [example payload structure](./img/payload-structure.png) from a sentry sdk event:  
 
@@ -65,7 +61,15 @@ python event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
+Cronjob
+```
+# crontab -e
+1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
+# crontab -l
+```
 ## Notes
+Mix of strings and serialized data types used in sqlite schema.
+
 The "modified" DSN you initialize sentry_sdk with in event.py will determine which endpoint gets hit in `flask/proxy.py`
 
 `python test.py` and `go run test.go` or for showing the most recent event saved in the database, and total row count.
@@ -73,19 +77,22 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 ## TODO
 
 PI  
+- event-to-sentry.go parameterize the DATABASE_PATH
+- event.go in go
+- event.go DSN as Struct with stringify method?
+- event-to-sentry.go in go
 - Tour of Go
-- gloang script on a crontab (macbook cronjob) every hour
 
 PII
 - javascript events
 - golang script x events y type
-
 - python. import logger for python
 - python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
+- rename 'flask' directory as proxy?
 - "save_event" "load_event" or "make pysentry" "make gosentry" and/or "python sentry.py" "go run sentry.go"
-- new visual
+- new visual, show Go icon w/ "event-to-sentry" so it's clear the relation between Go->DB->Sentry. don't need 'API/proxy' in step2.
 - "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me)
 - a check to see if Sentry is running? check port:9000 if it's on-premise
 - sqlite3 db column for fingerprint so never end up with duplicates
