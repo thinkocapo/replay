@@ -18,30 +18,34 @@ import (
 	"strings"
 	"time"
 )
-
+// all these need to go in init in order for dsn to work?
 var all = flag.Bool("all", false, "send all events or 1 event from database")
 
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 
+var DSN string
+var SENTRY_URL string
+var exists bool
 
-func main() {
-	flag.Parse()
-	fmt.Println("> --all", *all)
-
+func init() {
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	// TODO _ is for 'exists' could use in 'func init' to make sure it's there
-	DSN, _ := os.LookupEnv("DSN")
-
-	// DSN := os.Getenv("DSN")
+	DSN, exists = os.LookupEnv("DSN")
+	if !exists || DSN=="" { 
+		log.Fatal("MISSING DSN")
+	}
 	fmt.Println("> DSN", DSN)
 	KEY := strings.Split(DSN, "@")[0][7:]
-	SENTRY_URL := strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
-	fmt.Println("> SENTRY_URL", SENTRY_URL)
+	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
 
+	flag.Parse()
+	fmt.Printf("> --all= %v\n", *all)
+}
+
+func main() {
 	db, _ := sql.Open("sqlite3", "sqlite.db")
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
