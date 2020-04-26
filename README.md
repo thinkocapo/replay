@@ -63,7 +63,15 @@ python event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
+Cronjob & Crontab (Mac)
+```
+# crontab -e
+1-59 * * * * /home/wcap/thinkocapo/event-maker
+# crontab -l
+```
 ## Notes
+Mix of strings and serialized data types used in sqlite schema.
+
 The "modified" DSN you initialize sentry_sdk with in event.py will determine which endpoint gets hit in `flask/proxy.py`
 
 `python test.py` and `go run test.go` or for showing the most recent event saved in the database, and total row count.
@@ -72,19 +80,18 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 
 PI  
 - gloang script on a crontab (macbook cronjob) every hour
-
-- rename 'thing'y
 - Tour of Go
 - event-to-sentry.go parameterize the SQLITE_DATABASE path
+- make DSN into a Struct
 
 PII
 - javascript events
 - golang script x events y type
-
 - python. import logger for python
 - python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
+- rename 'flask' directory as proxy?
 - "save_event" "load_event" or "make pysentry" "make gosentry" and/or "python sentry.py" "go run sentry.go"
 - new visual, show Go icon w/ "event-to-sentry" so it's clear the relation between Go->DB->Sentry. don't need 'API/proxy' in step2.
 - "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me)
