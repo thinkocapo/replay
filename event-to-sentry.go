@@ -23,23 +23,7 @@ var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 
-func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
-	fmt.Println("before",bodyInterface["event_id"])
-	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
-	bodyInterface["event_id"] = uuid4
-	fmt.Println("after ",bodyInterface["event_id"])
-	return bodyInterface
-}
 
-func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-	fmt.Println("before",bodyInterface["timestamp"])
-	timestamp := time.Now()
-	oldTimestamp := bodyInterface["timestamp"].(string)
-	newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
-	bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-	fmt.Println("after ",bodyInterface["timestamp"])
-	return bodyInterface
-}
 
 func main() {
 	flag.Parse()
@@ -70,10 +54,7 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		var headerInterface map[string]interface{}
-		if err := json.Unmarshal([]byte(headers), &headerInterface); err != nil {
-			panic(err)
-		}
+		headerInterface := unmarshalJSON([]byte(headers))
 
 		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
@@ -81,7 +62,7 @@ func main() {
 
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil { fmt.Println(requestErr) }
-
+		
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
@@ -115,15 +96,34 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-func unmarshalJSON(bodyBytes []byte) map[string]interface{} {
-	var bodyInterface map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
+func unmarshalJSON(bytes []byte) map[string]interface{} {
+	var _interface map[string]interface{}
+	if err := json.Unmarshal(bytes, &_interface); err != nil {
 		panic(err)
 	}
-	return bodyInterface
+	return _interface
 }
+
 func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
 	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
 	return bodyBytes
+}
+
+func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
+	fmt.Println("before",bodyInterface["event_id"])
+	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
+	bodyInterface["event_id"] = uuid4
+	fmt.Println("after ",bodyInterface["event_id"])
+	return bodyInterface
+}
+
+func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+	fmt.Println("before",bodyInterface["timestamp"])
+	timestamp := time.Now()
+	oldTimestamp := bodyInterface["timestamp"].(string)
+	newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
+	bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+	fmt.Println("after ",bodyInterface["timestamp"])
+	return bodyInterface
 }
