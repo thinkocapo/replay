@@ -8,54 +8,62 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
-	"os"
 	"net/http"
-	// "github.com/buger/jsonparser"
+	"os"
 	"strings"
 	"time"
 )
 
-var all = flag.Bool("all", false, "send all events or 1 event from database")
-
+var all *bool
+var db *sql.DB
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 
+var DSN string
+var SENTRY_URL string
+var exists bool
 
-func main() {
-	flag.Parse()
-	fmt.Println("> --all", *all)
+type Event struct {
+	id int
+	name, _type, headers string
+	bodyBytesCompressed []byte
+}
 
+func init() {
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	// TODO _ is for 'exists' could use in 'func init' to make sure it's there
-	DSN, _ := os.LookupEnv("DSN")
-
-	// DSN := os.Getenv("DSN")
+	DSN, exists = os.LookupEnv("DSN")
+	if !exists || DSN=="" { 
+		log.Fatal("MISSING DSN")
+	}
 	fmt.Println("> DSN", DSN)
 	KEY := strings.Split(DSN, "@")[0][7:]
-	SENTRY_URL := strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
-	fmt.Println("> SENTRY_URL", SENTRY_URL)
+	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
 
-	db, _ := sql.Open("sqlite3", "sqlite.db")
+	all = flag.Bool("all", false, "send all events or 1 event from database")
+	flag.Parse()
+	fmt.Printf("> --all= %v\n", *all)
+	
+	db, _ = sql.Open("sqlite3", "sqlite.db")
+}
+
+func main() {
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
 		fmt.Println("We got Error", err)
 	}
 	for rows.Next() {
-		var id int
-		var name, _type, headers string
-		var bodyBytesCompressed []byte
-		
-		// TODO	- Struct?
-		rows.Scan(&id, &name, &_type, &bodyBytesCompressed, &headers)
+		var event Event
+		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
 
-		bodyBytes := decodeGzip(bodyBytesCompressed)
+		bodyBytes := decodeGzip(event.bodyBytesCompressed)
 		bodyInterface := unmarshalJSON(bodyBytes)
 
 		bodyInterface = replaceEventId(bodyInterface)
@@ -67,7 +75,7 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		headerInterface := unmarshalJSON([]byte(headers))
+		headerInterface := unmarshalJSON([]byte(event.headers))
 
 		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
@@ -79,7 +87,7 @@ func main() {
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-		fmt.Println(string(responseData))
+		fmt.Printf("> event %v\n", string(responseData))
 
 		if !*all {
 			rows.Close()
