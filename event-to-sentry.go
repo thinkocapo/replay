@@ -32,7 +32,8 @@ func main() {
 
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
-    }
+	}
+	// TODO _ is for 'exists' could use in 'func init' to make sure it's there
 	DSN, _ := os.LookupEnv("DSN")
 
 	// DSN := os.Getenv("DSN")
