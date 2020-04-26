@@ -41,6 +41,7 @@ source .virtualenv/bin/activate
 ```
 go get github.com/google/uuid
 go get github.com/mattn/go-sqlite3
+go get github.com/joho/godotenv
 ```
 ## Run
 sends an event to proxy (Flask) and saves it to sqlite database.
@@ -70,8 +71,7 @@ Note - `python sqlite-test.py` and `go run sqlite-test.go` show the most recent 
 
 PI  
 - Tour of Go
-- Struct/Interface methods for making bodyInterface and updating eventId, timestamp? print %T's after reading from db. Marshal/Unmarshaling and final httpClient.Do(request)
-- Classes. Client, Transport
+- Struct for rows.Scan
 - gloang script on a crontab (macbook cronjob) every hour
 
 PII
@@ -82,17 +82,15 @@ PII
 - python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
 
 PIII  
-- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me). would still need to Unmarshall the headers
 - new visual
+- "github.com/buger/jsonparser" so it'd be bytes->update instead of bytes->interface->update (i.e. it does the Marshalling for me)
+- a check to see if Sentry is running? check port:9000 if it's on-premise
 - sqlite3 db column for fingerprint so never end up with duplicates
-- for non-static languages, log/check the type/class of significant data objects?
-
+- for non-static languages, log/check the type/class of significant data objects? annotate data type to variable name
 - improve variable names. e.g. `request.data` as `request_data_bytes`
-
-Python
 - python3 function/class for checking data types  
-- before/after hook on Flask endpoint for logging name of endpoint
-- better packaging https://docs.python.org/3/tutorial/modules.html#packages
+- before/after hook on Flask endpoint for logging things...name of endpoint
+- https://docs.python.org/3/tutorial/modules.html#packages
 
 ## Notes
 If you think you messed up your database, delete database.db and re-create the file, run db_prep again to set the schema on it.
