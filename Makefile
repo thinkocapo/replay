@@ -1,7 +1,7 @@
 proxy:
-	FLASK_APP=./flask/server-sqlite.py FLASK_ENV=development flask run -p 3001
+	FLASK_APP=./flask/proxy.py FLASK_ENV=development flask run -p 3001
 
-goo:
+go:
 	go run event-to-sentry.go
 
 py:
