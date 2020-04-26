@@ -92,7 +92,7 @@ func process(buf []byte) {
 	headerSize := bytes.IndexByte(buf, '\n') + 1
 	payload := buf[headerSize:]
 	
-	// TODO - is any of this modifying the payload? would be badd...
+	// is any of this modifying the payload? would be badd...
 	// Debug("Received payload:", string(buf))
 	end := proto.MIMEHeadersEndPos(payload)
 	body := payload[end:]	
