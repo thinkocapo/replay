@@ -57,7 +57,9 @@ docker-compose up
 
 # script gets event from database and sends to Sentry. go works more consistently.
 go run event-to-sentry.go
+go run event-to-sentry.go --all
 python event-to-sentry.py
+python event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
@@ -158,3 +160,5 @@ sqlalchemy==1.3.15
 
 
 removed flask/.env which had `SQLITE=` in it
+
+https://en.wikipedia.org/wiki/Marshalling_(computer_science)

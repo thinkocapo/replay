@@ -23,17 +23,22 @@ var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
 
-func unmarshalJSON(bodyBytes []byte) map[string]interface{} {
-	var bodyInterface map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
-		panic(err)
-	}
+func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
+	fmt.Println("before",bodyInterface["event_id"])
+	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
+	bodyInterface["event_id"] = uuid4
+	fmt.Println("after ",bodyInterface["event_id"])
 	return bodyInterface
 }
-func marshalJSON(bodyInterface map[string]interface{}) []byte {
-	postBody, errPostBody := json.Marshal(bodyInterface) 
-	if errPostBody != nil { fmt.Println(errPostBody)}
-	return postBody
+
+func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+	fmt.Println("before",bodyInterface["timestamp"])
+	timestamp := time.Now()
+	oldTimestamp := bodyInterface["timestamp"].(string)
+	newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
+	bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+	fmt.Println("after ",bodyInterface["timestamp"])
+	return bodyInterface
 }
 
 func main() {
@@ -54,22 +59,11 @@ func main() {
 		bodyBytes := decodeGzip(bodyBytesCompressed)
 		bodyInterface := unmarshalJSON(bodyBytes)
 
-		// body = replaceEventId(bodyInterface)
-		fmt.Println("before",bodyInterface["event_id"])
-		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
-		bodyInterface["event_id"] = uuid4
-		fmt.Println("after ",bodyInterface["event_id"])
+		bodyInterface = replaceEventId(bodyInterface)
+		bodyInterface = replaceTimestamp(bodyInterface)
 		
-		// body = replaceTimestamp(bodyInterface)
-		fmt.Println("before",bodyInterface["timestamp"])
-		timestamp := time.Now()
-		oldTimestamp := bodyInterface["timestamp"].(string)
-		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
-		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-		fmt.Println("after ",bodyInterface["timestamp"])
-		
-		postBody := marshalJSON(bodyInterface)
-		buf := encodeGzip(postBody)
+		bodyBytesPost := marshalJSON(bodyInterface)
+		buf := encodeGzip(bodyBytesPost)
 
 		// TODO	-parameterize
 		SENTRY_URL := "http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
@@ -100,7 +94,6 @@ func main() {
 	rows.Close()
 }
 
-// decode gzip compression
 func decodeGzip(bodyBytes []byte) []byte {
 	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes)) // only for body (Gzipped)
 	if err != nil {
@@ -112,7 +105,7 @@ func decodeGzip(bodyBytes []byte) []byte {
 	}
 	return bodyBytes
 }
-// encode gzip compression
+
 func encodeGzip(b []byte) bytes.Buffer {
 	var buf bytes.Buffer
 	w := gzip.NewWriter(&buf)
@@ -120,4 +113,17 @@ func encodeGzip(b []byte) bytes.Buffer {
 	w.Close()
 	// return buf.Bytes()
 	return buf
+}
+
+func unmarshalJSON(bodyBytes []byte) map[string]interface{} {
+	var bodyInterface map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &bodyInterface); err != nil {
+		panic(err)
+	}
+	return bodyInterface
+}
+func marshalJSON(bodyInterface map[string]interface{}) []byte {
+	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
+	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
+	return bodyBytes
 }
