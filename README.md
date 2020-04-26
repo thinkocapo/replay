@@ -71,8 +71,10 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 ## TODO
 
 PI  
-- Tour of Go
 - gloang script on a crontab (macbook cronjob) every hour
+- rename 'thing'y
+- Tour of Go
+- event-to-sentry.go parameterize the SQLITE_DATABASE path
 
 PII
 - javascript events

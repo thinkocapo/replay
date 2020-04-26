@@ -25,16 +25,15 @@ MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
 # has stack trace
-def thingy():
+def stacktrace():
     try:
-        # for sure
         1 / 0
     except Exception as err:
         sentry_sdk.capture_exception(err)
     # sentry_sdk.capture_exception(Exception("WhatTimeIsIt"))
 
 def app():
-    thingy()
+    stacktrace()
     # sentry_sdk.capture_exception(Exception("This won't have a stack trace"))
 
 def dsn_and_proxy_connection_check():
