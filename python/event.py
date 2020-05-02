@@ -24,12 +24,12 @@ PROXY = 'localhost:3001'
 # proxy saves the event to database and forwards it on to Sentry
 # MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
+# TODO test
 def dsn(string):
     return KEY + '@'+ PROXY + string
 MODIFIED_DSN_FORWARD = dsn('/2')
 MODIFIED_DSN_SAVE = dsn('/3')
 MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/4')
-print('******MOD*******', MODIFIED_DSN_SAVE_AND_FORWARD)
 
 def stacktrace():
     try:
@@ -46,9 +46,8 @@ def dsn_and_proxy_check():
     if DSN=='':
         print('> no DSN')
         exit()
-
-    HOST,PORT = PROXY.split(':')
     try:
+        HOST,PORT = PROXY.split(':')
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((HOST, int(PORT)))
     except Exception as exception:

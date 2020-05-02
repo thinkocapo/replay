@@ -77,14 +77,15 @@ The "modified" DSN you initialize sentry_sdk with in event.py will determine whi
 ## TODO
 
 PI  
+- Tour of Go (yes)
 - event.go in go
 - event.go DSN as Struct with stringify method?
-- event.py back to root so can run either.
 - event-to-sentry.go parameterize the DATABASE_PATH
+- event-to-sentry.go DSN method for SENTRY_URL
 
 PII
 - proxy.go in root level so only need 3 files.
-- Tour of Go
+- event.py back to root so can run either?
 
 
 PIII  
@@ -92,7 +93,7 @@ PIII
 - golang script x events y type now that crontab works.
 - python. import logger for python
 - python. can rename proxy endpoints with /save /forward since the number /2 /3 is really for project Id? confirm it does/nt work
-
+- projectID from DSN and not hardcode '/2' '/3'
 
 - rename 'flask' directory as proxy?
 - "save_event" "load_event" or "make pysentry" "make gosentry" and/or "python sentry.py" "go run sentry.go"
