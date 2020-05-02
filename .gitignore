@@ -26,3 +26,5 @@ go/dump-request
 result-csv
 
 sqlite.db
+
+notes.txt
