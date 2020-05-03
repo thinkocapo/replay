@@ -1,15 +1,19 @@
 const sqlite3 = require('sqlite3').verbose();
-
 const Sentry = require('@sentry/node');
+
+// Put your DSN key here
 const DSN = 'http://211dbbd50f41437a83316cdd4bec7513@localhost:9000/4'
 
-// Sentry.init({ 
-//     dsn: DSN
-// });
+var eventSavedOffline;
 
+Sentry.init({ 
+    dsn: DSN,
+    beforeSend: function (event,hint) {
+        // Normally you return the 'event' here, but in our case we're returning the event that we loaded from sqlite (i.e. it was saved offline)
+        return eventSavedOffline
+    }
+});
 
-// TODO - load event from db
-// open database in memory
 let db = new sqlite3.Database('./sqlite.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
       return console.error(err.message);
@@ -22,17 +26,15 @@ db.serialize(() => {
       if (err) {
         console.error(err.message);
       }
-      console.log("\nROWS LENGTH", rows.length)
+      
+      // the 5th event in my database is a Node Event. All the rest are Python Events, at the moment.
       let row = rows[4]
-      console.log('row\n', row)
-      console.log('row typeof(data)\n', typeof(row.data))
-      console.log('row.data', new Buffer(row.data).toString('ascii'))
+      let string = new Buffer(row.data).toString('ascii')
+      eventSavedOffline = JSON.parse(string)
 
-    //   console.log(rows)
+      Sentry.captureException('ignore me')
     });
 });
-  
-  
   
 // close the database connection
 db.close((err) => {
@@ -41,10 +43,3 @@ db.close((err) => {
     }
     console.log('Close the database connection.');
 });
-
-// try {
-//     throw new Error('ignore me');
-// } catch (e) {
-//     console.log('ignore the thrown error, and use one loaded from database') 
-//     Sentry.captureException(errorSavedOffline)
-// }
