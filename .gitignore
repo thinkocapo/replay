@@ -26,5 +26,6 @@ result-csv
 
 sqlite.db
 
+notes.txt
 node_modules
 node/node_modules
