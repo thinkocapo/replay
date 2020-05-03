@@ -23,6 +23,11 @@ db.serialize(() => {
         console.error(err.message);
       }
       console.log("\nROWS LENGTH", rows.length)
+      let row = rows[4]
+      console.log('row\n', row)
+      console.log('row typeof(data)\n', typeof(row.data))
+      console.log('row.data', new Buffer(row.data).toString('ascii'))
+
     //   console.log(rows)
     });
 });
