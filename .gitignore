@@ -15,7 +15,6 @@ middleware
 
 event-to-sentry
 sqlite-test
-test
 
 go/app
 go/gor
@@ -26,3 +25,6 @@ go/dump-request
 result-csv
 
 sqlite.db
+
+node_modules
+node/node_modules

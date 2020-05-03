@@ -29,14 +29,14 @@ def dsn(string):
 MODIFIED_DSN_FORWARD = dsn('/2')
 MODIFIED_DSN_SAVE = dsn('/3')
 MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/4')
-print('******MOD*******', MODIFIED_DSN_SAVE_AND_FORWARD)
+print('******MOD*******', MODIFIED_DSN_FORWARD)
 
 def stacktrace():
     try:
         1 / 0
     except Exception as err:
         sentry_sdk.capture_exception(err)
-        # sentry_sdk.capture_exception(Exception("ThisWillHaveAStacktrace?"))
+        # sentry_sdk.capture_exception(Exception("ThisShouldntHaveStackTrace"))
 
 def app():
     stacktrace()
@@ -57,7 +57,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE }
+    params = { 'dsn': MODIFIED_DSN_FORWARD }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
