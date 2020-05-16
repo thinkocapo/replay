@@ -69,6 +69,8 @@ Cronjob (optional)
 ```
 
 ## Notes
+The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
+
 The "modified" DSN you initialize sentry_sdk with in event.py will determine which endpoint gets hit in `flask/proxy.py`
 
 `python test.py` and `go run test.go` or for showing the most recent event saved in the database, and total row count.
