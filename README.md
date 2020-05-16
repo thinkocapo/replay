@@ -53,9 +53,11 @@ Get Sentry running, then load event(s) from Sqlite and send to Sentry
 # getsentry/onpremise
 docker-compose up
 
-# Go works more consistently
+# Go works more consistently. takes the last saved event unless you specify --all
 go run event-to-sentry.go
 go run event-to-sentry.go --all
+
+# takes last saved event unless you specify a <id>
 python event-to-sentry.py
 python event-to-sentry.py <id>
 ```
@@ -102,7 +104,5 @@ getsentry/sentry-go
 
 - event.go DSN as Struct with stringify method?
 - event-to-sentry.go DSN method for SENTRY_URL
-
-
 
 
