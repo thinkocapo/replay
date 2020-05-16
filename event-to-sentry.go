@@ -54,7 +54,8 @@ func init() {
 	}
 	fmt.Println("> DSN", DSN)
 	KEY := strings.Split(DSN, "@")[0][7:]
-	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+	PROJECT_ID := DSN[len(DSN)-1:]
+	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/",PROJECT_ID,"/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()

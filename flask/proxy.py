@@ -28,6 +28,7 @@ print("""
 """)
 
 # SENTRY - Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+# TODO the '2' in api/2/store should come from DSN key
 SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
 
 # DATABASE - Must be full absolute path to sqlite database file
