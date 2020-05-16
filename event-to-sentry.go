@@ -32,7 +32,8 @@ var (
 // initializer function here too much work?
 type Event struct {
 	id int
-	name, _type, headers string
+	name, _type string
+	headers []byte
 	bodyBytesCompressed []byte
 }
 
@@ -77,7 +78,7 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		headerInterface := unmarshalJSON([]byte(event.headers))
+		headerInterface := unmarshalJSON(event.headers)
 
 		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
