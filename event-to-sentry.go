@@ -19,22 +19,24 @@ import (
 	"time"
 )
 
-var all *bool
-var db *sql.DB
-var httpClient = &http.Client{
+// var all *bool
+// var db *sql.DB
+var httpClient = &http.Client{}
 	// CheckRedirect: redirectPolicyFunc,
-}
+// }
+
 // TODO try
-// var DSN, SENTRY_url string
-var DSN string
-var SENTRY_URL string
+// var DSN, SENTRY_URL string
 // must use var because OUTSIDE of function
-var exists bool
+// var exists bool
 
 // TODO
-// var (
-	//...
-// )
+var (
+	all *bool
+	db *sql.DB
+	DSN, SENTRY_URL string 
+	exists bool
+)
 
 // TODO could []byte force-type headers into bytes? wouldn't have to []byte(event.headers) later
 // initializer function here too much work?
