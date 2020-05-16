@@ -6,6 +6,7 @@ const DSN = 'http://211dbbd50f41437a83316cdd4bec7513@localhost:9000/4'
 
 var eventSavedOffline;
 
+// *READ HERE* This file does not have to do with github.com/thinkocapo/event-maker
 Sentry.init({ 
     dsn: DSN,
     beforeSend: function (event,hint) {
