@@ -24,10 +24,17 @@ var db *sql.DB
 var httpClient = &http.Client{
 	// CheckRedirect: redirectPolicyFunc,
 }
-
+// TODO try
+// var DSN, SENTRY_url string
 var DSN string
 var SENTRY_URL string
+// must use var because OUTSIDE of function
 var exists bool
+
+// TODO
+// var (
+	//...
+// )
 
 // TODO could []byte force-type headers into bytes? wouldn't have to []byte(event.headers) later
 // initializer function here too much work?
@@ -97,17 +104,17 @@ func main() {
 	}
 	rows.Close()
 }
-
-func decodeGzip(bodyBytes []byte) []byte {
+// test - "return named values"
+func decodeGzip(bodyBytes []byte) (bodyBytes2 []byte) {
 	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
 	if err != nil {
 		fmt.Println(err)
 	}
-	bodyBytes, err = ioutil.ReadAll(bodyReader)
+	bodyBytes2, err = ioutil.ReadAll(bodyReader)
 	if err != nil {
 		fmt.Println(err)
 	}
-	return bodyBytes
+	return
 }
 
 func encodeGzip(b []byte) bytes.Buffer {
