@@ -14,6 +14,7 @@ var db = new sqlite3.Database('./sqlite.db', sqlite3.OPEN_READWRITE, (err) => {
     console.log('Connected to the in-memory SQlite database.');
 });
 
+// *READ HERE* This file does not have to do with github.com/thinkocapo/event-maker
 Sentry.init({ 
     dsn: DSN,
     beforeSend: function (event, hint) {

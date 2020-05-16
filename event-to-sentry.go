@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-var httpClient = &http.Client{} // CheckRedirect: redirectPolicyFunc,
+var httpClient = &http.Client{}
 
 var (
 	all *bool
@@ -28,8 +28,6 @@ var (
 	exists bool
 )
 
-// TODO could []byte force-type headers into bytes? wouldn't have to []byte(event.headers) later
-// initializer function here too much work?
 type Event struct {
 	id int
 	name, _type string

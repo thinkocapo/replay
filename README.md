@@ -94,13 +94,15 @@ getsentry/sentry-go
 ```
 
 ## Todo
-- event.go in go
+- tour
+- send go events to proxy.py?
+'OR'
+- send python events to proxy.go?
+- event-to-sentry.go var DATABASE_PATH
 
 - event.go DSN as Struct with stringify method?
-- event-to-sentry.go var DATABASE_PATH
 - event-to-sentry.go DSN method for SENTRY_URL
 
-- proxy.py in .go
 
 
 
