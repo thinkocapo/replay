@@ -16,7 +16,7 @@ PROXY = 'localhost:3001'
 # SENTRY = 'localhost:9000'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
-# MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
 
 # proxy saves the event to database. Doesn't send to Senry.
 # MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
@@ -27,9 +27,10 @@ PROXY = 'localhost:3001'
 # TODO test
 def dsn(string):
     return KEY + '@'+ PROXY + string
-MODIFIED_DSN_FORWARD = dsn('/2')
+# MODIFIED_DSN_FORWARD = dsn('/2')
 MODIFIED_DSN_SAVE = dsn('/3')
 MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/4')
+print('\n MODIFIED', MODIFIED_DSN_FORWARD)
 
 def stacktrace():
     try:
