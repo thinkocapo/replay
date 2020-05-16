@@ -106,16 +106,3 @@ getsentry/sentry-go
 
 
 
-http://127.0.0.1:3999/basics/5 function (x,y int) params if both are ints
-http://127.0.0.1:3999/basics/6 func return multiple values
-http://127.0.0.1:3999/basics/7 'empty returns' if you say func returns "named return values" like (x,y int) <--enforces return values are specific variables treated within the function. this is like a good function signature. Overloaded functions
-
-var c bool <-- defaults as false
-var i int <-- defaults as 0
-
-var c, python, java = true, false, "no!"
-
-Type Conversions The expression T(v) converts the value v to the type T. so try int("5")
-
-var i int
-j := i // j is an int

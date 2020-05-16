@@ -36,6 +36,9 @@ type Event struct {
 }
 
 func init() {
+	//TEST
+	defer fmt.Println("init()")
+	
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
@@ -56,6 +59,9 @@ func init() {
 }
 
 func main() {
+	// TEST
+	defer db.Close()
+
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
