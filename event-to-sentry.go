@@ -19,18 +19,8 @@ import (
 	"time"
 )
 
-// var all *bool
-// var db *sql.DB
-var httpClient = &http.Client{}
-	// CheckRedirect: redirectPolicyFunc,
-// }
+var httpClient = &http.Client{} // CheckRedirect: redirectPolicyFunc,
 
-// TODO try
-// var DSN, SENTRY_URL string
-// must use var because OUTSIDE of function
-// var exists bool
-
-// TODO
 var (
 	all *bool
 	db *sql.DB
@@ -107,13 +97,13 @@ func main() {
 	}
 	rows.Close()
 }
-// test - "return named values"
-func decodeGzip(bodyBytes []byte) (bodyBytes2 []byte) {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
+
+func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
+	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
 	if err != nil {
 		fmt.Println(err)
 	}
-	bodyBytes2, err = ioutil.ReadAll(bodyReader)
+	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
 	if err != nil {
 		fmt.Println(err)
 	}
