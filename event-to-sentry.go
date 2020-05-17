@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"io/ioutil"
-	"log"
+	"log" // adds timestamp 2020/05/17 13:46:39
 	"net/http"
 	"os"
 	"strings"
@@ -24,10 +24,20 @@ var httpClient = &http.Client{}
 var (
 	all *bool
 	db *sql.DB
-	DSN, SENTRY_URL string 
+	dsn DSN
+	SENTRY_URL string 
 	exists bool
 )
 
+// Could put key and projectId on here as well and use a newDsn constructor that returns a pointer... good if those need to be used by more than just sentryUrl() function
+type DSN struct { 
+	dsn string
+}
+func (d DSN) sentryUrl() string {
+	KEY := strings.Split(d.dsn, "@")[0][7:]
+	PROJECT_ID := d.dsn[len(d.dsn)-1:]
+	return strings.Join([]string{"http://localhost:9000/api/",PROJECT_ID,"/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+}
 type Event struct {
 	id int
 	name, _type string
@@ -39,20 +49,17 @@ func (e Event) String() string {
 }
 
 func init() {
-	//TEST
 	defer fmt.Println("init()")
 	
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	DSN, exists = os.LookupEnv("DSN")
-	if !exists || DSN=="" { 
-		log.Fatal("MISSING DSN")
-	}
-	fmt.Println("> DSN", DSN)
-	KEY := strings.Split(DSN, "@")[0][7:]
-	PROJECT_ID := DSN[len(DSN)-1:]
-	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/",PROJECT_ID,"/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+	d, exists := os.LookupEnv("DSN")
+	if !exists || d =="" { log.Fatal("MISSING DSN") }
+	fmt.Println("> dsn", d)
+	dsn = DSN{d} // or do struct literal that sets key and projectId as well
+	SENTRY_URL = dsn.sentryUrl()
+	fmt.Println("SENTRY_URL", SENTRY_URL)
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
