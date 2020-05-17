@@ -97,12 +97,12 @@ getsentry/sentry-go
 
 ## Todo
 - tour
-- send go events to proxy.py?
+
+- send go events to proxy.py? (yes do first, test can test scripting of python+go events together)
+    - script for sending python+go events together to Sentry:9000
 'OR'
-- send python events to proxy.go?
+- send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
+
+
 - event-to-sentry.go var DATABASE_PATH
-
-- event.go DSN as Struct with stringify method?
-- event-to-sentry.go DSN method for SENTRY_URL
-
 
