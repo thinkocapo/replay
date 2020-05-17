@@ -139,6 +139,10 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
+	if event_id, ok := bodyInterface["event_id"]; !ok { 
+		log.Print("no event_id on object from DB")
+	}
+
 	fmt.Println("before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
@@ -147,6 +151,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 }
 
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+	if timestamp, ok := bodyInterface["timestamp"]; !ok { 
+		log.Print("no timestamp on object from DB")
+	}
+
 	fmt.Println("before",bodyInterface["timestamp"])
 	timestamp := time.Now()
 	oldTimestamp := bodyInterface["timestamp"].(string)
