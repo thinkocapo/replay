@@ -34,6 +34,9 @@ type Event struct {
 	headers []byte
 	bodyBytesCompressed []byte
 }
+func (e Event) String() string {
+	return fmt.Sprintf("Event details: %v %v %v", e.id, e.name, e._type)
+}
 
 func init() {
 	//TEST
@@ -69,6 +72,7 @@ func main() {
 	for rows.Next() {
 		var event Event
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
+		fmt.Println(event)
 
 		bodyBytes := decodeGzip(event.bodyBytesCompressed)
 		bodyInterface := unmarshalJSON(bodyBytes)
@@ -139,7 +143,7 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
-	if event_id, ok := bodyInterface["event_id"]; !ok { 
+	if _, ok := bodyInterface["event_id"]; !ok { 
 		log.Print("no event_id on object from DB")
 	}
 
@@ -151,7 +155,7 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 }
 
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-	if timestamp, ok := bodyInterface["timestamp"]; !ok { 
+	if _, ok := bodyInterface["timestamp"]; !ok { 
 		log.Print("no timestamp on object from DB")
 	}
 
