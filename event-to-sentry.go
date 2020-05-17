@@ -12,42 +12,54 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"io/ioutil"
-	"log"
+	"log" // adds timestamp 2020/05/17 13:46:39
 	"net/http"
 	"os"
 	"strings"
 	"time"
 )
 
-var all *bool
-var db *sql.DB
-var httpClient = &http.Client{
-	// CheckRedirect: redirectPolicyFunc,
+var httpClient = &http.Client{}
+
+var (
+	all *bool
+	db *sql.DB
+	dsn DSN
+	SENTRY_URL string 
+	exists bool
+)
+
+// Could put key and projectId on here as well and use a newDsn constructor that returns a pointer... good if those need to be used by more than just sentryUrl() function
+type DSN struct { 
+	dsn string
 }
-
-var DSN string
-var SENTRY_URL string
-var exists bool
-
-// TODO could []byte force-type headers into bytes? wouldn't have to []byte(event.headers) later
-// initializer function here too much work?
+func (d DSN) sentryUrl() string {
+	KEY := strings.Split(d.dsn, "@")[0][7:]
+	PROJECT_ID := d.dsn[len(d.dsn)-1:]
+	return strings.Join([]string{"http://localhost:9000/api/",PROJECT_ID,"/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+}
 type Event struct {
 	id int
-	name, _type, headers string
+	name, _type string
+	headers []byte
 	bodyBytesCompressed []byte
+}
+func (e Event) String() string {
+	return fmt.Sprintf("Event details: %v %v %v", e.id, e.name, e._type)
 }
 
 func init() {
+	defer fmt.Println("init()")
+	
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	DSN, exists = os.LookupEnv("DSN")
-	if !exists || DSN=="" { 
-		log.Fatal("MISSING DSN")
-	}
-	fmt.Println("> DSN", DSN)
-	KEY := strings.Split(DSN, "@")[0][7:]
-	SENTRY_URL = strings.Join([]string{"http://localhost:9000/api/2/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+	d, exists := os.LookupEnv("DSN")
+	if !exists || d =="" { log.Fatal("MISSING DSN") }
+	fmt.Println("> dsn", d)
+	dsn = DSN{d} // or do struct literal that sets key and projectId as well
+	SENTRY_URL = dsn.sentryUrl()
+	fmt.Println("SENTRY_URL", SENTRY_URL)
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
@@ -57,6 +69,9 @@ func init() {
 }
 
 func main() {
+	// TEST
+	defer db.Close()
+
 	rows, err := db.Query("SELECT * FROM events")
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
@@ -64,6 +79,7 @@ func main() {
 	for rows.Next() {
 		var event Event
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
+		fmt.Println(event)
 
 		bodyBytes := decodeGzip(event.bodyBytesCompressed)
 		bodyInterface := unmarshalJSON(bodyBytes)
@@ -77,7 +93,7 @@ func main() {
 		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-		headerInterface := unmarshalJSON([]byte(event.headers))
+		headerInterface := unmarshalJSON(event.headers)
 
 		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
@@ -98,16 +114,16 @@ func main() {
 	rows.Close()
 }
 
-func decodeGzip(bodyBytes []byte) []byte {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
+func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
+	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
 	if err != nil {
 		fmt.Println(err)
 	}
-	bodyBytes, err = ioutil.ReadAll(bodyReader)
+	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
 	if err != nil {
 		fmt.Println(err)
 	}
-	return bodyBytes
+	return
 }
 
 func encodeGzip(b []byte) bytes.Buffer {
@@ -134,6 +150,10 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
+	if _, ok := bodyInterface["event_id"]; !ok { 
+		log.Print("no event_id on object from DB")
+	}
+
 	fmt.Println("before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
@@ -142,6 +162,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 }
 
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+	if _, ok := bodyInterface["timestamp"]; !ok { 
+		log.Print("no timestamp on object from DB")
+	}
+
 	fmt.Println("before",bodyInterface["timestamp"])
 	timestamp := time.Now()
 	oldTimestamp := bodyInterface["timestamp"].(string)

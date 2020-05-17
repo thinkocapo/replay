@@ -53,9 +53,11 @@ Get Sentry running, then load event(s) from Sqlite and send to Sentry
 # getsentry/onpremise
 docker-compose up
 
-# Go works more consistently
+# Go works more consistently. takes the last saved event unless you specify --all
 go run event-to-sentry.go
 go run event-to-sentry.go --all
+
+# takes last saved event unless you specify a <id>
 python event-to-sentry.py
 python event-to-sentry.py <id>
 ```
@@ -69,6 +71,8 @@ Cronjob (optional)
 ```
 
 ## Notes
+The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
+
 The "modified" DSN you initialize sentry_sdk with in event.py will determine which endpoint gets hit in `flask/proxy.py`
 
 `python test.py` and `go run test.go` or for showing the most recent event saved in the database, and total row count.
@@ -92,8 +96,13 @@ getsentry/sentry-go
 ```
 
 ## Todo
-- event.go in go
-- event.go DSN as Struct with stringify method?
-- event-to-sentry.go parameterize the DATABASE_PATH
-- event-to-sentry.go DSN method for SENTRY_URL
-- proxy.py in .go
+- tour
+
+- send go events to proxy.py? (yes do first, test can test scripting of python+go events together)
+    - script for sending python+go events together to Sentry:9000
+'OR'
+- send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
+
+
+- event-to-sentry.go var DATABASE_PATH
+
