@@ -3,10 +3,9 @@
 
 <img src="./img/undertaker-4.jpeg" width="450" height="300">  
 
-## why?  
+## why and what's happening?  
 Good for test data automation. Do not have to maintain +10 different app and sdk types in Heroku/GCP sending events all the time. Rather, run a single program `event-to-sentry.go` on a cronjob to send those +10 event types for you. It's free. 
 
-## what's happening
 <img src="./img/event-maker-slide-2.001.png" width="450" height="300">  
 
 **STEP1**  
