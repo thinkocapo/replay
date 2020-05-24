@@ -35,7 +35,7 @@ def stacktrace():
         1 / 0
     except Exception as err:
         # sentry_sdk.capture_exception(err)
-        sentry_sdk.capture_exception(Exception("things1022"))
+        sentry_sdk.capture_exception(Exception("anyday1055"))
 
 def app():
     stacktrace()
@@ -55,7 +55,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE }
+    params = { 'dsn': MODIFIED_DSN_FORWARD }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

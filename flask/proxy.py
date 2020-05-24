@@ -30,18 +30,13 @@ print("""
 DSN = os.getenv('DSN')
 KEY = DSN.split('@')[0]
 PROJECT_ID= DSN[-1:]
+# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+# SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7" % PROJECT_ID
 print('**** DSN *****', DSN)
 print('**** KEY *****', KEY)
 print('**** PROJECT_ID *****', PROJECT_ID)
-
-
-
-# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7" % PROJECT_ID
-# SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
-
 print('**** SENTRY *****', SENTRY)
-
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
