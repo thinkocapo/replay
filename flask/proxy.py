@@ -27,12 +27,13 @@ print("""
                                                                                  
 """)
 
-DSN = os.getenv('DSN')
+DSN = os.getenv('DSN_REACT')
 KEY = DSN.split('@')[0]
 PROJECT_ID= DSN[-1:]
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
 SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7" % PROJECT_ID
+
 print('**** DSN *****', DSN)
 print('**** KEY *****', KEY)
 print('**** PROJECT_ID *****', PROJECT_ID)
@@ -58,7 +59,7 @@ with sqlite3.connect(database) as db:
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 # TODO does the '2' here have to be dynamic from .env DSN as well??
-@app.route('/api/2/store/', methods=['POST'])
+@app.route('/api/00/store/', methods=['POST'])
 def forward():
     print('> FORWARD')
     request_headers = {}
@@ -79,7 +80,7 @@ def forward():
         print('LOCAL EXCEPTION', err)
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
-@app.route('/api/3/store/', methods=['POST'])
+@app.route('/api/01/store/', methods=['POST'])
 def save():
     print('> SAVING')
 
@@ -102,7 +103,7 @@ def save():
         print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD
-@app.route('/api/4/store/', methods=['POST'])
+@app.route('/api/02/store/', methods=['POST'])
 def save_and_forward():
 
     request_headers = {}
