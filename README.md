@@ -22,7 +22,7 @@ tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyt
 use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
 
 1. `git clone getsentry/onpremise` and `./install.sh`
-2. DSN in `.env`
+2. DSN in `.env`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 3. `pip3 install -r ./flask/requirements.txt`
 4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv`
 
