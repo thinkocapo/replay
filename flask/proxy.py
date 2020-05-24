@@ -27,9 +27,21 @@ print("""
                                                                                  
 """)
 
-# SENTRY - Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# TODO the '2' in api/2/store should come from DSN key so it's the right PROJECT_ID
-SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+DSN = os.getenv('DSN')
+KEY = DSN.split('@')[0]
+PROJECT_ID= DSN[-1:]
+print('**** DSN *****', DSN)
+print('**** KEY *****', KEY)
+print('**** PROJECT_ID *****', PROJECT_ID)
+
+
+
+# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7" % PROJECT_ID
+# SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+
+print('**** SENTRY *****', SENTRY)
+
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
@@ -50,6 +62,7 @@ with sqlite3.connect(database) as db:
 ########################  STEP 1  #########################
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
+# TODO does the '2' here have to be dynamic from .env DSN as well??
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
     print('> FORWARD')

@@ -35,7 +35,7 @@ def stacktrace():
         1 / 0
     except Exception as err:
         # sentry_sdk.capture_exception(err)
-        sentry_sdk.capture_exception(Exception("ThisShouldntHaveStackTrace942"))
+        sentry_sdk.capture_exception(Exception("things1022"))
 
 def app():
     stacktrace()
