@@ -34,12 +34,13 @@ def stacktrace():
     try:
         1 / 0
     except Exception as err:
-        # sentry_sdk.capture_exception(err)
-        sentry_sdk.capture_exception(Exception("anyday1055"))
+        sentry_sdk.capture_exception(err)
 
 def app():
     stacktrace()
-    # sentry_sdk.capture_exception(Exception("This won't have a stack trace"))
+    
+    # Exception literals will not have stack traces
+    sentry_sdk.capture_exception(Exception("anyday1055"))
 
 def dsn_and_proxy_check():
     if DSN=='':
