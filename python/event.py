@@ -17,7 +17,7 @@ SDK requires that DSN ends in a number. Use zero's for proxy endpoints so no con
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
-DSN = os.getenv('DSN')
+DSN = os.getenv('DSN_PYTHON')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 
@@ -25,6 +25,7 @@ PROXY = 'localhost:3001'
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
 MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+# print('MODIFIED_DSN_FORWARD', MODIFIED_DSN_FORWARD)
 
 # proxy saves the event to database. Doesn't send to Senry.
 MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/01'

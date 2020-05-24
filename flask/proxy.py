@@ -27,17 +27,17 @@ print("""
                                                                                  
 """)
 
-DSN = os.getenv('DSN_REACT')
+DSN = os.getenv('DSN_PYTHON')
 KEY = DSN.split('@')[0][7:]
 PROJECT_ID= DSN[-1:]
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
 # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
 SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
 
-print('**** DSN *****', DSN)
-print('**** KEY *****', KEY)
-print('**** PROJECT_ID *****', PROJECT_ID)
-print('**** SENTRY *****', SENTRY)
+# print('**** DSN *****', DSN)
+# print('**** KEY *****', KEY)
+# print('**** PROJECT_ID *****', PROJECT_ID)
+# print('**** SENTRY *****', SENTRY)
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
@@ -61,44 +61,31 @@ with sqlite3.connect(database) as db:
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
     print('> FORWARD')
-    request_headers = {}
 
+    # print('> request', request.base_url) # request.full_path
+    # key=request.args['sentry_key'] # only works for javascript events...
+
+    # TODO add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing
     def make(headers):
-        print('\nMMMMMMMMMMMMMMMMMAKINGGGGGGGGGGGGGGGGG')
         request_headers = {}
         user_agent = request.headers.get('User-Agent')
         if 'ython' in user_agent:
-            print('PYTHON')
-            # TODO add and test 'X-Sentry-Auth'
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
         if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
-            print('JAVASCRIPT')
-            # TODO add and test 'X-Sentry-Auth' or whatever will be used for Application Management tracing
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
         return request_headers
 
     request_headers = make(request.headers)
-    print('RRRRRRRRRRRRRRRRRRRRRrequest_headersSSSSSSSSSSSSSSSSSS\n', request_headers)
 
-
-    # # PYTHON - still works
-    # for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-    # # JAVASCRIPT
-    # for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
-    #     request_headers[key] = request.headers.get(key)
-    
     try:
         print('> type(request.data)', type(request.data))
         print('> type(request_headers)', type(request_headers))
-        # print('\n****HEADERS*****\n', request.headers)
 
-        print('1111111111111111')
         response = http.request(
             "POST", str(SENTRY), body=request.data, headers=request_headers 
         )
-        print('222222222222222')
 
         print('> nothing saved to sqlite database')
         return 'success'
