@@ -75,7 +75,9 @@ This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.p
 'OR'
 - send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
 
+NEW  
+- which request.header indicates what kind of sdk/event it's from? user-agent for now. Or...  
+- how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
 
 - event-to-sentry.go var DATABASE_PATH
-
 - have all developers use a DSN that points to a cloud hosted proxy)
