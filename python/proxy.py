@@ -6,7 +6,7 @@ from flask_cors import CORS
 import json
 # import sentry_sdk
 # from sentry_sdk.integrations.flask import FlaskIntegration
-from ..services import compress_gzip, decompress_gzip
+from services import compress_gzip, decompress_gzip
 import sqlite3
 import string # ?
 import urllib3
@@ -37,18 +37,6 @@ def sentryUrl(DSN):
     # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
     # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
     return "http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
-
-# DSN = os.getenv('DSN_PYTHON')
-# KEY = DSN.split('@')[0][7:]
-# PROJECT_ID= DSN[-1:]
-# # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
-# SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
-
-# print('**** DSN *****', DSN)
-# print('**** KEY *****', KEY)
-# print('**** PROJECT_ID *****', PROJECT_ID)
-# print('**** SENTRY *****', SENTRY)
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
@@ -86,17 +74,19 @@ def forward():
         request_headers = {}
         user_agent = request.headers.get('User-Agent')
         if 'ython' in user_agent:
+            print('> python error')
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
         if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
+            print('> javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 SENTRY = sentryUrl(os.getenv('DSN_REACT'))
         return request_headers, SENTRY
 
     request_headers, SENTRY = make(request.headers) # could make return 2 values? https://note.nkmk.me/en/python-function-return-multiple-values/
-    print('SENTRY IS....', SENTRY)
+    print('> SENTRY url is', SENTRY)
     
     try:
         print('> type(request.data)', type(request.data))
