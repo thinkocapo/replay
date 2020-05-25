@@ -106,6 +106,7 @@ def forward():
 def save():
     print('> SAVING')
 
+    # TODO set request_headers based on javascript vs. python, request.data should be fine
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
