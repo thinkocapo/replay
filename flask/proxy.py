@@ -27,12 +27,23 @@ print("""
                                                                                  
 """)
 
-DSN = os.getenv('DSN_PYTHON')
-KEY = DSN.split('@')[0][7:]
-PROJECT_ID= DSN[-1:]
-# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
-SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
+SENTRY=''
+
+def sentryUrl(DSN):
+    print('\nsentryUrl')
+    # DSN = os.getenv('DSN_PYTHON')
+    KEY = DSN.split('@')[0][7:]
+    PROJECT_ID= DSN[-1:]
+    # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+    # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+    return "http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
+
+# DSN = os.getenv('DSN_PYTHON')
+# KEY = DSN.split('@')[0][7:]
+# PROJECT_ID= DSN[-1:]
+# # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+# # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+# SENTRY ="http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
 
 # print('**** DSN *****', DSN)
 # print('**** KEY *****', KEY)
@@ -62,23 +73,31 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
-    # print('> request', request.base_url) # request.full_path
-    # key=request.args['sentry_key'] # only works for javascript events...
-
-    # TODO add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing
+    """
+    TODO
+    The purpose of this function is to figure out what kind of event (javascript, python etc.) is being sent.
+    It'd be much more convenient to look at the ?sentry_key=<value> being passed and compare it against the DSN's in .env, to figure it out...
+    But sentry-python doesn't provide it in the URL :( only sentry-javascript does
+    # print('> request', request.base_url) # only shows ?sentry_key=<value> on the javascript events :/
+    # key=request.args['sentry_key'] # value only exists for jascript events, not python :/
+    My guess is Sentry.io doesn't need this in the query params anyways, because all it needs is the project Id '/2' which in our case we're abusing to define the proxy endpoint (not allowed to use letters, numbers only)
+    """
     def make(headers):
         request_headers = {}
         user_agent = request.headers.get('User-Agent')
         if 'ython' in user_agent:
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
         if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
-        return request_headers
+                SENTRY = sentryUrl(os.getenv('DSN_REACT'))
+        return request_headers, SENTRY
 
-    request_headers = make(request.headers)
-
+    request_headers, SENTRY = make(request.headers) # could make return 2 values? https://note.nkmk.me/en/python-function-return-multiple-values/
+    print('SENTRY IS....', SENTRY)
+    
     try:
         print('> type(request.data)', type(request.data))
         print('> type(request_headers)', type(request_headers))
