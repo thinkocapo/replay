@@ -1,5 +1,5 @@
 proxy:
-	FLASK_APP=./flask/proxy.py FLASK_ENV=development flask run -p 3001
+	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run -p 3001
 
 event:
 	go run event.go

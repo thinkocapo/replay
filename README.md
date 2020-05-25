@@ -22,7 +22,7 @@ tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyt
 use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
 
 1. `git clone getsentry/onpremise` and `./install.sh`
-2. DSN in `.env`
+2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 3. `pip3 install -r ./flask/requirements.txt`
 4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv`
 
@@ -75,7 +75,10 @@ This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.p
 'OR'
 - send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
 
+NEW  
+- add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing 
+- which request.header indicates what kind of sdk/event it's from? user-agent for now. Or...  
+- how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
 
 - event-to-sentry.go var DATABASE_PATH
-
 - have all developers use a DSN that points to a cloud hosted proxy)

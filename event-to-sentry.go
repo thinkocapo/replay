@@ -72,7 +72,7 @@ func main() {
 	// TEST
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM events")
+	rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
 	}

@@ -6,7 +6,7 @@ from flask_cors import CORS
 import json
 # import sentry_sdk
 # from sentry_sdk.integrations.flask import FlaskIntegration
-from ..services import compress_gzip, decompress_gzip
+from services import compress_gzip, decompress_gzip
 import sqlite3
 import string # ?
 import urllib3
@@ -27,9 +27,16 @@ print("""
                                                                                  
 """)
 
-# SENTRY - Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# TODO the '2' in api/2/store should come from DSN key so it's the right PROJECT_ID
-SENTRY ="http://localhost:9000/api/2/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7"
+SENTRY=''
+
+def sentryUrl(DSN):
+    print('\nsentryUrl')
+    # DSN = os.getenv('DSN_PYTHON')
+    KEY = DSN.split('@')[0][7:]
+    PROJECT_ID= DSN[-1:]
+    # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+    # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+    return "http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
@@ -53,9 +60,33 @@ with sqlite3.connect(database) as db:
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
     print('> FORWARD')
-    request_headers = {}
-    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-        request_headers[key] = request.headers.get(key)
+
+    """
+    TODO
+    The purpose of this function is to figure out what kind of event (javascript, python etc.) is being sent.
+    It'd be much more convenient to look at the ?sentry_key=<value> being passed and compare it against the DSN's in .env, to figure it out...
+    But sentry-python doesn't provide it in the URL :( only sentry-javascript does
+    # print('> request', request.base_url) # only shows ?sentry_key=<value> on the javascript events :/
+    # key=request.args['sentry_key'] # value only exists for jascript events, not python :/
+    My guess is Sentry.io doesn't need this in the query params anyways, because all it needs is the project Id '/2' which in our case we're abusing to define the proxy endpoint (not allowed to use letters, numbers only)
+    """
+    def make(headers):
+        request_headers = {}
+        user_agent = request.headers.get('User-Agent')
+        if 'ython' in user_agent:
+            print('> python error')
+            for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+                request_headers[key] = request.headers.get(key)
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
+        if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
+            print('> javascript error')
+            for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+                request_headers[key] = request.headers.get(key)
+                SENTRY = sentryUrl(os.getenv('DSN_REACT'))
+        return request_headers, SENTRY
+
+    request_headers, SENTRY = make(request.headers) # could make return 2 values? https://note.nkmk.me/en/python-function-return-multiple-values/
+    print('> SENTRY url is', SENTRY)
     
     try:
         print('> type(request.data)', type(request.data))
@@ -71,7 +102,7 @@ def forward():
         print('LOCAL EXCEPTION', err)
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
-@app.route('/api/3/store/', methods=['POST'])
+@app.route('/api/01/store/', methods=['POST'])
 def save():
     print('> SAVING')
 
@@ -94,7 +125,7 @@ def save():
         print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD
-@app.route('/api/4/store/', methods=['POST'])
+@app.route('/api/02/store/', methods=['POST'])
 def save_and_forward():
 
     request_headers = {}
