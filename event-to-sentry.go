@@ -30,13 +30,12 @@ var (
 	projects map[string]*DSN
 )
 
-// Could put key and projectId on here as well and use a newDsn constructor that returns a pointer... good if those need to be used by more than just sentryUrl() function
 type DSN struct { 
 	url string
 	key string
 	projectId string
 }
-func (d DSN) sentryUrl() string {
+func (d DSN) storeEndpoint() string {
 	return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
 func newDSN(url string) (*DSN) {
@@ -79,7 +78,7 @@ func init() {
 
 func javascript(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("\n************* javascript *************")
-	SENTRY_URL = projects["javascript"].sentryUrl()
+	SENTRY_URL = projects["javascript"].storeEndpoint()
 
 	bodyInterface := unmarshalJSON(bodyBytesCompressed)
 	bodyInterface = replaceEventId(bodyInterface)
@@ -108,7 +107,7 @@ func javascript(bodyBytesCompressed []byte, headers []byte) {
 
 func python(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("\n************* python *************")
-	SENTRY_URL = projects["python"].sentryUrl()
+	SENTRY_URL = projects["python"].storeEndpoint()
 
 	bodyBytes := decodeGzip(bodyBytesCompressed)
 	bodyInterface := unmarshalJSON(bodyBytes)
