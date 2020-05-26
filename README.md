@@ -49,7 +49,7 @@ python3 event-to-sentry.py <id>
 See your event in Sentry at `localhost:9000`
 
 **OPTIONAL**  
-Cronjob on your Macbook that sends events in the background
+Cronjob on your Macbook that sends events in the background. Still needs sentry-cli usage for setting the release, and then event-to-sentry.go to use that same release.
 ```
 # crontab -e
 1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
@@ -71,14 +71,16 @@ This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.p
 
 ## Todo
 
+- sentry-cli for Release for js events from Database, so they're minified
+- sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
+- when loading events from database, should be able to set this same day/month/year as the release, so it'll get associated in Sentry.io
+
+- Android errors/crashes/sessions
+
+- write a proxy.go, but make sure Mobile stuff works in proxy.py first
 - event-to-sentry.go var DATABASE_PATH
-
-- send go events to proxy.py? (yes do first, test can test scripting of python+go events together)
-    - script for sending python+go events together to Sentry:9000
-'OR'
-- send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
-
+- improve use of log.Fatal vs panic, error handling
 - add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing 
 - which request.header indicates what kind of sdk/event it's from? user-agent for now. Or...  
 - how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
-- have all developers use a DSN that points to a cloud hosted proxy
+- proxy that any developer can run locally, which forwards to their Sentry of choice, as well as a cloud db ("crowdsourced")

@@ -91,3 +91,7 @@ event-to-sentry.go
 	dsn = DSN{d} // or do struct literal that sets key and projectId as well
 	SENTRY_URL = dsn.sentryUrl()
 	fmt.Println("SENTRY_URL", SENTRY_URL)
+
+
+// this assumed it's a single-digit project Id
+projectId := rawurl[len(url)-1:]
