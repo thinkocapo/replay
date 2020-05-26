@@ -45,3 +45,8 @@ gor file-server 8000
 
 https://dev.to/fevziomurtekin/using-sqlite-in-go-programming-3g2c
 https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
+
+
+goreplay:
+	go build middleware.go
+	sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store
