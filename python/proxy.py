@@ -102,17 +102,33 @@ def forward():
         print('LOCAL EXCEPTION', err)
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
-@app.route('/api/01/store/', methods=['POST'])
+@app.route('/api/3/store/', methods=['POST'])
 def save():
     print('> SAVING')
 
+    event_type = ''
     request_headers = {}
-    for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-        request_headers[key] = request.headers.get(key)
+    user_agent = request.headers.get('User-Agent')
+    
+    if 'ython' in user_agent:
+        print('> python error type')
+        event_type = 'python'
+        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+            request_headers[key] = request.headers.get(key)
+    if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
+        print('> javascript error type')
+        event_type = 'javascript'
+        for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+            request_headers[key] = request.headers.get(key)
+
+    # request.data for javascript going into sqlite should be fine...
+    # request_headers = {}
+    # for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+    #     request_headers[key] = request.headers.get(key)
 
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-    record = ('python1', 'python', request.data, json.dumps(request_headers))
+    record = (event_type, event_type, request.data, json.dumps(request_headers))
    
     try:
         with sqlite3.connect(database) as db:
@@ -125,7 +141,7 @@ def save():
         print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD
-@app.route('/api/02/store/', methods=['POST'])
+@app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
 
     request_headers = {}

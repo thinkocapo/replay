@@ -54,7 +54,7 @@ func init() {
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	d, exists := os.LookupEnv("DSN")
+	d, exists := os.LookupEnv("DSN_PYTHON")
 	if !exists || d =="" { log.Fatal("MISSING DSN") }
 	fmt.Println("> dsn", d)
 	dsn = DSN{d} // or do struct literal that sets key and projectId as well
@@ -68,6 +68,64 @@ func init() {
 	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
 
+func javascript(bodyBytesCompressed []byte, headers []byte) {
+	fmt.Println("\n************* javascript *************")
+	bodyInterface := unmarshalJSON(bodyBytesCompressed)
+	bodyInterface = replaceEventId(bodyInterface)
+	bodyInterface = replaceTimestamp(bodyInterface)
+	
+	bodyBytesPost := marshalJSON(bodyInterface)
+
+	// TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
+	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+
+	headerInterface := unmarshalJSON(headers)
+
+	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
+
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
+
+	fmt.Printf("> javascript event response: %v\n", string(responseData))
+}
+
+func python(bodyBytesCompressed []byte, headers []byte) {
+	fmt.Println("\n************* python *************")
+	bodyBytes := decodeGzip(bodyBytesCompressed)
+	bodyInterface := unmarshalJSON(bodyBytes)
+
+	bodyInterface = replaceEventId(bodyInterface)
+	bodyInterface = replaceTimestamp(bodyInterface)
+	
+	bodyBytesPost := marshalJSON(bodyInterface)
+	buf := encodeGzip(bodyBytesPost)
+
+	// TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+
+	headerInterface := unmarshalJSON(headers)
+
+	// "Host" header provided via sdk in python/event.py but in python/proxy.py (Flask). "Host" not required by Sentry.io
+	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
+
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
+
+	fmt.Printf("> python event response: %v\n", string(responseData))
+}
+
 func main() {
 	// TEST
 	defer db.Close()
@@ -78,34 +136,17 @@ func main() {
 	}
 	for rows.Next() {
 		var event Event
+		// TODO - rename 'bodyBytesCompressed' because they're NOT gzip compressed, if it's Javascript. same with Go
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
 		fmt.Println(event)
 
-		bodyBytes := decodeGzip(event.bodyBytesCompressed)
-		bodyInterface := unmarshalJSON(bodyBytes)
-
-		bodyInterface = replaceEventId(bodyInterface)
-		bodyInterface = replaceTimestamp(bodyInterface)
-		
-		bodyBytesPost := marshalJSON(bodyInterface)
-		buf := encodeGzip(bodyBytesPost)
-
-		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
-		if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
-		headerInterface := unmarshalJSON(event.headers)
-
-		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
-			request.Header.Set(v, headerInterface[v].(string))
+		if (event._type == "javascript") {
+			javascript(event.bodyBytesCompressed, event.headers)
 		}
 
-		response, requestErr := httpClient.Do(request)
-		if requestErr != nil { fmt.Println(requestErr) }
-
-		responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-		fmt.Printf("> event %v\n", string(responseData))
+		if (event._type == "python") {
+			python(event.bodyBytesCompressed, event.headers)
+		}
 
 		if !*all {
 			rows.Close()
@@ -164,6 +205,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	if _, ok := bodyInterface["timestamp"]; !ok { 
 		log.Print("no timestamp on object from DB")
+		// TODO - may need to insert a timestamp for javascript events, because sentry-javascript isn't setting one? done at server side?
+		timestamp1 := time.Now()
+		newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+		bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
 	}
 
 	fmt.Println("before",bodyInterface["timestamp"])
