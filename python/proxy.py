@@ -106,14 +106,18 @@ def forward():
 def save():
     print('> SAVING')
 
+    event_type = ''
     request_headers = {}
     user_agent = request.headers.get('User-Agent')
+    
     if 'ython' in user_agent:
         print('> python error type')
+        event_type = 'python'
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
     if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
         print('> javascript error type')
+        event_type = 'javascript'
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
 
@@ -122,10 +126,9 @@ def save():
     # for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
     #     request_headers[key] = request.headers.get(key)
 
-    # TODO need to set 'javascript' or 'python' here based on user_agent above...
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-    record = ('javascript1', 'javascript', request.data, json.dumps(request_headers))
+    record = (event_type, event_type, request.data, json.dumps(request_headers))
    
     try:
         with sqlite3.connect(database) as db:

@@ -54,7 +54,7 @@ func init() {
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	d, exists := os.LookupEnv("DSN_REACT")
+	d, exists := os.LookupEnv("DSN_PYTHON")
 	if !exists || d =="" { log.Fatal("MISSING DSN") }
 	fmt.Println("> dsn", d)
 	dsn = DSN{d} // or do struct literal that sets key and projectId as well
@@ -112,7 +112,8 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 
 	headerInterface := unmarshalJSON(headers)
 
-	for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+	// "Host" header provided via sdk in python/event.py but in python/proxy.py (Flask). "Host" not required by Sentry.io
+	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
@@ -122,7 +123,6 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("> event %v\n", string(responseData))
 	fmt.Printf("> python event response: %v\n", string(responseData))
 }
 
@@ -139,7 +139,6 @@ func main() {
 		// TODO - rename 'bodyBytesCompressed' because they're NOT gzip compressed, if it's Javascript. same with Go
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
 		fmt.Println(event)
-		fmt.Println("11111111111111111111111")
 
 		if (event._type == "javascript") {
 			javascript(event.bodyBytesCompressed, event.headers)
@@ -148,34 +147,6 @@ func main() {
 		if (event._type == "python") {
 			python(event.bodyBytesCompressed, event.headers)
 		}
-
-		// bodyBytes := decodeGzip(event.bodyBytesCompressed
-		// bodyInterface := unmarshalJSON(bodyBytes)
-
-		// bodyInterface = replaceEventId(bodyInterface)
-		// bodyInterface = replaceTimestamp(bodyInterface)
-		
-		// bodyBytesPost := marshalJSON(bodyInterface)
-		// buf := encodeGzip(bodyBytesPost)
-
-		// // TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
-		// request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
-		// if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
-		// headerInterface := unmarshalJSON(event.headers)
-
-		// for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
-		// for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
-		// 	request.Header.Set(v, headerInterface[v].(string))
-		// }
-
-		// response, requestErr := httpClient.Do(request)
-		// if requestErr != nil { fmt.Println(requestErr) }
-
-		// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		// if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-		// fmt.Printf("> event %v\n", string(responseData))
 
 		if !*all {
 			rows.Close()
