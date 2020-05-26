@@ -28,10 +28,10 @@ MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
 # print('MODIFIED_DSN_FORWARD', MODIFIED_DSN_FORWARD)
 
 # proxy saves the event to database. Doesn't send to Senry.
-MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/01'
+MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
 
 # proxy saves the event to database and forwards it on to Sentry
-MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/02'
+MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 
 def stacktrace():
     try:
@@ -43,7 +43,7 @@ def app():
     # stacktrace()
     
     # Exception literals will not have stack traces
-    sentry_sdk.capture_exception(Exception("anyday0224"))
+    sentry_sdk.capture_exception(Exception("good456"))
 
 def dsn_and_proxy_check():
     if DSN=='':
@@ -59,7 +59,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_FORWARD }
+    params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

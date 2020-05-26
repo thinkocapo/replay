@@ -4,12 +4,14 @@ proxy:
 event:
 	go run event.go
 
-gotosentry:
+eventpy:
+	python3 python/event.py
+
+eventtosentry:
 	go run event-to-sentry.go
 
 pythontosentry:
 	python3 event-to-sentry.py
 
-goreplay:
-	go build middleware.go
-	sudo ./gor --input-raw :9000 --middleware "./middleware" --output-http http://localhost:9000/api/2/store
+testdb:
+	python3 test/db.py

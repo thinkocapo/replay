@@ -54,7 +54,7 @@ func init() {
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	d, exists := os.LookupEnv("DSN")
+	d, exists := os.LookupEnv("DSN_REACT")
 	if !exists || d =="" { log.Fatal("MISSING DSN") }
 	fmt.Println("> dsn", d)
 	dsn = DSN{d} // or do struct literal that sets key and projectId as well
@@ -80,22 +80,33 @@ func main() {
 		var event Event
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
 		fmt.Println(event)
+		fmt.Println("11111111111111111111111")
 
-		bodyBytes := decodeGzip(event.bodyBytesCompressed)
-		bodyInterface := unmarshalJSON(bodyBytes)
+		// TODO - the javascript event did not come in gzip'd
+		// bodyBytes := decodeGzip(event.bodyBytesCompressed)
+		fmt.Println("22222222222222")
+
+
+		// bodyInterface := unmarshalJSON(bodyBytes)
+		bodyInterface := unmarshalJSON(event.bodyBytesCompressed)
+
 
 		bodyInterface = replaceEventId(bodyInterface)
 		bodyInterface = replaceTimestamp(bodyInterface)
 		
 		bodyBytesPost := marshalJSON(bodyInterface)
-		buf := encodeGzip(bodyBytesPost)
+		// buf := encodeGzip(bodyBytesPost)
+		
 
-		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+		// TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
+		request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 		if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
 		headerInterface := unmarshalJSON(event.headers)
+		// fmt.Println("\nHEADERS\n", headerInterface["Content-Type"])
 
-		for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+		// for _, v := range [6]string{"Host", "Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+		for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 			request.Header.Set(v, headerInterface[v].(string))
 		}
 
@@ -164,6 +175,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	if _, ok := bodyInterface["timestamp"]; !ok { 
 		log.Print("no timestamp on object from DB")
+		// TODO - may need to insert a timestamp for javascript events, because sentry-javascript isn't setting one? done at server side?
+		timestamp1 := time.Now()
+		newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+		bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
 	}
 
 	fmt.Println("before",bodyInterface["timestamp"])

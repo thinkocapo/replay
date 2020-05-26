@@ -29,25 +29,37 @@ try:
         rows = cur.fetchall()
         print('TOTAL ROWS: ', len(rows))
  
-        test = rows[-1]
-        # test = list(test)
-        print('ID OF LATEST ROW', test[0]) # is latest?
+        row = rows[-1] # -1 is python event right now
+        # row = list(row)
+        print('ID OF LATEST ROW', row[0]) # is latest??
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
-        buffer = test[4]
+        buffer = row[3]
 
-        # buffer = rows[0][4]
+        headers = row[4]
+        print('\nHEADERS\n', headers)
+
+
 
     
-        # TODO test
+        # TODO why did this stop working "EXCEPTION a bytes-like object is required, not 'str'"
         print('type(buffer)', type(buffer))
-        json_body = decompress_gzip(str(buffer))
-        dict_body = json.loads(json_body)
-        print('dict_body', dict_body['event_id'])
-        print('dict_body', dict_body['timestamp'])
 
-        # for key in dict_body:
-        #     print(key, type(dict_body[key]))
+        # TODO - this errors on javascript, which might not be gzip'd
+        
+        # python, works
+        # json_body = decompress_gzip(buffer)
+        # dict_body = json.loads(json_body)
+
+        # javascript, works
+        dict_body = json.loads(buffer)
+
+        print('dict_body', dict_body['event_id'])
+        # print('dict_body', dict_body['timestamp']) # fails in javascript
+
+        # print(dict_body)
+        for key in dict_body:
+            print(key, type(dict_body[key]))
 except Exception as e:
     print('EXCEPTION', e)
