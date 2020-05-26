@@ -27,17 +27,28 @@ var (
 	dsn DSN
 	SENTRY_URL string 
 	exists bool
+	projects map[string]*DSN
 )
 
 // Could put key and projectId on here as well and use a newDsn constructor that returns a pointer... good if those need to be used by more than just sentryUrl() function
 type DSN struct { 
-	dsn string
+	url string
+	key string
+	projectId string
 }
 func (d DSN) sentryUrl() string {
-	KEY := strings.Split(d.dsn, "@")[0][7:]
-	PROJECT_ID := d.dsn[len(d.dsn)-1:]
-	return strings.Join([]string{"http://localhost:9000/api/",PROJECT_ID,"/store/?sentry_key=",KEY,"&sentry_version=7"}, "")
+	return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
+func newDSN(url string) (*DSN) {
+	key := strings.Split(url, "@")[0][7:]
+	projectId := url[len(url)-1:]
+	return &DSN{
+		url,
+		key,
+		projectId,
+	}
+}
+
 type Event struct {
 	id int
 	name, _type string
@@ -45,21 +56,19 @@ type Event struct {
 	bodyBytesCompressed []byte
 }
 func (e Event) String() string {
-	return fmt.Sprintf("Event details: %v %v %v", e.id, e.name, e._type)
+	return fmt.Sprintf("> event id, type: %v %v", e.id, e._type)
 }
 
 func init() {
-	defer fmt.Println("init()")
+	defer fmt.Println("> init() complete")
 	
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
-	d, exists := os.LookupEnv("DSN_PYTHON")
-	if !exists || d =="" { log.Fatal("MISSING DSN") }
-	fmt.Println("> dsn", d)
-	dsn = DSN{d} // or do struct literal that sets key and projectId as well
-	SENTRY_URL = dsn.sentryUrl()
-	fmt.Println("SENTRY_URL", SENTRY_URL)
+
+	projects = make(map[string]*DSN)
+	projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
+	projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
@@ -70,6 +79,8 @@ func init() {
 
 func javascript(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("\n************* javascript *************")
+	SENTRY_URL = projects["javascript"].sentryUrl()
+
 	bodyInterface := unmarshalJSON(bodyBytesCompressed)
 	bodyInterface = replaceEventId(bodyInterface)
 	bodyInterface = replaceTimestamp(bodyInterface)
@@ -97,6 +108,8 @@ func javascript(bodyBytesCompressed []byte, headers []byte) {
 
 func python(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("\n************* python *************")
+	SENTRY_URL = projects["python"].sentryUrl()
+
 	bodyBytes := decodeGzip(bodyBytesCompressed)
 	bodyInterface := unmarshalJSON(bodyBytes)
 
