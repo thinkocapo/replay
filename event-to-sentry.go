@@ -52,7 +52,7 @@ type Event struct {
 	id int
 	name, _type string
 	headers []byte
-	bodyBytesCompressed []byte
+	bodyBytes []byte
 }
 func (e Event) String() string {
 	return fmt.Sprintf("> event id, type: %v %v", e.id, e._type)
@@ -76,11 +76,11 @@ func init() {
 	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
 
-func javascript(bodyBytesCompressed []byte, headers []byte) {
+func javascript(bodyBytes []byte, headers []byte) {
 	fmt.Println("\n************* javascript *************")
 	SENTRY_URL = projects["javascript"].storeEndpoint()
 
-	bodyInterface := unmarshalJSON(bodyBytesCompressed)
+	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 	bodyInterface = addTimestamp(bodyInterface)
 	
@@ -148,16 +148,15 @@ func main() {
 	}
 	for rows.Next() {
 		var event Event
-		// TODO - rename 'bodyBytesCompressed' because they're NOT gzip compressed, if it's Javascript. same with Go
-		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytesCompressed, &event.headers)
+		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
 		if (event._type == "javascript") {
-			javascript(event.bodyBytesCompressed, event.headers)
+			javascript(event.bodyBytes, event.headers)
 		}
 
 		if (event._type == "python") {
-			python(event.bodyBytesCompressed, event.headers)
+			python(event.bodyBytes, event.headers) // compressed
 		}
 
 		if !*all {
