@@ -139,7 +139,6 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 }
 
 func main() {
-	// TEST
 	defer db.Close()
 
 	rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
@@ -156,7 +155,8 @@ func main() {
 		}
 
 		if (event._type == "python") {
-			python(event.bodyBytes, event.headers) // compressed
+			// these bytes are gzip compressed
+			python(event.bodyBytes, event.headers)
 		}
 
 		if !*all {
