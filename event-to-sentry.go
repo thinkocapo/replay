@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log" // adds timestamp 2020/05/17 13:46:39
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -31,18 +32,33 @@ var (
 )
 
 type DSN struct { 
-	url string
+	rawurl string
 	key string
 	projectId string
 }
 func (d DSN) storeEndpoint() string {
-	return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	// TODO needs support sending to self-hosted vs sentry.io
+	// return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	return strings.Join([]string{"http://sentry.io/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
-func newDSN(url string) (*DSN) {
-	key := strings.Split(url, "@")[0][7:]
-	projectId := url[len(url)-1:]
+func newDSN(rawurl string) (*DSN) {
+	// if 'sentry.io' in url
+	// host := sentry.io vs. host := localhost:9000
+	key := strings.Split(rawurl, "@")[0][7:]
+
+	uri, err := url.Parse(rawurl)
+	if err != nil {
+		panic(err)
+	}
+	idx := strings.LastIndex(uri.Path, "/")
+	if idx == -1 {
+		log.Fatal("missing projectId in dsn")
+	}
+	projectId := uri.Path[idx+1:]
+	fmt.Println("\n*****PROJECTID", projectId)
+	
 	return &DSN{
-		url,
+		rawurl,
 		key,
 		projectId,
 	}
@@ -66,8 +82,10 @@ func init() {
 	}
 
 	projects = make(map[string]*DSN)
-	projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
-	projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
+	// projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
+	// projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
+	projects["javascript"] = newDSN(os.Getenv("DSN_REACT_SAAS"))
+	projects["python"] = newDSN(os.Getenv("DSN_PYTHON_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
@@ -78,24 +96,23 @@ func init() {
 
 func javascript(bodyBytes []byte, headers []byte) {
 	fmt.Println("\n************* javascript *************")
-	SENTRY_URL = projects["javascript"].storeEndpoint()
-
+	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 	bodyInterface = addTimestamp(bodyInterface)
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
-
-	// TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
+	
+	SENTRY_URL = projects["javascript"].storeEndpoint()
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
+	
 	headerInterface := unmarshalJSON(headers)
-
+	
 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
-
+	
 	response, requestErr := httpClient.Do(request)
 	if requestErr != nil { fmt.Println(requestErr) }
 
@@ -107,18 +124,17 @@ func javascript(bodyBytes []byte, headers []byte) {
 
 func python(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("\n************* python *************")
-	SENTRY_URL = projects["python"].storeEndpoint()
-
+	
 	bodyBytes := decodeGzip(bodyBytesCompressed)
 	bodyInterface := unmarshalJSON(bodyBytes)
-
+	
 	bodyInterface = replaceEventId(bodyInterface)
 	bodyInterface = replaceTimestamp(bodyInterface)
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
-
-	// TODO - SENTRY_URL's projectId needs to be based on the event that was retrieved from Database...
+	
+	SENTRY_URL = projects["python"].storeEndpoint()
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
