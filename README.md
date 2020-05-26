@@ -63,6 +63,8 @@ There are 3 modified DSN's in `event.py` that correspond to the 3 different endp
 
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
+https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
+
 This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.py, event_manager.py, and getsentry/sentry-go
 
 [/img/example-payload.png](./img/example-payload.png) from a sentry sdk event

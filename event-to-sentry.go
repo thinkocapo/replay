@@ -83,7 +83,7 @@ func javascript(bodyBytesCompressed []byte, headers []byte) {
 
 	bodyInterface := unmarshalJSON(bodyBytesCompressed)
 	bodyInterface = replaceEventId(bodyInterface)
-	bodyInterface = replaceTimestamp(bodyInterface)
+	bodyInterface = addTimestamp(bodyInterface)
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 
@@ -208,27 +208,29 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 		log.Print("no event_id on object from DB")
 	}
 
-	fmt.Println("before",bodyInterface["event_id"])
+	fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("after ",bodyInterface["event_id"])
+	fmt.Println("> after ",bodyInterface["event_id"])
 	return bodyInterface
 }
 
 func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-	if _, ok := bodyInterface["timestamp"]; !ok { 
-		log.Print("no timestamp on object from DB")
-		// TODO - may need to insert a timestamp for javascript events, because sentry-javascript isn't setting one? done at server side?
-		timestamp1 := time.Now()
-		newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
-		bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
-	}
-
 	fmt.Println("before",bodyInterface["timestamp"])
 	timestamp := time.Now()
 	oldTimestamp := bodyInterface["timestamp"].(string)
 	newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
 	bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+	fmt.Println("after ",bodyInterface["timestamp"])
+	return bodyInterface
+}
+// All SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
+// looks like I need to update my javascript sdk i'm using for this, and can deprecate this function
+func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+	log.Print("no timestamp on object from DB")
+	timestamp1 := time.Now()
+	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
 	fmt.Println("after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
