@@ -68,17 +68,15 @@ This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.p
 [/img/example-payload.png](./img/example-payload.png) from a sentry sdk event
 
 ## Todo
-- tour of go - methods&interfaces
+
+- event-to-sentry.go var DATABASE_PATH
 
 - send go events to proxy.py? (yes do first, test can test scripting of python+go events together)
     - script for sending python+go events together to Sentry:9000
 'OR'
 - send python events to proxy.go? (NEED create proxy.go) (yes and handle different compressions here, rather than do that in proxy.py)
 
-NEW  
 - add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing 
 - which request.header indicates what kind of sdk/event it's from? user-agent for now. Or...  
 - how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
-
-- event-to-sentry.go var DATABASE_PATH
-- have all developers use a DSN that points to a cloud hosted proxy)
+- have all developers use a DSN that points to a cloud hosted proxy
