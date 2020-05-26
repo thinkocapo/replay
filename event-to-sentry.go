@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"io/ioutil"
-	"log" // adds timestamp 2020/05/17 13:46:39
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,13 +37,10 @@ type DSN struct {
 	projectId string
 }
 func (d DSN) storeEndpoint() string {
-	// TODO needs support sending to self-hosted vs sentry.io
-	// return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 	return strings.Join([]string{"http://sentry.io/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
 func newDSN(rawurl string) (*DSN) {
-	// if 'sentry.io' in url
-	// host := sentry.io vs. host := localhost:9000
+	// TODO if 'sentry.io' in url then host := sentry.io else host := localhost:9000, and update storeEndpoint() w/ 'host'
 	key := strings.Split(rawurl, "@")[0][7:]
 
 	uri, err := url.Parse(rawurl)
@@ -55,7 +52,7 @@ func newDSN(rawurl string) (*DSN) {
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
-	fmt.Println("\n*****PROJECTID", projectId)
+	fmt.Println("> PROJECTID", projectId)
 	
 	return &DSN{
 		rawurl,
@@ -95,7 +92,7 @@ func init() {
 }
 
 func javascript(bodyBytes []byte, headers []byte) {
-	fmt.Println("\n************* javascript *************")
+	fmt.Println("> javascript")
 	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
@@ -123,7 +120,7 @@ func javascript(bodyBytes []byte, headers []byte) {
 }
 
 func python(bodyBytesCompressed []byte, headers []byte) {
-	fmt.Println("\n************* python *************")
+	fmt.Println("> python")
 	
 	bodyBytes := decodeGzip(bodyBytesCompressed)
 	bodyInterface := unmarshalJSON(bodyBytes)
@@ -140,7 +137,6 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 
 	headerInterface := unmarshalJSON(headers)
 
-	// "Host" header provided via sdk in python/event.py but in python/proxy.py (Flask). "Host" not required by Sentry.io
 	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -171,7 +167,6 @@ func main() {
 		}
 
 		if (event._type == "python") {
-			// these bytes are gzip compressed
 			python(event.bodyBytes, event.headers)
 		}
 
@@ -238,8 +233,8 @@ func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface
 	fmt.Println("after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
-// All SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
-// looks like I need to update my javascript sdk i'm using for this, and can deprecate this function
+// SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
+// Newer js sdk provides timestamp, so stop calling this function, upon upgrading js sdk. 
 func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	log.Print("no timestamp on object from DB")
 	timestamp1 := time.Now()
