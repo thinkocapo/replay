@@ -7,10 +7,10 @@ event:
 eventpy:
 	python3 python/event.py
 
-eventtosentry:
+eventsentry:
 	go run event-to-sentry.go
 
-pythontosentry:
+eventsentrypy:
 	python3 event-to-sentry.py
 
 testdb:
