@@ -49,7 +49,7 @@ python3 event-to-sentry.py <id>
 See your event in Sentry at `localhost:9000`
 
 **OPTIONAL**  
-Cronjob on your Macbook that sends events in the background. Still needs sentry-cli usage for setting the release, and then event-to-sentry.go to use that same release.
+Cronjob on Macbook that sends events in the background
 ```
 # crontab -e
 1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
@@ -57,17 +57,18 @@ Cronjob on your Macbook that sends events in the background. Still needs sentry-
 ```
 
 ## Notes
-There are 3 modified DSN's in `event.py` that correspond to the 3 different endpoints in `flask/proxy.py` which you can hit.`
+See `python/event.py` for how to construct the 3 'MODIFIED' DSN's which decide which of the 3 endpoints in `flask/proxy.py` which you can hit.
 
-`python test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
+`python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
 
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
+
+Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
+
 https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
 
-This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.py, event_manager.py, and getsentry/sentry-go
-
-[/img/example-payload.png](./img/example-payload.png) from a sentry sdk event
+https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
 
 ## Todo
 
