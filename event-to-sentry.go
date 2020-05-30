@@ -24,6 +24,7 @@ var httpClient = &http.Client{}
 
 var (
 	all *bool
+	id *string
 	db *sql.DB
 	dsn DSN
 	SENTRY_URL string 
@@ -86,8 +87,11 @@ func init() {
 	// projects["python"] = newDSN(os.Getenv("DSN_PYTHON_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
+	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
 	fmt.Printf("> --all= %v\n", *all)
+	fmt.Printf("> --id= %v\n", *id)
+
 	
 	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
@@ -154,13 +158,8 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 func main() {
 	defer db.Close()
 	
-	id := "15"
-	//query := []string{"SELECT * FROM events WHERE id=", string(id)}
-	// rows, err := db.Query(strings.Join(query, ""))
-	// rows, err := db.Query("SELECT * FROM events WHERE id=16")
-	
-	// strconv.Itoa(i)
-	rows, err := db.Query(strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", id))
+
+	rows, err := db.Query(strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id))
 
 	// ORIGINAL
 	// rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
