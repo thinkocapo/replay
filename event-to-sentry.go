@@ -55,10 +55,10 @@ func parseDSN(rawurl string) (*DSN) {
 
 	var host string
 	if (strings.Contains(rawurl, "ingest.sentry.io")) {
-		host = fmt.Sprint("sentry.io")
+		host = "ingest.sentry.io" // works with "sentry.io" too
 	}
 	if (strings.Contains(rawurl, "@localhost:")) {
-		host = fmt.Sprint("localhost:9000")
+		host = "localhost:9000"
 	}
 	fmt.Println("> DSN host", host)
 	
@@ -72,7 +72,8 @@ func parseDSN(rawurl string) (*DSN) {
 
 // could make a DSN field called 'storeEndpoint' and use this function there to assign the value
 func (d DSN) storeEndpoint() string {
-	return strings.Join([]string{"http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	return fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	// return strings.Join([]string{"http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
 
 type Event struct {
