@@ -24,6 +24,7 @@ var httpClient = &http.Client{}
 
 var (
 	all *bool
+	id *string
 	db *sql.DB
 	dsn DSN
 	SENTRY_URL string 
@@ -32,15 +33,13 @@ var (
 )
 
 type DSN struct { 
+	host string
 	rawurl string
 	key string
 	projectId string
 }
-func (d DSN) storeEndpoint() string {
-	return strings.Join([]string{"http://sentry.io/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
-}
-func newDSN(rawurl string) (*DSN) {
-	// TODO if 'sentry.io' in url then host := sentry.io else host := localhost:9000, and update storeEndpoint() w/ 'host'
+
+func parseDSN(rawurl string) (*DSN) {
 	key := strings.Split(rawurl, "@")[0][7:]
 
 	uri, err := url.Parse(rawurl)
@@ -52,13 +51,29 @@ func newDSN(rawurl string) (*DSN) {
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
-	fmt.Println("> PROJECTID", projectId)
+	fmt.Println("> DSN projectId", projectId)
+
+	var host string
+	if (strings.Contains(rawurl, "ingest.sentry.io")) {
+		host = "ingest.sentry.io" // works with "sentry.io" too
+	}
+	if (strings.Contains(rawurl, "@localhost:")) {
+		host = "localhost:9000"
+	}
+	fmt.Println("> DSN host", host)
 	
 	return &DSN{
+		host,
 		rawurl,
 		key,
 		projectId,
 	}
+}
+
+// could make a DSN field called 'storeEndpoint' and use this function there to assign the value
+func (d DSN) storeEndpoint() string {
+	return fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	// return strings.Join([]string{"http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
 
 type Event struct {
@@ -79,14 +94,17 @@ func init() {
 	}
 
 	projects = make(map[string]*DSN)
-	// projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
-	// projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
-	projects["javascript"] = newDSN(os.Getenv("DSN_REACT_SAAS"))
-	projects["python"] = newDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
+	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
+	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
+	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
+	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
 	fmt.Printf("> --all= %v\n", *all)
+	fmt.Printf("> --id= %v\n", *id)
+
 	
 	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
@@ -152,8 +170,16 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 
 func main() {
 	defer db.Close()
+	
+	query := ""
+	if (*id == "") {
+		query = "SELECT * FROM events ORDER BY id DESC"
+	} else {
+		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
+	}
 
-	rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
+	rows, err := db.Query(query)
+	
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
 	}
@@ -240,6 +266,6 @@ func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	timestamp1 := time.Now()
 	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
 	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
-	fmt.Println("after ",bodyInterface["timestamp"])
+	fmt.Println("> after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
