@@ -63,6 +63,12 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
+    print('\n111 REQUEST headers\n', request.headers)
+
+    print('\n111 REQUEST body\n', json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+
+
+
     # TODO https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
