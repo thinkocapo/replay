@@ -80,6 +80,7 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 - sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
 - when loading events from database, should be able to set this same day/month/year as the release, so it'll get associated in Sentry.io
 
+- proxy.py platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
 - write a proxy.go, but make sure Mobile stuff works in proxy.py first
 - event-to-sentry.go var DATABASE_PATH
 - improve use of log.Fatal vs panic, error handling
