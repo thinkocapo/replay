@@ -158,11 +158,14 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 func main() {
 	defer db.Close()
 	
+	query := ""
+	if (*id == "") {
+		query = "SELECT * FROM events ORDER BY id DESC"
+	} else {
+		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
+	}
 
-	rows, err := db.Query(strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id))
-
-	// ORIGINAL
-	// rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
+	rows, err := db.Query(query)
 	
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
