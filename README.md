@@ -23,7 +23,7 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 
 1. `git clone getsentry/onpremise` and `./install.sh`
 2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
-3. `pip3 install -r ./flask/requirements.txt`
+3. `pip3 install -r ./python/requirements.txt`
 4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv`
 
 ## Run
@@ -58,12 +58,11 @@ Cronjob on Macbook that sends events in the background
 ```
 
 ## Notes
-See `python/event.py` for how to construct the 3 'MODIFIED' DSN's which decide which of the 3 endpoints in `flask/proxy.py` which you can hit.
+See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py
 
 `python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
 
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
-
 
 Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
 
