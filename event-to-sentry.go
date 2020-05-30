@@ -37,7 +37,8 @@ type DSN struct {
 	projectId string
 }
 func (d DSN) storeEndpoint() string {
-	return strings.Join([]string{"http://sentry.io/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	// return strings.Join([]string{"http://sentry.io/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	return strings.Join([]string{"http://localhost:9000/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
 }
 func newDSN(rawurl string) (*DSN) {
 	// TODO if 'sentry.io' in url then host := sentry.io else host := localhost:9000, and update storeEndpoint() w/ 'host'
@@ -79,10 +80,10 @@ func init() {
 	}
 
 	projects = make(map[string]*DSN)
-	// projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
-	// projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
-	projects["javascript"] = newDSN(os.Getenv("DSN_REACT_SAAS"))
-	projects["python"] = newDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projects["javascript"] = newDSN(os.Getenv("DSN_REACT"))
+	projects["python"] = newDSN(os.Getenv("DSN_PYTHON"))
+	// projects["javascript"] = newDSN(os.Getenv("DSN_REACT_SAAS"))
+	// projects["python"] = newDSN(os.Getenv("DSN_PYTHON_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	flag.Parse()
@@ -152,8 +153,18 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 
 func main() {
 	defer db.Close()
+	
+	id := "15"
+	//query := []string{"SELECT * FROM events WHERE id=", string(id)}
+	// rows, err := db.Query(strings.Join(query, ""))
+	// rows, err := db.Query("SELECT * FROM events WHERE id=16")
+	
+	// strconv.Itoa(i)
+	rows, err := db.Query(strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", id))
 
-	rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
+	// ORIGINAL
+	// rows, err := db.Query("SELECT * FROM events ORDER BY id DESC")
+	
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
 	}
@@ -240,6 +251,6 @@ func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	timestamp1 := time.Now()
 	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
 	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
-	fmt.Println("after ",bodyInterface["timestamp"])
+	fmt.Println("> after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
