@@ -41,6 +41,7 @@ python3 event.py
 **STEP2**  
 ```
 go run event-to-sentry.go
+go run event-to-sentry.go --id=<id>
 go run event-to-sentry.go --all
 
 python3 event-to-sentry.py
@@ -49,7 +50,7 @@ python3 event-to-sentry.py <id>
 See your event in Sentry at `localhost:9000`
 
 **OPTIONAL**  
-Cronjob on your Macbook that sends events in the background. Still needs sentry-cli usage for setting the release, and then event-to-sentry.go to use that same release.
+Cronjob on Macbook that sends events in the background
 ```
 # crontab -e
 1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
@@ -57,26 +58,28 @@ Cronjob on your Macbook that sends events in the background. Still needs sentry-
 ```
 
 ## Notes
-There are 3 modified DSN's in `python/event.py` that correspond to the 3 different endpoints in `python/proxy.py` which you can hit. But you can use any app+sdk, just modify the DSN to follow the 'MODIFIED' convention.
+See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py
 
-`python test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
+`python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
 
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
+Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
+
 https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
 
-This repo borrowed code from: getsentry/sentry-python's transport.py, core_api.py, event_manager.py, and getsentry/sentry-go
-
-[/img/example-payload.png](./img/example-payload.png) from a sentry sdk event
+https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
 
 ## Todo
+
+- AM transactions
+- Android errors/crashes/sessions
 
 - sentry-cli for Release for js events from Database, so they're minified
 - sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
 - when loading events from database, should be able to set this same day/month/year as the release, so it'll get associated in Sentry.io
 
-- Android errors/crashes/sessions
-
+- proxy.py platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
 - write a proxy.go, but make sure Mobile stuff works in proxy.py first
 - event-to-sentry.go var DATABASE_PATH
 - improve use of log.Fatal vs panic, error handling

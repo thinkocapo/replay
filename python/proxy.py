@@ -36,6 +36,7 @@ def sentryUrl(DSN):
     PROJECT_ID= DSN[-1:]
     # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
     # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
+    # TODO must update for http://sentry.io as well. or re-write proxy in Go 
     return "http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
 
 # DATABASE - Must be full absolute path to sqlite database file
@@ -44,6 +45,7 @@ SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
 with sqlite3.connect(database) as db:
+    # TODO platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
     cursor = db.cursor()
     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
                                             id integer PRIMARY KEY,
@@ -61,15 +63,7 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
-    """
-    TODO
-    The purpose of this function is to figure out what kind of event (javascript, python etc.) is being sent.
-    It'd be much more convenient to look at the ?sentry_key=<value> being passed and compare it against the DSN's in .env, to figure it out...
-    But sentry-python doesn't provide it in the URL :( only sentry-javascript does
-    # print('> request', request.base_url) # only shows ?sentry_key=<value> on the javascript events :/
-    # key=request.args['sentry_key'] # value only exists for jascript events, not python :/
-    My guess is Sentry.io doesn't need this in the query params anyways, because all it needs is the project Id '/2' which in our case we're abusing to define the proxy endpoint (not allowed to use letters, numbers only)
-    """
+    # TODO https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
         user_agent = request.headers.get('User-Agent')
