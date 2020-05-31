@@ -43,7 +43,7 @@ def app():
     # stacktrace()
     
     # Exception literals will not have stack traces
-    sentry_sdk.capture_exception(Exception("good456"))
+    sentry_sdk.capture_exception(Exception("steel449"))
 
 def dsn_and_proxy_check():
     if DSN=='':
@@ -59,7 +59,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE }
+    params = { 'dsn': MODIFIED_DSN_FORWARD }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

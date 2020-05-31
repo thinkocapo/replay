@@ -15,6 +15,7 @@ load_dotenv()
 http = urllib3.PoolManager()
 
 app = Flask(__name__)
+# app.run(ssl_context='adhoc') # flask run --cert=adhoc
 CORS(app)
 
 print("""
@@ -26,6 +27,8 @@ print("""
   \___/  |_| \_| |____/  |_____| |_| \_\   |_|   /_/   \_\ |_|\_\ |_____| |_| \_\
                                                                                  
 """)
+
+
 
 SENTRY=''
 
@@ -78,23 +81,25 @@ def forward():
     # TODO https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
-        user_agent = request.headers.get('User-Agent')
-        if 'ython' in user_agent:
-            print('> python error')
+        user_agent = request.headers.get('User-Agent').lower()
+        if 'python' in user_agent:
+            print('> Python error')
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
-                SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
-                # SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
-        if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
-            print('> javascript error')
+                # TODO Original, 'flask' project
+                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
+                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
+        if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+            print('> Javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
-                SENTRY = sentryUrl(os.getenv('DSN_REACT'))
-                # SENTRY = sentryUrl(os.getenv('DSN_REACT_SAAS'))
+                # SENTRY = sentryUrl(os.getenv('DSN_REACT'))
+                SENTRY = sentryUrl(os.getenv('DSN_REACT_SAAS'))
         return request_headers, SENTRY
 
-    request_headers, SENTRY = make(request.headers) # could make return 2 values? https://note.nkmk.me/en/python-function-return-multiple-values/
-    print('> SENTRY url is', SENTRY)
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
 
     try:
         print('> type(request.data)', type(request.data))
