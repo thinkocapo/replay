@@ -109,15 +109,14 @@ def forward():
         print('> type(request.data)', type(request.data))
         print('> type(request_headers)', type(request_headers))
 
-        # response = http.request(
-        #     "POST", str(SENTRY), body=request.data, headers=request_headers 
-        # )
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
 
         print('> nothing saved to sqlite database')
         return 'success'
     except Exception as err:
-        # print('LOCAL EXCEPTION', err)
-        print('DONE')
+        print('LOCAL EXCEPTION', err)
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
