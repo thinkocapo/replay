@@ -151,8 +151,9 @@ func javascript(bodyBytes []byte, headers []byte) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> javascript event response\n", responseData)
-	// fmt.Printf("\n> javascript event response", string(responseData))
+	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
+	fmt.Printf("\n> javascript event response", string(responseData))
+	// fmt.Printf("\n> javascript event response\n", responseData)
 }
 
 func python(bodyBytesCompressed []byte, headers []byte) {
