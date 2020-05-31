@@ -1,6 +1,9 @@
 proxy:
 	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run -p 3001
 
+proxyhttps:
+	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run --cert=adhoc -p 3001
+
 event:
 	go run event.go
 
