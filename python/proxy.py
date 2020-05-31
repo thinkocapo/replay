@@ -59,6 +59,7 @@ def sentryUrl(DSN):
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
+
 with sqlite3.connect(database) as db:
     # TODO platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
     cursor = db.cursor()
@@ -119,6 +120,13 @@ def forward():
 def save():
     print('> SAVING')
 
+    print('> type(request.data)', type(request.data))
+    print('> type(request_headers)', type(request.headers))
+    for header in request.headers.to_wsgi_list():
+        print(header)
+    print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # json.dumps(json.loads(request.data),indent=2)
+
     event_type = ''
     request_headers = {}
     user_agent = request.headers.get('User-Agent')
@@ -126,7 +134,9 @@ def save():
     if 'ython' in user_agent:
         print('> python error type')
         event_type = 'python'
-        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        # TODO - need to know if it's Transaction or Error type now...     
+        # for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
     if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
         print('> javascript error type')
@@ -137,11 +147,14 @@ def save():
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
     record = (event_type, event_type, request.data, json.dumps(request_headers))
-   
+    print('TTTTTTTTTTTTTTTTTTTTTTTTTTTTT')
     try:
         with sqlite3.connect(database) as db:
+            print('1111111111111111111111')
+
             cursor = db.cursor()
             cursor.execute(insert_query, record)
+            print('2222222222222222222')
             print('> Id in Sqlite', cursor.lastrowid)
             cursor.close()
             return str(cursor.lastrowid)

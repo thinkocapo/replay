@@ -114,7 +114,7 @@ func init() {
 	fmt.Printf("> --all= %v\n", *all)
 	fmt.Printf("> --id= %v\n", *id)
 
-	db, _ = sql.Open("sqlite3", "sqlite.db")
+	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
 }
 
 func javascript(bodyBytes []byte, headers []byte) {

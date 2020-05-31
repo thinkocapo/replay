@@ -42,6 +42,12 @@ HOW TO PRETTY PRINT FLASK CLASS REQUEST BODY
     json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
     json.dumps(json.loads(request.data),indent=2)
 
+print('> type(request.data)', type(request.data))
+print('> type(request_headers)', type(request.headers))
+for header in request.headers.to_wsgi_list():
+    print(header)
+json.dumps(json.loads(decompress_gzip(request.data)),indent=2)
+json.dumps(json.loads(request.data),indent=2)
 
 
 05/31/2020
