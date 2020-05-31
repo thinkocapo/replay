@@ -70,10 +70,16 @@ func parseDSN(rawurl string) (*DSN) {
 	}
 }
 
-// could make a DSN field called 'storeEndpoint' and use this function there to assign the value
+// TODO could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
 func (d DSN) storeEndpoint() string {
-	return fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
-	// return strings.Join([]string{"http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7"}, "")
+	var fullurl string
+	if (d.host == "ingest.sentry.io") {
+		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	}
+	if (d.host == "localhost:9000") {
+		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	}
+	return fullurl
 }
 
 type Event struct {
@@ -94,10 +100,13 @@ func init() {
 	}
 
 	projects = make(map[string]*DSN)
-	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
-	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
-	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	
+	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
+	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
+
+	// Must use Hosted Sentry for AM Transactions
+	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
+	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -105,7 +114,6 @@ func init() {
 	fmt.Printf("> --all= %v\n", *all)
 	fmt.Printf("> --id= %v\n", *id)
 
-	
 	db, _ = sql.Open("sqlite3", "sqlite.db")
 }
 
@@ -114,16 +122,25 @@ func javascript(bodyBytes []byte, headers []byte) {
 	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
+
+	// sentry-javascript timestamp is in format "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
+	// undertaker is setting, as it was based on sentry-python which looks like format 2020-05-31T11:10:29.118356Z both formats are supported by Sentry.io
 	bodyInterface = addTimestamp(bodyInterface)
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
 	SENTRY_URL = projects["javascript"].storeEndpoint()
+	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
 	headerInterface := unmarshalJSON(headers)
 	
+	// TODO why not just set exactly what came from the database in &event.headers? This way don't have to worry about messing them up...
+	// Was it because there were inconsistent headers sent for those python errors earlier? remember - python event.py and Flask error were different
+	// "could" make a difference, so maybe hard-code for now??
+	// but if can't deduce what kind of tx it is in the proxy, then we wouldn't know here either...
 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -134,7 +151,8 @@ func javascript(bodyBytes []byte, headers []byte) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("> javascript event response: %v\n", string(responseData))
+	fmt.Printf("\n> javascript event response\n", responseData)
+	// fmt.Printf("\n> javascript event response", string(responseData))
 }
 
 func python(bodyBytesCompressed []byte, headers []byte) {
@@ -144,6 +162,8 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 	bodyInterface := unmarshalJSON(bodyBytes)
 	
 	bodyInterface = replaceEventId(bodyInterface)
+
+	// TODO could use addTimestamp? since that's why javascript ^ uses. then re-name it updateTimestamp
 	bodyInterface = replaceTimestamp(bodyInterface)
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
@@ -259,6 +279,7 @@ func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface
 	fmt.Println("after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
+
 // SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
 // Newer js sdk provides timestamp, so stop calling this function, upon upgrading js sdk. 
 func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {

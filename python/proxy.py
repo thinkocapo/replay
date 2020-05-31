@@ -28,6 +28,8 @@ print("""
                                                                                  
 """)
 
+
+
 SENTRY=''
 
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
@@ -76,34 +78,28 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
-    # print('> type(request.data)', type(request.data))
-    # print('> type(request_headers)', type(request.headers))
-
-    # print('\n111 REQUEST headers\n', request.headers)
-    # print('\n111 REQUEST body\n', json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-
     # TODO https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
-        user_agent = request.headers.get('User-Agent')
-        if 'ython' in user_agent:
-            print('> python error')
+        user_agent = request.headers.get('User-Agent').lower()
+        if 'python' in user_agent:
+            print('> Python error')
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 # TODO Original, 'flask' project
-                SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
+                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
-                # SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
-        if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
-            print('> javascript error')
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
+        if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+            print('> Javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
-                SENTRY = sentryUrl(os.getenv('DSN_REACT'))
-                # SENTRY = sentryUrl(os.getenv('DSN_REACT_SAAS'))
+                # SENTRY = sentryUrl(os.getenv('DSN_REACT'))
+                SENTRY = sentryUrl(os.getenv('DSN_REACT_SAAS'))
         return request_headers, SENTRY
 
     request_headers, SENTRY = make(request.headers)
-    print('> SENTRY url is', SENTRY)
+    print('> SENTRY url for store endpoint', SENTRY)
 
     try:
         print('> type(request.data)', type(request.data))
