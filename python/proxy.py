@@ -30,15 +30,27 @@ print("""
 
 SENTRY=''
 
+# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+# AM Transactions can't be sent to any self-hosted SEntry instance as of 05/30/2020 
+# https://github.com/getsentry/sentry/releases
 def sentryUrl(DSN):
-    print('\nsentryUrl')
-    # DSN = os.getenv('DSN_PYTHON')
-    KEY = DSN.split('@')[0][7:]
-    PROJECT_ID= DSN[-1:]
-    # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-    # SENTRY ="http://localhost:9000/api/{}/store/?sentry_key=09aa0d909232457a8a6dfff118bac658&sentry_version=7".format(PROJECT_ID)
-    # TODO must update for http://sentry.io as well. or re-write proxy in Go 
-    return "http://localhost:9000/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
+    print('> sentryUrl')
+
+    if ("@localhost:" in DSN):
+        KEY = DSN.split('@')[0][7:]
+        # assumes single-digit projectId right now
+        PROJECT_ID= DSN[-1:]
+        HOST = 'localhost:9000'
+        return "http://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    if ("ingest.sentry.io" in DSN):
+        KEY = DSN.split('@')[0][8:] # 8 because of 's' in 'https'
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+        # MODIFIED_DSN_FORWARD used a dsn of "http://0d52d5f4e8a64f5ab2edce50d88a7626@o87286.ingest.sentry.io/1428657" in thinkocapo/react to call:
+        # return "https://o87286.ingest.sentry.io/api/1428657/store/?sentry_key=0d52d5f4e8a64f5ab2edce50d88a7626&sentry_version=7" # will-frontend-react in SAAS
+        # it ^ reached SaaS sentry.io
+
 
 # DATABASE - Must be full absolute path to sqlite database file
 # sqlite.db will get created if doesn't exist
@@ -62,7 +74,7 @@ with sqlite3.connect(database) as db:
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
-    print('> 0000000000 FORWARD')
+    print('> FORWARD')
 
     # print('> type(request.data)', type(request.data))
     # print('> type(request_headers)', type(request.headers))
@@ -92,7 +104,6 @@ def forward():
 
     request_headers, SENTRY = make(request.headers)
     print('> SENTRY url is', SENTRY)
-    # return 'END EXPERIMENT'
 
     try:
         print('> type(request.data)', type(request.data))
@@ -127,11 +138,6 @@ def save():
         event_type = 'javascript'
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
-
-    # request.data for javascript going into sqlite should be fine...
-    # request_headers = {}
-    # for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
-    #     request_headers[key] = request.headers.get(key)
 
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
