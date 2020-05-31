@@ -15,6 +15,7 @@ load_dotenv()
 http = urllib3.PoolManager()
 
 app = Flask(__name__)
+# app.run(ssl_context='adhoc') # flask run --cert=adhoc
 CORS(app)
 
 print("""
@@ -61,13 +62,13 @@ with sqlite3.connect(database) as db:
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
-    print('> FORWARD')
+    print('> 0000000000 FORWARD')
 
-    print('\n111 REQUEST headers\n', request.headers)
+    # print('> type(request.data)', type(request.data))
+    # print('> type(request_headers)', type(request.headers))
 
-    print('\n111 REQUEST body\n', json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-
-
+    # print('\n111 REQUEST headers\n', request.headers)
+    # print('\n111 REQUEST body\n', json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
 
     # TODO https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
@@ -77,29 +78,35 @@ def forward():
             print('> python error')
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
+                # TODO Original, 'flask' project
                 SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
+                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
+                # SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
         if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
             print('> javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 SENTRY = sentryUrl(os.getenv('DSN_REACT'))
+                # SENTRY = sentryUrl(os.getenv('DSN_REACT_SAAS'))
         return request_headers, SENTRY
 
-    request_headers, SENTRY = make(request.headers) # could make return 2 values? https://note.nkmk.me/en/python-function-return-multiple-values/
+    request_headers, SENTRY = make(request.headers)
     print('> SENTRY url is', SENTRY)
-    
+    # return 'END EXPERIMENT'
+
     try:
         print('> type(request.data)', type(request.data))
         print('> type(request_headers)', type(request_headers))
 
-        response = http.request(
-            "POST", str(SENTRY), body=request.data, headers=request_headers 
-        )
+        # response = http.request(
+        #     "POST", str(SENTRY), body=request.data, headers=request_headers 
+        # )
 
         print('> nothing saved to sqlite database')
         return 'success'
     except Exception as err:
-        print('LOCAL EXCEPTION', err)
+        # print('LOCAL EXCEPTION', err)
+        print('DONE')
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
