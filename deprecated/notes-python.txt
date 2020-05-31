@@ -13,3 +13,17 @@ source .virtualenv/bin/activate
 }
 
 python2 BytesIO buffer getvalue() returns string instead of bytes (python3)
+
+
+
+
+
+
+
+request.data for javascript going into sqlite should be fine...
+request_headers = {}
+for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+    request_headers[key] = request.headers.get(key)
+
+
+return "http://sentry.io/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
