@@ -106,7 +106,7 @@ func init() {
 
 	// Must use Hosted Sentry for AM Transactions
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONEAT_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -118,7 +118,7 @@ func init() {
 }
 
 func javascript(bodyBytes []byte, headers []byte) {
-	fmt.Println("> javascript")
+	fmt.Println("> JAVASCRIPT")
 	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
@@ -159,8 +159,8 @@ func javascript(bodyBytes []byte, headers []byte) {
 func python(bodyBytesCompressed []byte, headers []byte) {
 	fmt.Println("> python")
 	
-	bodyBytes := decodeGzip(bodyBytesCompressed)
-	bodyInterface := unmarshalJSON(bodyBytes)
+	// bodyBytes := decodeGzip(bodyBytesCompressed)
+	bodyInterface := unmarshalJSON(bodyBytesCompressed)
 	
 	bodyInterface = replaceEventId(bodyInterface)
 
@@ -171,6 +171,8 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 	buf := encodeGzip(bodyBytesPost)
 	
 	SENTRY_URL = projects["python"].storeEndpoint()
+	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
@@ -285,9 +287,12 @@ func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface
 // Newer js sdk provides timestamp, so stop calling this function, upon upgrading js sdk. 
 func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	log.Print("no timestamp on object from DB")
-	timestamp1 := time.Now()
-	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
-	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
+	
+	// timestamp1 := time.Now()
+	// newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+	// bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
+
+	bodyInterface["timestamp"] = "1590957221.4570072"
 	fmt.Println("> after ",bodyInterface["timestamp"])
 	return bodyInterface
 }

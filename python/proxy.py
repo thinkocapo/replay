@@ -122,39 +122,39 @@ def save():
 
     print('> type(request.data)', type(request.data))
     print('> type(request_headers)', type(request.headers))
-    for header in request.headers.to_wsgi_list():
-        print(header)
-    print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # for header in request.headers.to_wsgi_list():
+    #     print(header)
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
     # json.dumps(json.loads(request.data),indent=2)
 
     event_type = ''
     request_headers = {}
-    user_agent = request.headers.get('User-Agent')
+    user_agent = request.headers.get('User-Agent').lower()
     
-    if 'ython' in user_agent:
-        print('> python error type')
+    data = ''
+    if 'python' in user_agent:
+        print('> PYTHON <')
         event_type = 'python'
         # TODO - need to know if it's Transaction or Error type now...     
         # for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
-    if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
-        print('> javascript error type')
+        data = decompress_gzip(request.data)
+    if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+        print('> JAVASCRIPT <')
         event_type = 'javascript'
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
+        data = request.data
 
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-    record = (event_type, event_type, request.data, json.dumps(request_headers))
-    print('TTTTTTTTTTTTTTTTTTTTTTTTTTTTT')
+    record = (event_type, event_type, data, json.dumps(request_headers))
+    
     try:
         with sqlite3.connect(database) as db:
-            print('1111111111111111111111')
-
             cursor = db.cursor()
             cursor.execute(insert_query, record)
-            print('2222222222222222222')
             print('> Id in Sqlite', cursor.lastrowid)
             cursor.close()
             return str(cursor.lastrowid)
