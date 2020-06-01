@@ -75,6 +75,7 @@ func parseDSN(rawurl string) (*DSN) {
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if (d.host == "ingest.sentry.io") {
+		// still works if you pass in the "o87286"
 		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
 		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
 	}
@@ -122,12 +123,16 @@ func javascript(event Event) {
 	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
-	// updateTimestamp "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
-	// TODO recognize Error (updateTimestamp) vs Transaction (updateTimestamps)
-	// bodyInterface = updateTimestamp(bodyInterface)
+	if (event._type == "error") {
+		bodyInterface = updateTimestamp(bodyInterface, "javascript")
+	}
+	// if (event._type == "transaction") {
+	// 	bodyInterface = updateTimestamps(bodyInterface)
+	// }
 
-	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
-	fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
+	// move to updateTimestamp(s) functions...
+	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
+	// fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
@@ -160,8 +165,12 @@ func python(event Event) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	// updateTimestamp 2020-05-31T11:10:29.118356Z
-	// TODO recognize Error (updateTimestamp) vs Transaction (updateTimestamps)
-	// bodyInterface = replaceTimestamp(bodyInterface)
+	if (event._type == "error") {
+		bodyInterface = updateTimestamp(bodyInterface, "python")
+	}
+	// if (event._type == "transaction") {
+	// 	bodyInterface = updateTimestamps(bodyInterface)
+	// }
 	
 	// is format 2020-05-31T23:55:11.807534Z
 	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
@@ -273,13 +282,36 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	return bodyInterface
 }
 
-func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-	fmt.Println("before",bodyInterface["timestamp"])
-	timestamp := time.Now()
-	oldTimestamp := bodyInterface["timestamp"].(string)
-	newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
-	bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-	fmt.Println("after ",bodyInterface["timestamp"])
+// updateTimestamp "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
+func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+	fmt.Println(" timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	
+	if (platform == "javascript") {
+		bodyInterface["timestamp"] = time.Now().Unix() 
+	}
+
+	if (platform == "python") {
+		timestamp := time.Now()
+		oldTimestamp := bodyInterface["timestamp"].(string)
+		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
+		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+		fmt.Println("after ",bodyInterface["timestamp"])
+	}
+
+	fmt.Println(" timestamp after", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	return bodyInterface
+}
+
+func updateTimestamps(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+	// 'start_timestamp' is only present in transactions
+	fmt.Println("       timestamp before",bodyInterface["start_timestamp"])
+	fmt.Println(" start_timestamp before",bodyInterface["start_timestamp"])
+
+	// TODO - recursively go through all nested spans and update their timestamps...
+
+	fmt.Println("       timestamp after",bodyInterface["start_timestamp"])
+	fmt.Println(" start_timestamp after",bodyInterface["start_timestamp"])
+	
 	return bodyInterface
 }
 
