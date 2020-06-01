@@ -16,5 +16,7 @@ eventsentry:
 eventsentrypy:
 	python3 event-to-sentry.py
 
+resetdb:
+	rm am-transactions-sqlite.db && touch am-transactions-sqlite.db && python3 test/create-db.py
 testdb:
 	python3 test/db.py

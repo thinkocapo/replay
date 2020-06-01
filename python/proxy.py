@@ -59,6 +59,7 @@ def sentryUrl(DSN):
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
+
 with sqlite3.connect(database) as db:
     # TODO platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
     cursor = db.cursor()
@@ -119,25 +120,37 @@ def forward():
 def save():
     print('> SAVING')
 
+    print('> type(request.data)', type(request.data))
+    print('> type(request_headers)', type(request.headers))
+    # for header in request.headers.to_wsgi_list():
+    #     print(header)
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # json.dumps(json.loads(request.data),indent=2)
+
     event_type = ''
     request_headers = {}
-    user_agent = request.headers.get('User-Agent')
+    user_agent = request.headers.get('User-Agent').lower()
     
-    if 'ython' in user_agent:
-        print('> python error type')
+    data = ''
+    if 'python' in user_agent:
+        print('> PYTHON <')
         event_type = 'python'
-        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        # TODO - need to know if it's Transaction or Error type now...     
+        # for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
-    if 'ozilla' in user_agent or 'hrome' in user_agent or 'afari' in user_agent:
-        print('> javascript error type')
+        data = decompress_gzip(request.data)
+    if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+        print('> JAVASCRIPT <')
         event_type = 'javascript'
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
+        data = request.data
 
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-    record = (event_type, event_type, request.data, json.dumps(request_headers))
-   
+    record = (event_type, event_type, data, json.dumps(request_headers))
+    
     try:
         with sqlite3.connect(database) as db:
             cursor = db.cursor()
