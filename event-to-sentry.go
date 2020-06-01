@@ -55,7 +55,7 @@ func parseDSN(rawurl string) (*DSN) {
 
 	var host string
 	if (strings.Contains(rawurl, "ingest.sentry.io")) {
-		host = "ingest.sentry.io" // works with "sentry.io" too
+		host = "ingest.sentry.io" // works with "sentry.io" too?
 	}
 	if (strings.Contains(rawurl, "@localhost:")) {
 		host = "localhost:9000"
@@ -74,7 +74,7 @@ func parseDSN(rawurl string) (*DSN) {
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if (d.host == "ingest.sentry.io") {
-		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
 	}
 	if (d.host == "localhost:9000") {
 		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
@@ -122,11 +122,13 @@ func javascript(bodyBytes []byte, headers []byte) {
 	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
-
 	// sentry-javascript timestamp is in format "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
 	// undertaker is setting, as it was based on sentry-python which looks like format 2020-05-31T11:10:29.118356Z both formats are supported by Sentry.io
-	bodyInterface = addTimestamp(bodyInterface)
-	
+	// bodyInterface = addTimestamp(bodyInterface) // TODO is also 'start_timestamp'
+	// 1590969296.2136922
+	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
+	fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
+
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
 	SENTRY_URL = projects["javascript"].storeEndpoint()
@@ -136,6 +138,7 @@ func javascript(bodyBytes []byte, headers []byte) {
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
 	headerInterface := unmarshalJSON(headers)
+	// fmt.Printf("> headers %v", headerInterface)
 	
 	// TODO why not just set exactly what came from the database in &event.headers? This way don't have to worry about messing them up...
 	// Was it because there were inconsistent headers sent for those python errors earlier? remember - python event.py and Flask error were different
@@ -165,7 +168,13 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	// TODO could use addTimestamp? since that's why javascript ^ uses. then re-name it updateTimestamp
-	bodyInterface = replaceTimestamp(bodyInterface)
+	// TODO don't replace timestamp IF it's a Transaction...
+	// bodyInterface = replaceTimestamp(bodyInterface)
+	
+	
+	// is format 2020-05-31T23:55:11.807534Z
+	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
+	fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
@@ -178,7 +187,7 @@ func python(bodyBytesCompressed []byte, headers []byte) {
 
 	headerInterface := unmarshalJSON(headers)
 
-	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+	for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
@@ -288,11 +297,11 @@ func replaceTimestamp(bodyInterface map[string]interface{}) map[string]interface
 func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	log.Print("no timestamp on object from DB")
 	
-	// timestamp1 := time.Now()
-	// newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
-	// bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
+	timestamp1 := time.Now()
+	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
 
-	bodyInterface["timestamp"] = "1590957221.4570072"
+	// bodyInterface["timestamp"] = "1590957221.4570072"
 	fmt.Println("> after ",bodyInterface["timestamp"])
 	return bodyInterface
 }
