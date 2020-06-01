@@ -26,6 +26,7 @@ for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Conten
 return "http://sentry.io/api/%s/store/?sentry_key=%s&sentry_version=7" % (PROJECT_ID, KEY)
 
 
+pip install pyopenssl is for flask to support https
 
 
 05/31/2020
