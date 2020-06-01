@@ -93,8 +93,6 @@ func (e Event) String() string {
 }
 
 func init() {
-	defer fmt.Println("> init() complete")
-	
 	if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
 	}
@@ -103,7 +101,6 @@ func init() {
 	
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
-
 	// Must use Hosted Sentry for AM Transactions
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
 	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONEAT_SAAS"))
@@ -111,8 +108,8 @@ func init() {
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
-	fmt.Printf("> --all= %v\n", *all)
-	fmt.Printf("> --id= %v\n", *id)
+	// fmt.Printf("> --all= %v\n", *all)
+	// fmt.Printf("> --id= %v\n", *id)
 
 	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
 }
@@ -122,10 +119,11 @@ func javascript(bodyBytes []byte, headers []byte) {
 	
 	bodyInterface := unmarshalJSON(bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
-	// sentry-javascript timestamp is in format "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
-	// undertaker is setting, as it was based on sentry-python which looks like format 2020-05-31T11:10:29.118356Z both formats are supported by Sentry.io
-	// bodyInterface = addTimestamp(bodyInterface) // TODO is also 'start_timestamp'
-	// 1590969296.2136922
+
+	// updateTimestamp "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
+	// TODO recognize Error (updateTimestamp) vs Transaction (updateTimestamps)
+	// bodyInterface = updateTimestamp(bodyInterface)
+
 	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
 	fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
 
@@ -138,12 +136,7 @@ func javascript(bodyBytes []byte, headers []byte) {
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
 	headerInterface := unmarshalJSON(headers)
-	// fmt.Printf("> headers %v", headerInterface)
 	
-	// TODO why not just set exactly what came from the database in &event.headers? This way don't have to worry about messing them up...
-	// Was it because there were inconsistent headers sent for those python errors earlier? remember - python event.py and Flask error were different
-	// "could" make a difference, so maybe hard-code for now??
-	// but if can't deduce what kind of tx it is in the proxy, then we wouldn't know here either...
 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -156,21 +149,17 @@ func javascript(bodyBytes []byte, headers []byte) {
 
 	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
 	fmt.Printf("\n> javascript event response", string(responseData))
-	// fmt.Printf("\n> javascript event response\n", responseData)
 }
 
 func python(bodyBytes []byte, headers []byte) {
 	fmt.Println("> python")
-	
 	// bodyBytes := decodeGzip(bodyBytesCompressed)
 	bodyInterface := unmarshalJSON(bodyBytes)
-	
 	bodyInterface = replaceEventId(bodyInterface)
 
-	// TODO could use addTimestamp? since that's why javascript ^ uses. then re-name it updateTimestamp
-	// TODO don't replace timestamp IF it's a Transaction...
+	// updateTimestamp 2020-05-31T11:10:29.118356Z
+	// TODO recognize Error (updateTimestamp) vs Transaction (updateTimestamps)
 	// bodyInterface = replaceTimestamp(bodyInterface)
-	
 	
 	// is format 2020-05-31T23:55:11.807534Z
 	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
