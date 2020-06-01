@@ -133,10 +133,10 @@ def save():
     
     data = ''
     if 'python' in user_agent:
-        print('> PYTHON <')
 
         event_platform = 'python'
         event_type = get_event_type(request.data, "python")
+        print('> PYTHON', event_type)
 
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
@@ -144,31 +144,28 @@ def save():
         data = decompress_gzip(request.data)
 
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
-        print('> JAVASCRIPT <')
 
         event_platform = 'javascript'
         event_type = get_event_type(request.data, "javascript")
+        print('> JAVASCRIPT ', event_type)
 
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
 
         data = request.data
 
-    print('> event_type', event_type)
-    return 'DONE'    
-
-    # insert_query = ''' INSERT INTO events(name,type,data,headers)
-    #           VALUES(?,?,?,?) '''
-    # record = (event_platform, event_platform, data, json.dumps(request_headers))
-    # try:
-    #     with sqlite3.connect(database) as db:
-    #         cursor = db.cursor()
-    #         cursor.execute(insert_query, record)
-    #         print('> Id in Sqlite', cursor.lastrowid)
-    #         cursor.close()
-    #         return str(cursor.lastrowid)
-    # except Exception as err:
-    #     print("LOCAL EXCEPTION", err)
+    insert_query = ''' INSERT INTO events(name,type,data,headers)
+              VALUES(?,?,?,?) '''
+    record = (event_platform, event_type, data, json.dumps(request_headers))
+    try:
+        with sqlite3.connect(database) as db:
+            cursor = db.cursor()
+            cursor.execute(insert_query, record)
+            print('> SQLITE ID', cursor.lastrowid)
+            cursor.close()
+            return str(cursor.lastrowid)
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])

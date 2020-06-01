@@ -36,11 +36,11 @@ def get_event_type(bytes_data, platform):
     if platform == 'javascript':
         body_dict = json.loads(bytes_data)
     
-    if "type" in body_dict:
-        print("> type ", body_dict['type'])
+    # if "type" in body_dict:
+    #     print("> type ", body_dict['type'])
 
-    if "transaction" in body_dict:
-        print("> transaction ", body_dict['transaction'])
+    # if "transaction" in body_dict:
+    #     print("> transaction ", body_dict['transaction'])
 
     # print(json.dumps(body_dict, indent=2))
 
