@@ -159,11 +159,11 @@ func javascript(bodyBytes []byte, headers []byte) {
 	// fmt.Printf("\n> javascript event response\n", responseData)
 }
 
-func python(bodyBytesCompressed []byte, headers []byte) {
+func python(bodyBytes []byte, headers []byte) {
 	fmt.Println("> python")
 	
 	// bodyBytes := decodeGzip(bodyBytesCompressed)
-	bodyInterface := unmarshalJSON(bodyBytesCompressed)
+	bodyInterface := unmarshalJSON(bodyBytes)
 	
 	bodyInterface = replaceEventId(bodyInterface)
 
