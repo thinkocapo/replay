@@ -51,8 +51,8 @@ func parseDSN(rawurl string) (*DSN) {
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
-	fmt.Println("> DSN projectId", projectId)
-
+	// fmt.Println("> DSN projectId", projectId)
+	
 	var host string
 	if (strings.Contains(rawurl, "ingest.sentry.io")) {
 		host = "ingest.sentry.io" // works with "sentry.io" too?
@@ -60,7 +60,8 @@ func parseDSN(rawurl string) (*DSN) {
 	if (strings.Contains(rawurl, "@localhost:")) {
 		host = "localhost:9000"
 	}
-	fmt.Println("> DSN host", host)
+
+	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	
 	return &DSN{
 		host,
@@ -74,7 +75,8 @@ func parseDSN(rawurl string) (*DSN) {
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if (d.host == "ingest.sentry.io") {
-		fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
 	}
 	if (d.host == "localhost:9000") {
 		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
@@ -89,7 +91,7 @@ type Event struct {
 	bodyBytes []byte
 }
 func (e Event) String() string {
-	return fmt.Sprintf("> event id, type: %v %v", e.id, e._type)
+	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.name, e._type)
 }
 
 func init() {
@@ -99,9 +101,9 @@ func init() {
 
 	projects = make(map[string]*DSN)
 	
+	// Must use Hosted Sentry for AM Transactions
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
-	// Must use Hosted Sentry for AM Transactions
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
 	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONEAT_SAAS"))
 
@@ -114,10 +116,10 @@ func init() {
 	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
 }
 
-func javascript(bodyBytes []byte, headers []byte) {
-	fmt.Println("> JAVASCRIPT")
+func javascript(event Event) {
+	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
 	
-	bodyInterface := unmarshalJSON(bodyBytes)
+	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
 	// updateTimestamp "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
@@ -135,7 +137,7 @@ func javascript(bodyBytes []byte, headers []byte) {
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
-	headerInterface := unmarshalJSON(headers)
+	headerInterface := unmarshalJSON(event.headers)
 	
 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
@@ -151,10 +153,10 @@ func javascript(bodyBytes []byte, headers []byte) {
 	fmt.Printf("\n> javascript event response", string(responseData))
 }
 
-func python(bodyBytes []byte, headers []byte) {
-	fmt.Println("> python")
+func python(event Event) {
+	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
 	// bodyBytes := decodeGzip(bodyBytesCompressed)
-	bodyInterface := unmarshalJSON(bodyBytes)
+	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
 	// updateTimestamp 2020-05-31T11:10:29.118356Z
@@ -174,7 +176,7 @@ func python(bodyBytes []byte, headers []byte) {
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-	headerInterface := unmarshalJSON(headers)
+	headerInterface := unmarshalJSON(event.headers)
 
 	for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
 		request.Header.Set(v, headerInterface[v].(string))
@@ -209,12 +211,12 @@ func main() {
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
-		if (event._type == "javascript") {
-			javascript(event.bodyBytes, event.headers)
+		if (event.name == "javascript") {
+			javascript(event)
 		}
 
-		if (event._type == "python") {
-			python(event.bodyBytes, event.headers)
+		if (event.name == "python") {
+			python(event)
 		}
 
 		if !*all {
