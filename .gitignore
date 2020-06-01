@@ -24,6 +24,7 @@ go/dump-request
 
 result-csv
 
+am-transactions-sqlite.db
 sqlite.db
 
 notes.txt
