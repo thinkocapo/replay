@@ -126,13 +126,9 @@ func javascript(event Event) {
 	if (event._type == "error") {
 		bodyInterface = updateTimestamp(bodyInterface, "javascript")
 	}
-	// if (event._type == "transaction") {
-	// 	bodyInterface = updateTimestamps(bodyInterface)
-	// }
-
-	// move to updateTimestamp(s) functions...
-	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
-	// fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
+	if (event._type == "transaction") {
+		bodyInterface = updateTimestamps(bodyInterface, "javascript")
+	}
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
@@ -168,9 +164,9 @@ func python(event Event) {
 	if (event._type == "error") {
 		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
-	// if (event._type == "transaction") {
-	// 	bodyInterface = updateTimestamps(bodyInterface)
-	// }
+	if (event._type == "transaction") {
+		bodyInterface = updateTimestamps(bodyInterface, "python")
+	}
 	
 	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
 	
@@ -315,8 +311,13 @@ func updateTimestamps(bodyInterface map[string]interface{}, platform string) map
 	// 'start_timestamp' is only present in transactions
 	fmt.Println("       timestamp before",bodyInterface["start_timestamp"])
 	fmt.Println(" start_timestamp before",bodyInterface["start_timestamp"])
+	// event.context.trace.span_id
+	// event.startTimestamp
+	// event.endTimestamp
 
-	// TODO - recursively go through all nested spans and update their timestamps...
+	// for span in event.entrices[0].data: 
+		// start_timestamp
+		// timestamp
 
 	fmt.Println("       timestamp after",bodyInterface["start_timestamp"])
 	fmt.Println(" start_timestamp after",bodyInterface["start_timestamp"])
