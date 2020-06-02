@@ -326,14 +326,14 @@ func updateTimestamps(bodyInterface map[string]interface{}, platform string) map
 
 // SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
 // Newer js sdk provides timestamp, so stop calling this function, upon upgrading js sdk. 
-func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-	log.Print("no timestamp on object from DB")
+// func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+// 	log.Print("no timestamp on object from DB")
 	
-	timestamp1 := time.Now()
-	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
-	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
+// 	timestamp1 := time.Now()
+// 	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
+// 	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
 
-	// bodyInterface["timestamp"] = "1590957221.4570072"
-	fmt.Println("> after ",bodyInterface["timestamp"])
-	return bodyInterface
-}
+// 	// bodyInterface["timestamp"] = "1590957221.4570072"
+// 	fmt.Println("> after ",bodyInterface["timestamp"])
+// 	return bodyInterface
+// }
