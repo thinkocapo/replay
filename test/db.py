@@ -33,8 +33,11 @@ try:
         # print('Most recent sqlite id:', rows[len(rows)-1][0]) # is latest??
  
         # TODO - iterate through all rows and print
+        # most recently added row
         row = rows[-1]
-        # row = list(row)
+        
+        # row by selection
+        row = rows[0]
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
@@ -49,6 +52,7 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
+            'buffer': buffer,
             'headers': headers
         }
         print(json.dumps(output, indent=2))
