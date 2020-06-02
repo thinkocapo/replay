@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	// "strconv"
 	"strings"
 	"time"
 )
@@ -127,6 +128,7 @@ func javascript(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface, "javascript")
 	}
 	if (event._type == "transaction") {
+		fmt.Println(bodyInterface["start_timestamp"])
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
 	}
 
@@ -144,14 +146,14 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
-	fmt.Printf("\n> javascript event response", string(responseData))
+	// // TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
+	// fmt.Printf("\n> javascript event response", string(responseData))
 }
 
 func python(event Event) {
@@ -165,6 +167,7 @@ func python(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
 	if (event._type == "transaction") {
+		fmt.Println(bodyInterface)
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
 	
@@ -186,13 +189,13 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> python event response: %v\n", string(responseData))
+	// fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func main() {
@@ -307,22 +310,29 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 	return bodyInterface
 }
 
-func updateTimestamps(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
 	// 'start_timestamp' is only present in transactions
-	fmt.Println("       timestamp before",bodyInterface["start_timestamp"])
-	fmt.Println(" start_timestamp before",bodyInterface["start_timestamp"])
+	fmt.Println("       timestamp before",data["start_timestamp"])
+	fmt.Println(" start_timestamp before",data["start_timestamp"])
+	
+	// bodyInterface == event
 	// event.context.trace.span_id
-	// event.startTimestamp
-	// event.endTimestamp
+
+	
+	// TODO
+	// timestamp := time.Now().Unix()
+	// startTimestamp, _ := strconv.ParseInt(data["startTimestamp"].(string), 64)
+	// endTimestamp, _ := strconv.ParseInt(data["endTimestamp"].(string), 64)
+	// data["startTimestamp"] = timestamp
+	// data["endTimestamp"] = timestamp + (endTimestamp - startTimestamp)
 
 	// for span in event.entrices[0].data: 
 		// start_timestamp
 		// timestamp
 
-	fmt.Println("       timestamp after",bodyInterface["start_timestamp"])
-	fmt.Println(" start_timestamp after",bodyInterface["start_timestamp"])
-	
-	return bodyInterface
+	fmt.Println("       timestamp after",data["start_timestamp"])
+	fmt.Println(" start_timestamp after",data["start_timestamp"])
+	return data
 }
 
 // SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
