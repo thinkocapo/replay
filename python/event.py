@@ -17,7 +17,7 @@ SDK requires that DSN ends in a number. Use zero's for proxy endpoints so no con
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
-DSN = os.getenv('DSN_PYTHON')
+DSN = os.getenv('DSN_PYTHONTEST')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 
@@ -43,7 +43,7 @@ def app():
     # stacktrace()
     
     # Exception literals will not have stack traces
-    sentry_sdk.capture_exception(Exception("steel449"))
+    sentry_sdk.capture_exception(Exception("Five0Ten"))
 
 def dsn_and_proxy_check():
     if DSN=='':
@@ -59,7 +59,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_FORWARD }
+    params = { 'dsn': MODIFIED_DSN_SAVE }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
