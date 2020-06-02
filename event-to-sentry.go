@@ -106,7 +106,7 @@ func init() {
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONEAT_SAAS"))
+	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONTEST_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -172,9 +172,7 @@ func python(event Event) {
 	// 	bodyInterface = updateTimestamps(bodyInterface)
 	// }
 	
-	// is format 2020-05-31T23:55:11.807534Z
-	fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
-	fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
+	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
@@ -187,6 +185,7 @@ func python(event Event) {
 
 	headerInterface := unmarshalJSON(event.headers)
 
+	// X-Sentry-Auth
 	for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -197,7 +196,7 @@ func python(event Event) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("> python event response: %v\n", string(responseData))
+	fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func main() {
@@ -282,23 +281,33 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	return bodyInterface
 }
 
-// updateTimestamp "1590946750.683085," https://github.com/getsentry/sentry-javascript/pull/2575
+// js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
 	fmt.Println(" timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	
+	// "1590946750" unix
 	if (platform == "javascript") {
 		bodyInterface["timestamp"] = time.Now().Unix() 
 	}
 
+	// "2020-05-31T23:55:11.807534Z"
 	if (platform == "python") {
+		// is PST, or wherever you're running this from
 		timestamp := time.Now()
+		// is GMT, so not same as timezone you're running this from
 		oldTimestamp := bodyInterface["timestamp"].(string)
 		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
 		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-		fmt.Println("after ",bodyInterface["timestamp"])
+
+		// TODO these need to match. 'timestamp before' is GTC, appearing as far ahead of PST.
+		// timestamp before 2020-06-02T00:09:51.365214Z
+		// timestamp after 2020-06-01T17:12:26.365214Z
+	   
+		// doesn't work, won't appear in Sentry.io
+		// bodyInterface["timestamp"] = time.Now().Unix()
 	}
 
-	fmt.Println(" timestamp after", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	fmt.Println("  timestamp after", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	return bodyInterface
 }
 

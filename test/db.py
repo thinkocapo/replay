@@ -48,8 +48,8 @@ try:
         output = {
             'id': sqlite_id,
             'platform': event_name,
-            'type': event_type
-            # 'headers': headers
+            'type': event_type,
+            'headers': headers
         }
         print(json.dumps(output, indent=2))
     
