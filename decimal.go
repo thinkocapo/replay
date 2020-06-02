@@ -46,8 +46,16 @@ func main() {
 	// fmt.Println("\ntstring:", timestamp)
 
 	ts := timestamp1[:10] + "." + timestamp1[11:]
-
+	// https://github.com/getsentry/sentry-javascript/tree/master/packages/utils
+	// https://github.com/getsentry/sentry-javascript/blob/c6a2ec95f5c21df5fb6c4d7ee07087b615e23436/packages/utils/src/misc.ts
 	fmt.Println("\ntimestamp:", ts)
+
+	timestamp1000 := time.Now().UnixNano()
+	base := timestamp1000 / 1000000
+	modulo := timestamp % 1000000
+	fmt.Println("\ntimestamp1000 base:", base)
+	fmt.Println("\ntimestamp1000 modulo:", modulo)
+
 
 	// myv := float64(ts) // fails
 
