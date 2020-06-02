@@ -6,7 +6,7 @@ from flask_cors import CORS
 import json
 # import sentry_sdk
 # from sentry_sdk.integrations.flask import FlaskIntegration
-from services import compress_gzip, decompress_gzip
+from services import compress_gzip, decompress_gzip, get_event_type
 import sqlite3
 import string # ?
 import urllib3
@@ -87,7 +87,6 @@ def forward():
             print('> Python error')
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
-                # TODO Original, 'flask' project
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
                 SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
@@ -120,48 +119,55 @@ def forward():
 def save():
     print('> SAVING')
 
-    print('> type(request.data)', type(request.data))
-    print('> type(request_headers)', type(request.headers))
+    # print('> type(request.data)', type(request.data))
+    # print('> type(request_headers)', type(request.headers))
     # for header in request.headers.to_wsgi_list():
     #     print(header)
     # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
     # json.dumps(json.loads(request.data),indent=2)
 
+    event_platform = ''
     event_type = ''
     request_headers = {}
     user_agent = request.headers.get('User-Agent').lower()
     
     data = ''
     if 'python' in user_agent:
-        print('> PYTHON <')
-        event_type = 'python'
-        # TODO - need to know if it's Transaction or Error type now...     
-        # for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+
+        event_platform = 'python'
+        event_type = get_event_type(request.data, "python")
+        print('> PYTHON', event_type)
+
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
+
         data = decompress_gzip(request.data)
+
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
-        print('> JAVASCRIPT <')
-        event_type = 'javascript'
+
+        event_platform = 'javascript'
+        event_type = get_event_type(request.data, "javascript")
+        print('> JAVASCRIPT ', event_type)
+
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
+
         data = request.data
 
     insert_query = ''' INSERT INTO events(name,type,data,headers)
               VALUES(?,?,?,?) '''
-    record = (event_type, event_type, data, json.dumps(request_headers))
-    
+    record = (event_platform, event_type, data, json.dumps(request_headers))
     try:
         with sqlite3.connect(database) as db:
             cursor = db.cursor()
             cursor.execute(insert_query, record)
-            print('> Id in Sqlite', cursor.lastrowid)
+            print('> SQLITE ID', cursor.lastrowid)
             cursor.close()
             return str(cursor.lastrowid)
     except Exception as err:
         print("LOCAL EXCEPTION", err)
 
-# MODIFIED_DSN_SAVE_AND_FORWARD
+# MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
 
@@ -189,7 +195,3 @@ def save_and_forward():
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
-
-# @app.route('/load-and-forward', defaults={'_id':0}, methods=['GET'])
-# @app.route('/load-and-forward/<_id>', methods=['GET'])
-# def load_and_forward(_id):
