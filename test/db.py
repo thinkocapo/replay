@@ -2,6 +2,7 @@ from gzip import GzipFile
 import json
 from six import BytesIO
 import sqlite3
+import sys
 
 """This tests how many records are in your Sqlite database"""
 
@@ -26,7 +27,15 @@ conn = sqlite3.connect(path_to_database)
 try:
     with conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM events")
+    
+        _id = sys.argv[1] if len(sys.argv) > 1 else None
+        if _id==None:
+            cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+        else:
+            cur.execute("SELECT * FROM events WHERE id=?", [_id])
+
+
+        # cur.execute("SELECT * FROM events")
 
         rows = cur.fetchall()
         print('TOTAL ROWS: ', len(rows))
@@ -37,7 +46,7 @@ try:
         row = rows[-1]
         
         # row by selection
-        row = rows[0]
+        # row = rows[0]
 
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
@@ -52,8 +61,8 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            'buffer': buffer,
-            'headers': headers
+            'buffer': json.loads(buffer),
+            'headers': json.loads(headers)
         }
         print(json.dumps(output, indent=2))
     

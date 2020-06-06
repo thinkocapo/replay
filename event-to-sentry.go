@@ -310,14 +310,16 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 	return bodyInterface
 }
 
+
+// JS some are like 1591419091.4805 but others 1591419092.000035
+// PYTHON are like 2020-06-06T04:54:56.636664Z
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	// 'start_timestamp' is only present in transactions
+	// 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/parent
 	fmt.Println("       timestamp before",data["start_timestamp"])
 	fmt.Println(" start_timestamp before",data["start_timestamp"])
 	
 	// bodyInterface == event
 	// event.context.trace.span_id
-
 	
 	// TODO
 	// timestamp := time.Now().Unix()
