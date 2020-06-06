@@ -45,25 +45,31 @@ func main() {
 	newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
 	fmt.Printf("\njs newParentEndTimestamp %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
 
-	// TODO
-	// 1.
-	func updateSpan(parentStartTimestamp) {
-		spanStartTimestamp, _ := decimal.NewFromString(span.start_timestamp)
-		spanStartTimestamp, _ := decimal.NewFromString(span.timestamp)
-		// ^ format it with right decimals so can do subtraction:
-
-		spanStartDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-		spanEndDifference := spanEndTimestamp.Sub(parentStartTimestamp)
-
-		newSpanStartTimestamp := newParentStartTimestamp.Add(spanStartDifference)
-		newSpanEndTimestamp := newParentStartTimestamp.Add(spanEndDifference)
-
+	if (newParentEndTimestamp.Sub(newParentStartTimestampDecimal).Equal(parentDifference)) {
+		fmt.Printf("\nTRUE")
+	} else {
+		fmt.Printf("\nFALSE - not equal")
+		fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestampDecimal))
 	}
 
+	// TODO
+	// 1.
+	// func updateSpan(parentStartTimestamp) {
+	// 	spanStartTimestamp, _ := decimal.NewFromString(span.start_timestamp)
+	// 	spanStartTimestamp, _ := decimal.NewFromString(span.timestamp)
+	// 	// ^ format it with right decimals so can do subtraction:
 
-	// RUn this Test
-	// (newParentEndTimestamp - newParentStartTimestamp) == parentDifference
+	// 	spanStartDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+	// 	spanEndDifference := spanEndTimestamp.Sub(parentStartTimestamp)
 
+	// 	newSpanStartTimestamp := newParentStartTimestamp.Add(spanStartDifference)
+	// 	newSpanEndTimestamp := newParentStartTimestamp.Add(spanEndDifference)
+	// }
+
+
+
+
+	/////////////////////////////////////////////////////////////////////////////
 	// timestamp, _ := decimal.NewFromString(string(time.Now().Unix()))
 	// timestamp := decimal.NewFromFloat(float64(time.Now().Unix()))
 
