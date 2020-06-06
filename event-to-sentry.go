@@ -336,13 +336,16 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp before %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), decimal.NewFromFloat(sp["start_timestamp"].(float64)))
 			fmt.Printf("\n> js updatetimestamps SPAN       timestamp before %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64))	, decimal.NewFromFloat(sp["timestamp"].(float64)))
 
+			
 			spanStartTimestamp := decimal.NewFromFloat(sp["start_timestamp"].(float64))
 			spanEndTimestamp := decimal.NewFromFloat(sp["timestamp"].(float64))		
 			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+			
+			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 		
 			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-			newSpanStartTimestamp := unixTimestampDecimal.Add(spanDifference)
+			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 		
 			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
