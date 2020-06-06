@@ -320,55 +320,55 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // JS some are like 1591419091.4805 but others 1591419092.000035
 // PYTHON are like 2020-06-06T04:54:56.636664Z
 // 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/trace
-// data.context.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
+// data.contexts.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	// fmt.Println("updateTimestamps       timestamp before", string(data["timestamp"].(string)))
-	// fmt.Println("updateTimestamps start_timestamp before", string(data["start_timestamp"].(string)))
-	// float64
-	// fmt.Printf("updateTimestamps       timestamp before %T \n", data["timestamp"])
-	// fmt.Printf("updateTimestamps start_timestamp before %T \n", data["start_timestamp"])
-	
 	
 	if (platform == "javascript") {
+		// PARENT TRACE
 		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
+		// make into a 'decimal' class type for logging or else it logs as "1.5914674155654302e+09" instead of 1591467415.5654302
 		fmt.Printf("> js updateTimestamps parent start_timestamp before %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), decimal.NewFromFloat(data["start_timestamp"].(float64)))
 		fmt.Printf("> js updateTimestamps parent       timestamp before %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), decimal.NewFromFloat(data["timestamp"].(float64)))
 		
 		parentStartTimestamp := decimal.NewFromFloat(data["start_timestamp"].(float64))
-		parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))
-
-		// fmt.Printf("\njs updateTimestamps parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
-	
+		parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))		
 		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-		// fmt.Printf("\njs updateTimestamps parentDifference %v (%T)\n", parentDifference, parentDifference)
 	
-		newParentStartTime := time.Now().UnixNano()
-		newParentStartTimestamp := fmt.Sprint(newParentStartTime)
-		newParentStartTimestamp = newParentStartTimestamp[:10] + "." + newParentStartTimestamp[10:]
-		fmt.Printf("\n> js updatetimestamps parent start_timestamp after %v (%T)\n", newParentStartTimestamp, newParentStartTimestamp)
+		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 	
-		newParentStartTimestampDecimal, _ := decimal.NewFromString(newParentStartTimestamp)
-		newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
-		fmt.Printf("> js updatetimestamps parent       timestamp after %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
-	
-		if (newParentEndTimestamp.Sub(newParentStartTimestampDecimal).Equal(parentDifference)) {
+		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
 			fmt.Printf("\nTRUE - equal")
 		} else {
 			fmt.Printf("\nFALSE - not equal")
-			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestampDecimal))
+			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
 		}
 
-		data["start_timestamp"] = newParentStartTimestampDecimal
+		// is okay that this is an instance of the 'decimal' package and no longer Float64? 
+		data["start_timestamp"] = newParentStartTimestamp
 		data["timestamp"] = newParentEndTimestamp
-	
+
+		fmt.Printf("\n> js1 updatetimestamps paraent start_timestamp after %v (%T)\n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("\n> js1 updatetimestamps paraent       timestamp after %v (%T)\n", data["timestamp"], data["timestamp"])
+
+		// SPANS
+		for _, span := range data["spans"].([]interface{}) {
+			fmt.Printf("\n span \n", span)
+		}
+
+		// for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
+		// 	request.Header.Set(v, headerInterface[v].(string))
+		// }
+
+		
 	} 
 	
-	// for span in event.entrices[0].data: 
-		// start_timestamp
-		// timestamp
-	// ^ then TEST for JS Transactions...
 
-	// IF it's python...
+	// if (platform == "python") {
+
+	// }
+
 	fmt.Println("       timestamp after",data["start_timestamp"])
 	fmt.Println(" start_timestamp after",data["start_timestamp"])
 	return data
