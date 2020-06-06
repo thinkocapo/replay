@@ -14,67 +14,51 @@ func main() {
 	// if err != nil {
 	// 	panic(err)
 	// }
-
 	// quantity := decimal.NewFromInt(3)
-
 	// fee, _ := decimal.NewFromString(".035")
 	// taxRate, _ := decimal.NewFromString(".08875")
-
 	// subtotal := price.Mul(quantity)
-
 	// preTax := subtotal.Mul(fee.Add(decimal.NewFromFloat(1)))
-
 	// total := preTax.Mul(taxRate.Add(decimal.NewFromFloat(1)))
-
 	// fmt.Println("Subtotal:", subtotal)                      // Subtotal: 408.06
 	// fmt.Println("Pre-tax:", preTax)                         // Pre-tax: 422.3421
 	// fmt.Println("Taxes:", total.Sub(preTax))                // Taxes: 37.482861375
 	// fmt.Println("Total:", total)                            // Total: 459.824961375
 	// fmt.Println("Tax rate:", total.Sub(preTax).Div(preTax)) // Tax rate: 0.08875
-
+	
 	// TODO try with 1591051102.7653 as well
-	
-	// ?
-	// timestamp, _ := decimal.NewFromString(string(time.Now().Unix()))
-	// timestamp := decimal.NewFromFloat(float64(time.Now().Unix()))
-	
 	parentStartTimestamp, _ := decimal.NewFromString("1591051102.765368")
 	parentEndTimestamp, _ := decimal.NewFromString("1591051102.777408")
 	fmt.Printf("\njs    parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
 
-
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	fmt.Printf("\nparentDifference %v (%T)\n", parentDifference, parentDifference)
+	fmt.Printf("\njs        parentDifference %v (%T)\n", parentDifference, parentDifference)
 
 	newParentStartTime := time.Now().UnixNano()
 	newParentStartTimestamp := fmt.Sprint(newParentStartTime)
 	newParentStartTimestamp = newParentStartTimestamp[:10] + "." + newParentStartTimestamp[10:]
 	fmt.Printf("\njs newParentStartTimestamp %v (%T)\n", newParentStartTimestamp, newParentStartTimestamp)
 
-	// newParentEndTimestamp := newParentStartTimestamp + parentDifference
+	newParentStartTimestampDecimal, _ := decimal.NewFromString(newParentStartTimestamp)
+	newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
+	fmt.Printf("\njs newParentEndTimestamp %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
 
-	// WORKS 06/05/2020 10:13p	
-	// sentryTimestamp := newStartTimestamp[:11] + "." + newStartTimestamp[11:]
-	// fmt.Println("\nsentryTimestamp:", sentryTimestamp)
-	
-	
-	
-	// ?
+
+	// RUn this Test
+	// (newParentEndTimestamp - newParentStartTimestamp) == parentDifference
+
+	// timestamp, _ := decimal.NewFromString(string(time.Now().Unix()))
+	// timestamp := decimal.NewFromFloat(float64(time.Now().Unix()))
+
 	// timestamp = strconv.FormatInt(timestamp, 10)
 
-	//?
 	// timestamp1000 := time.Now().UnixNano()
 	// base := timestamp1000 / 1000000
 	// modulo := timestamp % 1000000
 	// fmt.Println("\ntimestamp1000 base:", base)
 	// fmt.Println("\ntimestamp1000 modulo:", modulo)
 
-
-
-
-
-
-
+		//
 	// myv := float64(ts) // fails
 
 	// newStartTimestamp := timestamp
