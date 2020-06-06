@@ -61,7 +61,7 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            # 'buffer': json.loads(buffer),
+            'buffer': json.loads(buffer),
             'headers': json.loads(headers)
         }
         print(json.dumps(output, indent=2))
