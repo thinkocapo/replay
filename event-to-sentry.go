@@ -339,9 +339,9 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 	
 		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
-			fmt.Printf("\nTRUE - equal")
+			fmt.Printf("\nTRUE - parent")
 		} else {
-			fmt.Printf("\nFALSE - not equal")
+			fmt.Printf("\nFALSE - parent")
 			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
 		}
 
@@ -349,22 +349,58 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		data["start_timestamp"] = newParentStartTimestamp
 		data["timestamp"] = newParentEndTimestamp
 
-		fmt.Printf("\n> js1 updatetimestamps paraent start_timestamp after %v (%T)\n", data["start_timestamp"], data["start_timestamp"])
-		fmt.Printf("\n> js1 updatetimestamps paraent       timestamp after %v (%T)\n", data["timestamp"], data["timestamp"])
+		fmt.Printf("\n> js updatetimestamps parent start_timestamp after %v (%T)\n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("\n> js updatetimestamps parent       timestamp after %v (%T)\n", data["timestamp"], data["timestamp"])
 
+		// TEST...
+		firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
+		// both print...
+		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"])
+		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"].(float64))
+		fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
+		
+
+		// fSp := firstSpan
+		
 		// SPANS
+		// for _, span := range data["spans"].(map[string]float64) {
 		for _, span := range data["spans"].([]interface{}) {
-			fmt.Printf("\n span \n", span)
+			// give it a type
+			sp := span.(map[string]interface{})
+			
+			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp before %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), decimal.NewFromFloat(sp["start_timestamp"].(float64)))
+			fmt.Printf("\n> js updatetimestamps SPAN       timestamp before %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64))	, decimal.NewFromFloat(sp["timestamp"].(float64)))
+
+			spanStartTimestamp := decimal.NewFromFloat(sp["start_timestamp"].(float64))
+			spanEndTimestamp := decimal.NewFromFloat(sp["timestamp"].(float64))		
+			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+		
+			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			newSpanStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+		
+			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
+				fmt.Printf("TRUE - span")
+			} else {
+				fmt.Printf("\nFALSE - span")
+				fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+			}
+
+			// is okay that this is an instance of the 'decimal' package and no longer Float64? 
+			sp["start_timestamp"] = newSpanStartTimestamp
+			sp["timestamp"] = newSpanEndTimestamp
+
+			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+			fmt.Printf("\n> js updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
 		}
 
-		// for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
-		// 	request.Header.Set(v, headerInterface[v].(string))
-		// }
+		fmt.Printf("\n> ***************** after ", firstSpan["start_timestamp"])
+		// SUCCESS - it updated by reference
+		// before - 1591467416.0387652
+		// after  - 1591476953.491206959
 
-		
 	} 
 	
-
 	// if (platform == "python") {
 
 	// }
