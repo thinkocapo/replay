@@ -11,6 +11,7 @@ import (
 	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -148,14 +149,14 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
-	fmt.Printf("\n> javascript event response", string(responseData))
+	// // TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
+	// fmt.Printf("\n> javascript event response", string(responseData))
 }
 
 func python(event Event) {
@@ -194,13 +195,13 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> python event response: %v\n", string(responseData))
+	// fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func main() {
@@ -318,15 +319,50 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 
 // JS some are like 1591419091.4805 but others 1591419092.000035
 // PYTHON are like 2020-06-06T04:54:56.636664Z
+// 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/trace
+// data.context.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	// 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/parent
-	fmt.Println("       timestamp before",data["start_timestamp"])
-	fmt.Println(" start_timestamp before",data["start_timestamp"])
+	// fmt.Println("updateTimestamps       timestamp before", string(data["timestamp"].(string)))
+	// fmt.Println("updateTimestamps start_timestamp before", string(data["start_timestamp"].(string)))
+
+	// float64
+	// fmt.Printf("updateTimestamps       timestamp before %T \n", data["timestamp"])
+	// fmt.Printf("updateTimestamps start_timestamp before %T \n", data["start_timestamp"])
 	
-	// IF it's javascript...
-	// - data is the event
-	// - event.context.trace.span_id is the Parent
-	// 2. put decimal.go here, but do same for all spans as well...
+	fmt.Printf("updateTimestamps       timestamp before %v \n", decimal.NewFromFloat(data["timestamp"].(float64)))
+	fmt.Printf("updateTimestamps start_timestamp before %v \n", decimal.NewFromFloat(data["start_timestamp"].(float64)))
+
+	if (platform == "javascript") {
+		// parentStartTimestamp, _ := decimal.NewFromString("1591051102.765368")
+		// parentEndTimestamp, _ := decimal.NewFromString("1591051102.777408")
+		parentStartTimestamp, _ := decimal.NewFromString(data["start_timestamp"].(string)[:10] + "." + data["start_timestamp"].(string)[10:])
+		parentEndTimestamp, _ := decimal.NewFromString(data["timestamp"].(string))
+
+		fmt.Printf("\njs    parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
+	
+		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+		fmt.Printf("\njs        parentDifference %v (%T)\n", parentDifference, parentDifference)
+	
+		newParentStartTime := time.Now().UnixNano()
+		newParentStartTimestamp := fmt.Sprint(newParentStartTime)
+		newParentStartTimestamp = newParentStartTimestamp[:10] + "." + newParentStartTimestamp[10:]
+		fmt.Printf("\njs newParentStartTimestamp %v (%T)\n", newParentStartTimestamp, newParentStartTimestamp)
+	
+		newParentStartTimestampDecimal, _ := decimal.NewFromString(newParentStartTimestamp)
+		newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
+		fmt.Printf("\njs newParentEndTimestamp %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
+	
+		if (newParentEndTimestamp.Sub(newParentStartTimestampDecimal).Equal(parentDifference)) {
+			fmt.Printf("\nTRUE")
+		} else {
+			fmt.Printf("\nFALSE - not equal")
+			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestampDecimal))
+		}
+
+		data["start_timestamp"] = newParentStartTimestampDecimal
+		data["timestamp"] = newParentEndTimestamp
+	
+	} 
 	
 	// for span in event.entrices[0].data: 
 		// start_timestamp
