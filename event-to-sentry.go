@@ -78,7 +78,9 @@ func (d DSN) storeEndpoint() string {
 	if (d.host == "ingest.sentry.io") {
 		// still works if you pass in the "o87286"
 		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		
 		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		// fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/")
 	}
 	if (d.host == "localhost:9000") {
 		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
@@ -146,14 +148,14 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil { fmt.Println(requestErr) }
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
 
-	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	// if responseDataErr != nil { log.Fatal(responseDataErr) }
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// // TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
-	// fmt.Printf("\n> javascript event response", string(responseData))
+	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
+	fmt.Printf("\n> javascript event response", string(responseData))
 }
 
 func python(event Event) {
@@ -184,18 +186,21 @@ func python(event Event) {
 
 	headerInterface := unmarshalJSON(event.headers)
 
-	// X-Sentry-Auth
-	for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
+	// TODO
+	// X-Sentry-Auth? When sending python error, "multiple authorization payloads requested"
+	// If 'X-Sentry-Auth' is needed for Py|Js transactions, then add it here. Otherwise, omit it, because looks like it breaks Python Errors from being accepted
+	// for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
+	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil { fmt.Println(requestErr) }
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
 
-	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	// if responseDataErr != nil { log.Fatal(responseDataErr) }
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// fmt.Printf("\n> python event response: %v\n", string(responseData))
+	fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func main() {
@@ -318,20 +323,17 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	fmt.Println("       timestamp before",data["start_timestamp"])
 	fmt.Println(" start_timestamp before",data["start_timestamp"])
 	
-	// bodyInterface == event
-	// event.context.trace.span_id
+	// IF it's javascript...
+	// - data is the event
+	// - event.context.trace.span_id is the Parent
+	// 2. put decimal.go here, but do same for all spans as well...
 	
-	// TODO
-	// timestamp := time.Now().Unix()
-	// startTimestamp, _ := strconv.ParseInt(data["startTimestamp"].(string), 64)
-	// endTimestamp, _ := strconv.ParseInt(data["endTimestamp"].(string), 64)
-	// data["startTimestamp"] = timestamp
-	// data["endTimestamp"] = timestamp + (endTimestamp - startTimestamp)
-
 	// for span in event.entrices[0].data: 
 		// start_timestamp
 		// timestamp
+	// ^ then TEST for JS Transactions...
 
+	// IF it's python...
 	fmt.Println("       timestamp after",data["start_timestamp"])
 	fmt.Println(" start_timestamp after",data["start_timestamp"])
 	return data

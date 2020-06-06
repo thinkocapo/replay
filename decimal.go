@@ -27,6 +27,8 @@ func main() {
 	// fmt.Println("Tax rate:", total.Sub(preTax).Div(preTax)) // Tax rate: 0.08875
 	
 	// TODO try with 1591051102.7653 as well
+
+	// TODO - needs to be the real event.trace.context.spanid/start_timestamp AND formatted with proper decimal...
 	parentStartTimestamp, _ := decimal.NewFromString("1591051102.765368")
 	parentEndTimestamp, _ := decimal.NewFromString("1591051102.777408")
 	fmt.Printf("\njs    parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
@@ -42,6 +44,21 @@ func main() {
 	newParentStartTimestampDecimal, _ := decimal.NewFromString(newParentStartTimestamp)
 	newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
 	fmt.Printf("\njs newParentEndTimestamp %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
+
+	// TODO
+	// 1.
+	func updateSpan(parentStartTimestamp) {
+		spanStartTimestamp, _ := decimal.NewFromString(span.start_timestamp)
+		spanStartTimestamp, _ := decimal.NewFromString(span.timestamp)
+		// ^ format it with right decimals so can do subtraction:
+
+		spanStartDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+		spanEndDifference := spanEndTimestamp.Sub(parentStartTimestamp)
+
+		newSpanStartTimestamp := newParentStartTimestamp.Add(spanStartDifference)
+		newSpanEndTimestamp := newParentStartTimestamp.Add(spanEndDifference)
+
+	}
 
 
 	// RUn this Test
