@@ -11,11 +11,13 @@ import (
 	// "github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	// "strconv"
 	"strings"
 	"time"
 )
@@ -77,7 +79,9 @@ func (d DSN) storeEndpoint() string {
 	if (d.host == "ingest.sentry.io") {
 		// still works if you pass in the "o87286"
 		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		
 		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		// fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/")
 	}
 	if (d.host == "localhost:9000") {
 		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
@@ -117,88 +121,6 @@ func init() {
 	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
 }
 
-func javascript(event Event) {
-	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
-	
-	bodyInterface := unmarshalJSON(event.bodyBytes)
-	bodyInterface = replaceEventId(bodyInterface)
-
-	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "javascript")
-	}
-	// if (event._type == "transaction") {
-	// 	bodyInterface = updateTimestamps(bodyInterface)
-	// }
-
-	// move to updateTimestamp(s) functions...
-	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
-	// fmt.Printf("> start_timestamp %v\n", bodyInterface["start_timestamp"])
-
-	bodyBytesPost := marshalJSON(bodyInterface)
-	
-	SENTRY_URL = projects["javascript"].storeEndpoint()
-	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
-
-	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-	
-	headerInterface := unmarshalJSON(event.headers)
-	
-	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
-	
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
-
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
-	fmt.Printf("\n> javascript event response", string(responseData))
-}
-
-func python(event Event) {
-	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
-	// bodyBytes := decodeGzip(bodyBytesCompressed)
-	bodyInterface := unmarshalJSON(event.bodyBytes)
-	bodyInterface = replaceEventId(bodyInterface)
-
-	// updateTimestamp 2020-05-31T11:10:29.118356Z
-	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "python")
-	}
-	// if (event._type == "transaction") {
-	// 	bodyInterface = updateTimestamps(bodyInterface)
-	// }
-	
-	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
-	
-	bodyBytesPost := marshalJSON(bodyInterface)
-	buf := encodeGzip(bodyBytesPost)
-	
-	SENTRY_URL = projects["python"].storeEndpoint()
-	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
-
-	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
-	headerInterface := unmarshalJSON(event.headers)
-
-	// X-Sentry-Auth
-	for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
-
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
-
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-	fmt.Printf("\n> python event response: %v\n", string(responseData))
-}
-
 func main() {
 	defer db.Close()
 	
@@ -234,39 +156,88 @@ func main() {
 	rows.Close()
 }
 
-func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
-	if err != nil {
-		fmt.Println(err)
+func javascript(event Event) {
+	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
+	
+	bodyInterface := unmarshalJSON(event.bodyBytes)
+	bodyInterface = replaceEventId(bodyInterface)
+
+	if (event._type == "error") {
+		bodyInterface = updateTimestamp(bodyInterface, "javascript")
 	}
-	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
-	if err != nil {
-		fmt.Println(err)
+	if (event._type == "transaction") {
+		bodyInterface = updateTimestamps(bodyInterface, "javascript")
 	}
-	return
+
+	bodyBytesPost := marshalJSON(bodyInterface)
+	
+	SENTRY_URL = projects["javascript"].storeEndpoint()
+	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
+	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+	
+	headerInterface := unmarshalJSON(event.headers)
+	
+	// js tx looks like it only has User-Agent
+	// for _, v := range [1]string{"User-Agent"} {
+	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+	
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
+
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
+
+	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
+	fmt.Printf("\n> javascript event response\n", string(responseData))
 }
 
-func encodeGzip(b []byte) bytes.Buffer {
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
-	w.Write(b)
-	w.Close()
-	// return buf.Bytes()
-	return buf
-}
+func python(event Event) {
+	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
+	// bodyBytes := decodeGzip(bodyBytesCompressed)
+	bodyInterface := unmarshalJSON(event.bodyBytes)
+	bodyInterface = replaceEventId(bodyInterface)
 
-func unmarshalJSON(bytes []byte) map[string]interface{} {
-	var _interface map[string]interface{}
-	if err := json.Unmarshal(bytes, &_interface); err != nil {
-		panic(err)
+	// updateTimestamp 2020-05-31T11:10:29.118356Z
+	if (event._type == "error") {
+		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
-	return _interface
-}
+	if (event._type == "transaction") {
+		fmt.Println(bodyInterface)
+		bodyInterface = updateTimestamps(bodyInterface, "python")
+	}
+	
+	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
+	
+	bodyBytesPost := marshalJSON(bodyInterface)
+	buf := encodeGzip(bodyBytesPost)
+	
+	SENTRY_URL = projects["python"].storeEndpoint()
+	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
-func marshalJSON(bodyInterface map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
-	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
-	return bodyBytes
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+
+	headerInterface := unmarshalJSON(event.headers)
+
+	// TODO
+	// X-Sentry-Auth? When sending python error, "multiple authorization payloads requested"
+	// If 'X-Sentry-Auth' is needed for Py|Js transactions, then add it here. Otherwise, omit it, because looks like it breaks Python Errors from being accepted
+	// for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
+	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
+
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
+
+	// fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
@@ -274,10 +245,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 		log.Print("no event_id on object from DB")
 	}
 
-	fmt.Println("> before",bodyInterface["event_id"])
+	// fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("> after ",bodyInterface["event_id"])
+	fmt.Println("> event_id after",bodyInterface["event_id"])
 	return bodyInterface
 }
 
@@ -311,17 +282,136 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 	return bodyInterface
 }
 
-func updateTimestamps(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
-	// 'start_timestamp' is only present in transactions
-	fmt.Println("       timestamp before",bodyInterface["start_timestamp"])
-	fmt.Println(" start_timestamp before",bodyInterface["start_timestamp"])
 
-	// TODO - recursively go through all nested spans and update their timestamps...
-
-	fmt.Println("       timestamp after",bodyInterface["start_timestamp"])
-	fmt.Println(" start_timestamp after",bodyInterface["start_timestamp"])
+// JS some are like 1591419091.4805 but others 1591419092.000035
+// PYTHON are like 2020-06-06T04:54:56.636664Z
+// 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/trace
+// data.contexts.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
+func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
 	
-	return bodyInterface
+	if (platform == "javascript") {
+		// PARENT TRACE
+		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
+		// make into a 'decimal' class type for logging or else it logs as "1.5914674155654302e+09" instead of 1591467415.5654302
+		fmt.Printf("> js updateTimestamps parent start_timestamp before %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), decimal.NewFromFloat(data["start_timestamp"].(float64)))
+		fmt.Printf("> js updateTimestamps parent       timestamp before %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), decimal.NewFromFloat(data["timestamp"].(float64)))
+		
+		parentStartTimestamp := decimal.NewFromFloat(data["start_timestamp"].(float64))
+		parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))		
+		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+	
+		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
+	
+		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
+			fmt.Printf("\nTRUE - parent")
+		} else {
+			fmt.Printf("\nFALSE - parent")
+			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
+		}
+
+		// is okay that this is an instance of the 'decimal' package and no longer Float64? 
+		// need [:7] (Roudn()) still ???????
+		// n1, _ := newParentStartTimestamp.Round(7).Float64()
+		data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
+		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
+
+		fmt.Printf("\n> js updatetimestamps parent start_timestamp after %v (%T)\n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("\n> js updatetimestamps parent       timestamp after %v (%T)\n", data["timestamp"], data["timestamp"])
+
+		// TEST
+		// both print...
+		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"])
+		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"].(float64))
+		firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
+		fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
+
+		// SPANS
+		// for _, span := range data["spans"].(map[string]float64) {
+		for _, span := range data["spans"].([]interface{}) {
+			// give it a type
+			sp := span.(map[string]interface{})
+			
+			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp before %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), decimal.NewFromFloat(sp["start_timestamp"].(float64)))
+			fmt.Printf("\n> js updatetimestamps SPAN       timestamp before %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64))	, decimal.NewFromFloat(sp["timestamp"].(float64)))
+
+			
+			spanStartTimestamp := decimal.NewFromFloat(sp["start_timestamp"].(float64))
+			spanEndTimestamp := decimal.NewFromFloat(sp["timestamp"].(float64))		
+			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+			
+			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+		
+			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
+			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+		
+			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
+				fmt.Printf("TRUE - span")
+			} else {
+				fmt.Printf("\nFALSE - span")
+				fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+			}
+
+			// is okay that this is an instance of the 'decimal' package and no longer Float64? 
+			sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
+			sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
+
+			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+			fmt.Printf("\n> js updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
+		}
+
+		fmt.Printf("\n> ***************** after ", firstSpan["start_timestamp"])
+		// SUCCESS - it updated by reference
+		// before - 1591467416.0387652
+		// after  - 1591476953.491206959
+
+	} 
+	
+	// if (platform == "python") {
+
+	// }
+
+	// fmt.Println("       timestamp after",data["timestamp"])
+	// fmt.Println(" start_timestamp after",data["start_timestamp"])
+	return data
+}
+
+func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
+	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
+	if err != nil {
+		fmt.Println(err)
+	}
+	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return
+}
+
+func encodeGzip(b []byte) bytes.Buffer {
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	w.Write(b)
+	w.Close()
+	// return buf.Bytes()
+	return buf
+}
+
+func unmarshalJSON(bytes []byte) map[string]interface{} {
+	var _interface map[string]interface{}
+	if err := json.Unmarshal(bytes, &_interface); err != nil {
+		panic(err)
+	}
+	return _interface
+}
+
+func marshalJSON(bodyInterface map[string]interface{}) []byte {
+	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
+	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
+	return bodyBytes
 }
 
 // SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
