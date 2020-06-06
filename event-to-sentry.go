@@ -131,7 +131,7 @@ func javascript(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface, "javascript")
 	}
 	if (event._type == "transaction") {
-		fmt.Println(bodyInterface["start_timestamp"])
+		// fmt.Println(bodyInterface["start_timestamp"])
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
 	}
 
@@ -279,10 +279,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 		log.Print("no event_id on object from DB")
 	}
 
-	fmt.Println("> before",bodyInterface["event_id"])
+	// fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("> after ",bodyInterface["event_id"])
+	fmt.Println("> event_id after \n",bodyInterface["event_id"])
 	return bodyInterface
 }
 
@@ -324,36 +324,35 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
 	// fmt.Println("updateTimestamps       timestamp before", string(data["timestamp"].(string)))
 	// fmt.Println("updateTimestamps start_timestamp before", string(data["start_timestamp"].(string)))
-
 	// float64
 	// fmt.Printf("updateTimestamps       timestamp before %T \n", data["timestamp"])
 	// fmt.Printf("updateTimestamps start_timestamp before %T \n", data["start_timestamp"])
 	
-	fmt.Printf("updateTimestamps       timestamp before %v \n", decimal.NewFromFloat(data["timestamp"].(float64)))
-	fmt.Printf("updateTimestamps start_timestamp before %v \n", decimal.NewFromFloat(data["start_timestamp"].(float64)))
-
+	
 	if (platform == "javascript") {
-		// parentStartTimestamp, _ := decimal.NewFromString("1591051102.765368")
-		// parentEndTimestamp, _ := decimal.NewFromString("1591051102.777408")
-		parentStartTimestamp, _ := decimal.NewFromString(data["start_timestamp"].(string)[:10] + "." + data["start_timestamp"].(string)[10:])
-		parentEndTimestamp, _ := decimal.NewFromString(data["timestamp"].(string))
+		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
+		fmt.Printf("> js updateTimestamps parent start_timestamp before %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), decimal.NewFromFloat(data["start_timestamp"].(float64)))
+		fmt.Printf("> js updateTimestamps parent       timestamp before %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), decimal.NewFromFloat(data["timestamp"].(float64)))
+		
+		parentStartTimestamp := decimal.NewFromFloat(data["start_timestamp"].(float64))
+		parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))
 
-		fmt.Printf("\njs    parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
+		// fmt.Printf("\njs updateTimestamps parentStartTimestamp %v (%T)\n", parentStartTimestamp, parentStartTimestamp)
 	
 		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-		fmt.Printf("\njs        parentDifference %v (%T)\n", parentDifference, parentDifference)
+		// fmt.Printf("\njs updateTimestamps parentDifference %v (%T)\n", parentDifference, parentDifference)
 	
 		newParentStartTime := time.Now().UnixNano()
 		newParentStartTimestamp := fmt.Sprint(newParentStartTime)
 		newParentStartTimestamp = newParentStartTimestamp[:10] + "." + newParentStartTimestamp[10:]
-		fmt.Printf("\njs newParentStartTimestamp %v (%T)\n", newParentStartTimestamp, newParentStartTimestamp)
+		fmt.Printf("\n> js updatetimestamps parent start_timestamp after %v (%T)\n", newParentStartTimestamp, newParentStartTimestamp)
 	
 		newParentStartTimestampDecimal, _ := decimal.NewFromString(newParentStartTimestamp)
 		newParentEndTimestamp := newParentStartTimestampDecimal.Add(parentDifference)
-		fmt.Printf("\njs newParentEndTimestamp %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
+		fmt.Printf("> js updatetimestamps parent       timestamp after %v (%T)\n", newParentEndTimestamp, newParentEndTimestamp)
 	
 		if (newParentEndTimestamp.Sub(newParentStartTimestampDecimal).Equal(parentDifference)) {
-			fmt.Printf("\nTRUE")
+			fmt.Printf("\nTRUE - equal")
 		} else {
 			fmt.Printf("\nFALSE - not equal")
 			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestampDecimal))
