@@ -201,15 +201,13 @@ func python(event Event) {
 	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
-	// updateTimestamp 2020-05-31T11:10:29.118356Z
 	if (event._type == "error") {
 		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
 	if (event._type == "transaction") {
+		// 2020-05-31T11:10:29.118356Z
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
-	
-	// fmt.Printf("> timestamp %v\n", bodyInterface["timestamp"])
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
@@ -288,21 +286,24 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // data.contexts.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
 	if (platform == "python") {
-		fmt.Printf("> py updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-		fmt.Printf("> py updateTimestamps parent       timestamp before %v (%T) \n", data["timestamp"], data["timestamp"])
+		fmt.Printf("\n> py updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("> py updateTimestamps parent       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 		
 		// PARENT TRACE
 		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
 		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-		// fmt.Println("******* t1 ", t1.UnixNano())
-		// fmt.Println("******* t2 ", t2.UnixNano())
 
-		parentStartTimestamp := decimal.NewFromInt(t1.UnixNano())
-		parentEndTimestamp := decimal.NewFromInt(t2.UnixNano())		
+		t1String := fmt.Sprint(t1.UnixNano())
+		t2String := fmt.Sprint(t2.UnixNano())
+	
+		parentStartTimestamp, _ := decimal.NewFromString(t1String[:10] + "." + t1String[10:])
+		parentEndTimestamp, _ := decimal.NewFromString(t2String[:10] + "." + t2String[10:])
 		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+		// fmt.Println("\nxxxxxxxxxxx parentDifference", parentDifference)
 
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		// fmt.Println("\nyyyyyyyyyyy newParentStartTimestamp", newParentStartTimestamp)
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
 		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
@@ -315,8 +316,10 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
 		// TODO - could conver back to time.RFC3339Nano (as that's what Python Transactions use), since these are now float64's??
-		fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", data["timestamp"], data["timestamp"])
+		// fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+		// fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", data["timestamp"], data["timestamp"])
+		fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
+		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
 
 		// SPANS
 		for _, span := range data["spans"].([]interface{}) {
@@ -352,8 +355,10 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
-			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
-			fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
+			// fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+			// fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
+			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
+			fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 		}
 	}
 	if (platform == "javascript") {
