@@ -34,7 +34,6 @@ try:
         else:
             cur.execute("SELECT * FROM events WHERE id=?", [_id])
 
-
         # cur.execute("SELECT * FROM events")
 
         rows = cur.fetchall()
