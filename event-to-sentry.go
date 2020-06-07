@@ -265,8 +265,8 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // }
 
 func updateTimestamps2(data map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> both updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps parent       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
+	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 	
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	if (platform == "python") {		
@@ -289,7 +289,7 @@ func updateTimestamps2(data map[string]interface{}, platform string) map[string]
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
 	if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
-		fmt.Printf("\nTRUE - parent BOTH")
+		// fmt.Printf("\nTRUE - parent BOTH")
 	} else {
 		fmt.Printf("\nFALSE - parent BOTH")
 		fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
@@ -297,8 +297,8 @@ func updateTimestamps2(data map[string]interface{}, platform string) map[string]
 	data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 	data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
-	fmt.Printf("\n> both updateTimestamps parent start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps parent       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
+	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
+	fmt.Printf("> both updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
 
 	// SPAN
 	for _, span := range data["spans"].([]interface{}) {
@@ -329,7 +329,7 @@ func updateTimestamps2(data map[string]interface{}, platform string) map[string]
 		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 	
 		if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
-			fmt.Printf("TRUE - span BOTH")
+			// fmt.Printf("TRUE - span BOTH")
 		} else {
 			fmt.Printf("\nFALSE - span BOTH")
 			fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
@@ -439,7 +439,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 	
 		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
-			fmt.Printf("\nTRUE - parent")
+			// fmt.Printf("\nTRUE - parent")
 		} else {
 			fmt.Printf("\nFALSE - parent")
 			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
@@ -474,7 +474,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 		
 			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
-				fmt.Printf("TRUE - span")
+				// fmt.Printf("TRUE - span")
 			} else {
 				fmt.Printf("\nFALSE - span")
 				fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
