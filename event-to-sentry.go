@@ -76,9 +76,6 @@ func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if (d.host == "ingest.sentry.io") {
 		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
-		// still works if you pass in the "o87286"
-		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")	
-		// fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/")
 	}
 	if (d.host == "localhost:9000") {
 		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
@@ -103,7 +100,7 @@ func init() {
 
 	projects = make(map[string]*DSN)
 	
-	// Must use Hosted Sentry for AM Performance Transactions
+	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
@@ -229,7 +226,7 @@ func python(event Event) {
 	fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
-
+// used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
 	fmt.Println(" timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
@@ -258,12 +255,7 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 	return bodyInterface
 }
 
-// example type add func(a int, b int) int
-// https://golang.org/pkg/go/types/
-// func updateTimestamps3(data map[string]interface{}, platform string, dec func(*decimal.Decimal) decimal.Decimal) map[string]interface{} {
-// 	return data
-// }
-
+// used for TRANSACTIONS
 // start/end here is same as the sdk's start_timestamp/timestamp, and start_timestamp is only present in transactions
 // For future reference, data.contexts.trace.span_id is the Parent Trace and at one point I thoguht I saw data.entries with spans. Disregarding it for now.
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
@@ -367,6 +359,12 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	return bodyInterface
 }
 
+func undertake(bodyInterface map[string]interface{}) {
+	tags := bodyInterface["tags"].(map[string]interface{})
+	tags["undertaker"] = "is_here"
+}
+
+////////////////////////////  UTILS  /////////////////////////////////////////
 func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
 	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
 	if err != nil {
@@ -402,7 +400,9 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	return bodyBytes
 }
 
-func undertake(bodyInterface map[string]interface{}) {
-	tags := bodyInterface["tags"].(map[string]interface{})
-	tags["undertaker"] = "is_here"
-}
+//////////////////////////////////////////////////////////////////////////
+// example type add func(a int, b int) int
+// https://golang.org/pkg/go/types/
+// func updateTimestamps3(data map[string]interface{}, platform string, dec func(*decimal.Decimal) decimal.Decimal) map[string]interface{} {
+// 	return data
+// }
