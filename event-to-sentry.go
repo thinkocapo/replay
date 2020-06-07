@@ -303,8 +303,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-		// fmt.Println("\nyyyyyyyyyyy newParentStartTimestamp", newParentStartTimestamp)
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
+		// fmt.Println("\nyyyyyyyyyyy newParentStartTimestamp", newParentStartTimestamp)
 
 		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
 			fmt.Printf("\nTRUE - parent PYTHON")
@@ -330,12 +330,17 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Printf("\n> py updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
 			t1, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
 			t2, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
-			// fmt.Println("******* t1 ", t1.UnixNano())
-			// fmt.Println("******* t2 ", t2.UnixNano())
-			
-			spanStartTimestamp := decimal.NewFromInt(t1.UnixNano())
-			spanEndTimestamp := decimal.NewFromInt(t2.UnixNano())
+
+			t1String := fmt.Sprint(t1.UnixNano())
+			t2String := fmt.Sprint(t2.UnixNano())
+
+			// INT's, but we need subtraction on the decimals via Floats
+			// spanStartTimestamp := decimal.NewFromInt(t1.UnixNano())
+			// spanEndTimestamp := decimal.NewFromInt(t2.UnixNano())
+			spanStartTimestamp, _ := decimal.NewFromString(t1String[:10] + "." + t1String[10:])
+			spanEndTimestamp, _ := decimal.NewFromString(t2String[:10] + "." + t2String[10:])
 			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+			// fmt.Println("\nxxxxxxxxxxx spanDifference", spanDifference)
 			
 			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 		
@@ -343,6 +348,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+			// fmt.Println("\nyyyyyyyyyyy newSpanStartTimestamp", newSpanStartTimestamp)
 		
 			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
 				fmt.Printf("TRUE - span PYTHON")
@@ -383,9 +389,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
 		}
 
-		// is okay that this is an instance of the 'decimal' package and no longer Float64? 
-		// need [:7] (Roudn()) still ???????
-		// n1, _ := newParentStartTimestamp.Round(7).Float64()
+		// better to put as Float65 before serialization. also keep 7 decimal places.
 		data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
@@ -400,14 +404,11 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		// fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
 
 		// SPANS
-		// for _, span := range data["spans"].(map[string]float64) {
 		for _, span := range data["spans"].([]interface{}) {
-			// give it a type
 			sp := span.(map[string]interface{})
 			
 			fmt.Printf("\n> js updatetimestamps SPAN start_timestamp before %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), decimal.NewFromFloat(sp["start_timestamp"].(float64)))
 			fmt.Printf("\n> js updatetimestamps SPAN       timestamp before %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64))	, decimal.NewFromFloat(sp["timestamp"].(float64)))
-
 			
 			spanStartTimestamp := decimal.NewFromFloat(sp["start_timestamp"].(float64))
 			spanEndTimestamp := decimal.NewFromFloat(sp["timestamp"].(float64))		
