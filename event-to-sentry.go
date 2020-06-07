@@ -228,13 +228,13 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil { fmt.Println(requestErr) }
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil { fmt.Println(requestErr) }
 
-	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	// if responseDataErr != nil { log.Fatal(responseDataErr) }
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// fmt.Printf("\n> python event response: %v\n", string(responseData))
+	fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
