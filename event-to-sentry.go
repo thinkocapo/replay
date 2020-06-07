@@ -53,18 +53,16 @@ func parseDSN(rawurl string) (*DSN) {
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
-	// fmt.Println("> DSN projectId", projectId)
 	
 	var host string
 	if (strings.Contains(rawurl, "ingest.sentry.io")) {
-		host = "ingest.sentry.io" // works with "sentry.io" too?
+		host = "ingest.sentry.io"
 	}
 	if (strings.Contains(rawurl, "@localhost:")) {
 		host = "localhost:9000"
 	}
 
 	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
-	
 	return &DSN{
 		host,
 		rawurl,
@@ -73,14 +71,13 @@ func parseDSN(rawurl string) (*DSN) {
 	}
 }
 
-// TODO could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
+// Could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if (d.host == "ingest.sentry.io") {
-		// still works if you pass in the "o87286"
-		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
-		
 		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+		// still works if you pass in the "o87286"
+		// fullurl = fmt.Sprint("https://o87286.",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")	
 		// fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/")
 	}
 	if (d.host == "localhost:9000") {
@@ -106,7 +103,7 @@ func init() {
 
 	projects = make(map[string]*DSN)
 	
-	// Must use Hosted Sentry for AM Transactions
+	// Must use Hosted Sentry for AM Performance Transactions
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
@@ -115,8 +112,6 @@ func init() {
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
-	// fmt.Printf("> --all= %v\n", *all)
-	// fmt.Printf("> --id= %v\n", *id)
 
 	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
 }
@@ -144,7 +139,6 @@ func main() {
 		if (event.name == "javascript") {
 			javascript(event)
 		}
-
 		if (event.name == "python") {
 			python(event)
 		}
@@ -178,9 +172,6 @@ func javascript(event Event) {
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
 	headerInterface := unmarshalJSON(event.headers)
-	
-	// js tx looks like it only has User-Agent
-	// for _, v := range [1]string{"User-Agent"} {
 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -205,7 +196,6 @@ func python(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
 	if (event._type == "transaction") {
-		// 2020-05-31T11:10:29.118356Z
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
 	
@@ -220,10 +210,7 @@ func python(event Event) {
 
 	headerInterface := unmarshalJSON(event.headers)
 
-	// TODO
-	// X-Sentry-Auth? When sending python error, "multiple authorization payloads requested"
-	// If 'X-Sentry-Auth' is needed for Py|Js transactions, then add it here. Otherwise, omit it, because looks like it breaks Python Errors from being accepted
-	// for _, v := range [6]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent", "X-Sentry-Auth"} {
+	// Including X-Sentry-Auth causes, "multiple authorization payloads requested". Why was it being used at one point here? Was it needed for JS errors? It's not used for transactions
 	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
@@ -241,7 +228,6 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	if _, ok := bodyInterface["event_id"]; !ok { 
 		log.Print("no event_id on object from DB")
 	}
-
 	// fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
 	bodyInterface["event_id"] = uuid4
@@ -253,7 +239,8 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
 	fmt.Println(" timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	
-	// "1590946750" unix
+	// "1590946750"
+	// TODO - works? or need the extra decimals (millseconds) at the end
 	if (platform == "javascript") {
 		bodyInterface["timestamp"] = time.Now().Unix() 
 	}
@@ -267,44 +254,40 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
 		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
 
-		// TODO these need to match. 'timestamp before' is GTC, appearing as far ahead of PST.
+		// TODO these should match. 'timestamp before' is GTC, appearing as far ahead of PST.
 		// timestamp before 2020-06-02T00:09:51.365214Z
-		// timestamp after 2020-06-01T17:12:26.365214Z
-	   
-		// doesn't work, won't appear in Sentry.io
-		// bodyInterface["timestamp"] = time.Now().Unix()
+		// timestamp after  2020-06-01T17:12:26.365214Z
 	}
 
-	fmt.Println("  timestamp after", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	fmt.Println("  timestamp after", bodyInterface["timestamp"])
 	return bodyInterface
 }
 
 
-// JS some are like 1591419091.4805 but others 1591419092.000035
-// PYTHON are like 2020-06-06T04:54:56.636664Z
-// 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/trace
-// data.contexts.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
+// start/end here is same as the sdk's start_timestamp/timestamp, and start_timestamp is only present in transactions
+// For future reference, data.contexts.trace.span_id is the Parent Trace and at one point I thoguht I saw data.entries with spans. Disregarding it for now.
+// Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
+// Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
+	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
 	if (platform == "python") {
 		fmt.Printf("\n> py updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
 		fmt.Printf("> py updateTimestamps parent       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 		
 		// PARENT TRACE
+		// TODO rename as parentStartTime (i.e. object from Go's Time package) and parentStartTimeString, because parentStartTimestamp follows that logically
 		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
 		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-
 		t1String := fmt.Sprint(t1.UnixNano())
 		t2String := fmt.Sprint(t2.UnixNano())
 	
 		parentStartTimestamp, _ := decimal.NewFromString(t1String[:10] + "." + t1String[10:])
 		parentEndTimestamp, _ := decimal.NewFromString(t2String[:10] + "." + t2String[10:])
 		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-		// fmt.Println("\nxxxxxxxxxxx parentDifference", parentDifference)
 
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
-		// fmt.Println("\nyyyyyyyyyyy newParentStartTimestamp", newParentStartTimestamp)
 
 		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
 			fmt.Printf("\nTRUE - parent PYTHON")
@@ -315,40 +298,31 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
-		// TODO - could conver back to time.RFC3339Nano (as that's what Python Transactions use), since these are now float64's??
-		// fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-		// fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", data["timestamp"], data["timestamp"])
+		// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and mirrors what the javascript() function does
+		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like '123456789^e10'
 		fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
 		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
 
 		// SPANS
 		for _, span := range data["spans"].([]interface{}) {
-			// give it a type
 			sp := span.(map[string]interface{})
 			
 			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
 			fmt.Printf("\n> py updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
 			t1, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
 			t2, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
-
 			t1String := fmt.Sprint(t1.UnixNano())
 			t2String := fmt.Sprint(t2.UnixNano())
 
-			// INT's, but we need subtraction on the decimals via Floats
-			// spanStartTimestamp := decimal.NewFromInt(t1.UnixNano())
-			// spanEndTimestamp := decimal.NewFromInt(t2.UnixNano())
 			spanStartTimestamp, _ := decimal.NewFromString(t1String[:10] + "." + t1String[10:])
 			spanEndTimestamp, _ := decimal.NewFromString(t2String[:10] + "." + t2String[10:])
 			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-			// fmt.Println("\nxxxxxxxxxxx spanDifference", spanDifference)
-			
 			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 		
 			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
-			// fmt.Println("\nyyyyyyyyyyy newSpanStartTimestamp", newSpanStartTimestamp)
 		
 			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
 				fmt.Printf("TRUE - span PYTHON")
@@ -356,17 +330,16 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 				fmt.Printf("\nFALSE - span PYTHON")
 				fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 			}
-
-			// is okay that this is an instance of the 'decimal' package and no longer Float64? 
 			sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
-			// fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
-			// fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
+			// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like '123456789^e10'
 			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
 			fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 		}
 	}
+
+	// JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
 	if (platform == "javascript") {
 		// PARENT TRACE
 		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
@@ -389,19 +362,15 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
 		}
 
-		// better to put as Float65 before serialization. also keep 7 decimal places.
 		data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
 		fmt.Printf("\n> js updatetimestamps parent start_timestamp after %v (%T)\n", data["start_timestamp"], data["start_timestamp"])
 		fmt.Printf("\n> js updatetimestamps parent       timestamp after %v (%T)\n", data["timestamp"], data["timestamp"])
 
-		// TEST
-		// both print...
-		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"])
-		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"].(float64))
+		// TEST for making sure that the span object was updated by reference
 		// firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
-		// fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
+		// fmt.Printf("\n> before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
 
 		// SPANS
 		for _, span := range data["spans"].([]interface{}) {
@@ -413,7 +382,6 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			spanStartTimestamp := decimal.NewFromFloat(sp["start_timestamp"].(float64))
 			spanEndTimestamp := decimal.NewFromFloat(sp["timestamp"].(float64))		
 			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-			
 			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 		
 			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
@@ -436,10 +404,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Printf("\n> js updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
 		}
 
-		// fmt.Printf("\n> ***************** after ", firstSpan["start_timestamp"])
-		// SUCCESS - it updated by reference
-		// before - 1591467416.0387652
-		// after  - 1591476953.491206959
+		// TEST for making sure that the span object was updated by reference. E.g. 1591467416.0387652 should now be 1591476953.491206959
+		// fmt.Printf("\n> after ", firstSpan["start_timestamp"])
 	} 
 	return data
 }
