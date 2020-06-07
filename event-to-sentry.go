@@ -229,7 +229,7 @@ func python(event Event) {
 // used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println(" timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	fmt.Println("> timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	
 	// "1590946750"
 	// TODO - works? or need the extra decimals (millseconds) at the end
@@ -251,7 +251,7 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 		// timestamp after  2020-06-01T17:12:26.365214Z
 	}
 
-	fmt.Println("  timestamp after", bodyInterface["timestamp"])
+	fmt.Println("> timestamp after", bodyInterface["timestamp"])
 	return bodyInterface
 }
 
@@ -359,7 +359,12 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	return bodyInterface
 }
 
+// Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
 func undertake(bodyInterface map[string]interface{}) {
+	if (bodyInterface["tags"] == nil) {
+		fmt.Println("*************** No tags ***************")
+		bodyInterface["tags"] = make(map[string]interface{})
+	}
 	tags := bodyInterface["tags"].(map[string]interface{})
 	tags["undertaker"] = "is_here"
 }
