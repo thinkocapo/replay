@@ -163,6 +163,8 @@ func javascript(event Event) {
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
 	}
 
+	// undertake()
+
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
 	SENTRY_URL = projects["javascript"].storeEndpoint()
@@ -198,6 +200,8 @@ func python(event Event) {
 	if (event._type == "transaction") {
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
+
+	// undertake()
 	
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
@@ -299,7 +303,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
 		// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and mirrors what the javascript() function does
-		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like '123456789^e10'
+		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
 		fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
 		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
 
@@ -333,7 +337,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
-			// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like '123456789^e10'
+			// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
 			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
 			fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 		}
@@ -443,4 +447,10 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
 	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
 	return bodyBytes
+}
+
+// TODO - test, does this update by reference? is this how to return nil?
+func undertake(bodyInterface map[string]interface{}) {
+	tags := bodyInterface["tags"].(map[string]interface{})
+	tags["undertaker"] = "is_here"
 }
