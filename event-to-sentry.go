@@ -297,12 +297,10 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
-	if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
-		// fmt.Printf("\nTRUE - parent BOTH")
-	} else {
-		fmt.Printf("\nFALSE - parent BOTH")
-		fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
+	if (!newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
+		fmt.Printf("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
 	}
+
 	data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 	data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
@@ -342,12 +340,10 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 	
-		if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
-			// fmt.Printf("TRUE - span BOTH")
-		} else {
-			fmt.Printf("\nFALSE - span BOTH")
-			fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+		if (!newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
+			fmt.Printf("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
+
 		sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
