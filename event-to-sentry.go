@@ -229,7 +229,7 @@ func python(event Event) {
 // used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println("> timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
+	fmt.Println("> Error timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	
 	// "1590946750"
 	// TODO - works? or need the extra decimals (millseconds) at the end
@@ -239,19 +239,24 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 
 	// "2020-05-31T23:55:11.807534Z"
 	if (platform == "python") {
-		// is PST, or wherever you're running this from
-		timestamp := time.Now()
-		// is GMT, so not same as timezone you're running this from
+		// adding .UTC() seems to have fixed it, so appears at top of Discover event feed. Universal Coordinated Time
+		timestamp := time.Now().UTC()
+
+		// when using timestamp := time.Now() and no "Europe/London" like above, the 'after' timestamp ends up being before the 'before', and so it doesn't display on top of your Discover  eventfeed
+		// timestamp before 2020-06-02T00:09:51.365214Z
+		// timestamp after  2020-06-01T17:12:26.365214Z
+		
+		// Trying to get GMT, basically just want the error to be top-most in your Discover feed
+		// Displays 2 hours ahead. so could subtract 2 hours somewhere?
+		// loc, _ := time.LoadLocation("Europe/London")
+		// timestamp := time.Now().In(loc)
+		
 		oldTimestamp := bodyInterface["timestamp"].(string)
 		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
 		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-
-		// TODO these should match. 'timestamp before' is GTC, appearing as far ahead of PST.
-		// timestamp before 2020-06-02T00:09:51.365214Z
-		// timestamp after  2020-06-01T17:12:26.365214Z
 	}
 
-	fmt.Println("> timestamp after", bodyInterface["timestamp"])
+	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
 	return bodyInterface
 }
 
@@ -362,7 +367,6 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 // Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
 func undertake(bodyInterface map[string]interface{}) {
 	if (bodyInterface["tags"] == nil) {
-		fmt.Println("*************** No tags ***************")
 		bodyInterface["tags"] = make(map[string]interface{})
 	}
 	tags := bodyInterface["tags"].(map[string]interface{})
