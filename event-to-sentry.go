@@ -239,7 +239,7 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 	// "2020-05-31T23:55:11.807534Z"
 	if (platform == "python") {
 		// adding .UTC() seems to have fixed it, so appears at top of Discover event feed. Universal Coordinated Time
-		timestamp := time.Now().UTC()
+		// timestamp := time.Now().UTC() // HERE
 
 		// when using timestamp := time.Now() and no "Europe/London" like above, the 'after' timestamp ends up being before the 'before', and so it doesn't display on top of your Discover  eventfeed
 		// timestamp before 2020-06-02T00:09:51.365214Z
@@ -250,9 +250,13 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 		// loc, _ := time.LoadLocation("Europe/London")
 		// timestamp := time.Now().In(loc)
 		
-		oldTimestamp := bodyInterface["timestamp"].(string)
-		newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
-		bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+		// HERE
+		// oldTimestamp := bodyInterface["timestamp"].(string)
+		// newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
+		// bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
+
+		// discovered that this works...
+		bodyInterface["timestamp"] = time.Now().Unix() 
 	}
 
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
