@@ -231,8 +231,7 @@ func python(event Event) {
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
 	fmt.Println("> Error timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
 	
-	// "1590946750"
-	// TODO - works? or need the extra decimals (millseconds) at the end
+	// "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
 	if (platform == "javascript") {
 		bodyInterface["timestamp"] = time.Now().Unix() 
 	}
