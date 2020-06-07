@@ -61,7 +61,7 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            'buffer': json.loads(buffer), # TODO add flag for 'include body' in query
+            # 'buffer': json.loads(buffer), # TODO add flag for 'include body' in query
             'headers': json.loads(headers)
         }
         print(json.dumps(output, indent=2))

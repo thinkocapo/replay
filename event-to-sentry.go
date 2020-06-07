@@ -206,7 +206,6 @@ func python(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface, "python")
 	}
 	if (event._type == "transaction") {
-		fmt.Println(bodyInterface)
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
 	
@@ -288,7 +287,21 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // 'start_timestamp' is only present in transactions. 'timestamp' represents end of the span/trace
 // data.contexts.trace.span_id is the Parent. data["start_timestamp"] data["timestamp"]
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	
+	if (platform == "python") {
+		fmt.Printf("> py updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("> py updateTimestamps parent       timestamp before %v (%T) \n", data["timestamp"], data["timestamp"])
+		// PARENT TRACE
+		// ???
+		// parentStartTimestamp := decimal.NewFromFloat(data["start_timestamp"].(float64))
+		// parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))		
+		// parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+		t, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
+		fmt.Println("******* t ", t)
+
+		// unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+		// newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		// SPANS
+	}
 	if (platform == "javascript") {
 		// PARENT TRACE
 		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
@@ -367,15 +380,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		// SUCCESS - it updated by reference
 		// before - 1591467416.0387652
 		// after  - 1591476953.491206959
-
 	} 
-	
-	// if (platform == "python") {
-
-	// }
-
-	// fmt.Println("       timestamp after",data["timestamp"])
-	// fmt.Println(" start_timestamp after",data["start_timestamp"])
 	return data
 }
 
