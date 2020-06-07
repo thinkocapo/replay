@@ -37,7 +37,9 @@ try:
         # cur.execute("SELECT * FROM events")
 
         rows = cur.fetchall()
+        # TODO - update with attribute/metadata like a count* from query, as this isn't accurate if only selecing 1 by Id
         print('TOTAL ROWS: ', len(rows))
+
         # print('Most recent sqlite id:', rows[len(rows)-1][0]) # is latest??
  
         # TODO - iterate through all rows and print
