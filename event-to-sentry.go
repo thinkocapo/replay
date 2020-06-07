@@ -294,8 +294,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		// PARENT TRACE
 		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
 		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-		fmt.Println("******* t1 ", t1.UnixNano())
-		fmt.Println("******* t2 ", t2.UnixNano())
+		// fmt.Println("******* t1 ", t1.UnixNano())
+		// fmt.Println("******* t2 ", t2.UnixNano())
 
 		parentStartTimestamp := decimal.NewFromInt(t1.UnixNano())
 		parentEndTimestamp := decimal.NewFromInt(t2.UnixNano())		
@@ -319,6 +319,42 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", data["timestamp"], data["timestamp"])
 
 		// SPANS
+		for _, span := range data["spans"].([]interface{}) {
+			// give it a type
+			sp := span.(map[string]interface{})
+			
+			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+			fmt.Printf("\n> py updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
+			t1, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
+			t2, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
+			// fmt.Println("******* t1 ", t1.UnixNano())
+			// fmt.Println("******* t2 ", t2.UnixNano())
+			
+			spanStartTimestamp := decimal.NewFromInt(t1.UnixNano())
+			spanEndTimestamp := decimal.NewFromInt(t2.UnixNano())
+			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+			
+			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+		
+			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
+			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+		
+			if (newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
+				fmt.Printf("TRUE - span PYTHON")
+			} else {
+				fmt.Printf("\nFALSE - span PYTHON")
+				fmt.Print(newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+			}
+
+			// is okay that this is an instance of the 'decimal' package and no longer Float64? 
+			sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
+			sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
+
+			fmt.Printf("\n> py updatetimestamps SPAN start_timestamp after %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+			fmt.Printf("\n> py updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
+		}
 	}
 	if (platform == "javascript") {
 		// PARENT TRACE
