@@ -72,9 +72,7 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 
 ## Todo
 
-- AM transactions
 - Android errors/crashes/sessions
-
 
 - sentry-cli for Release for js events from Database, so they're minified
 - sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
