@@ -290,16 +290,34 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	if (platform == "python") {
 		fmt.Printf("> py updateTimestamps parent start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
 		fmt.Printf("> py updateTimestamps parent       timestamp before %v (%T) \n", data["timestamp"], data["timestamp"])
+		
 		// PARENT TRACE
-		// ???
-		// parentStartTimestamp := decimal.NewFromFloat(data["start_timestamp"].(float64))
-		// parentEndTimestamp := decimal.NewFromFloat(data["timestamp"].(float64))		
-		// parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-		t, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
-		fmt.Println("******* t ", t)
+		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string))
+		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
+		fmt.Println("******* t1 ", t1.UnixNano())
+		fmt.Println("******* t2 ", t2.UnixNano())
 
-		// unixTimestampString := fmt.Sprint(time.Now().UnixNano())
-		// newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		parentStartTimestamp := decimal.NewFromInt(t1.UnixNano())
+		parentEndTimestamp := decimal.NewFromInt(t2.UnixNano())		
+		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+
+		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
+
+		if (newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
+			fmt.Printf("\nTRUE - parent PYTHON")
+		} else {
+			fmt.Printf("\nFALSE - parent PYTHON")
+			fmt.Print(newParentEndTimestamp.Sub(newParentStartTimestamp))
+		}
+		data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
+		data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
+
+		// TODO - could conver back to time.RFC3339Nano (as that's what Python Transactions use), since these are now float64's??
+		fmt.Printf("\n> py updateTimestamps parent start_timestamp after %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+		fmt.Printf("> py updateTimestamps parent       timestamp after %v (%T) \n", data["timestamp"], data["timestamp"])
+
 		// SPANS
 	}
 	if (platform == "javascript") {
@@ -337,8 +355,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		// both print...
 		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"])
 		// fmt.Printf("\n> *****************", firstSpan["start_timestamp"].(float64))
-		firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
-		fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
+		// firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
+		// fmt.Printf("\n> ***************** before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
 
 		// SPANS
 		// for _, span := range data["spans"].(map[string]float64) {
@@ -376,7 +394,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			fmt.Printf("\n> js updatetimestamps SPAN       timestamp after %v (%T)\n", sp["timestamp"], sp["timestamp"])
 		}
 
-		fmt.Printf("\n> ***************** after ", firstSpan["start_timestamp"])
+		// fmt.Printf("\n> ***************** after ", firstSpan["start_timestamp"])
 		// SUCCESS - it updated by reference
 		// before - 1591467416.0387652
 		// after  - 1591476953.491206959
@@ -418,17 +436,3 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
 	return bodyBytes
 }
-
-// SDK's are supposed to set timestamps https://github.com/getsentry/sentry-javascript/issues/2573
-// Newer js sdk provides timestamp, so stop calling this function, upon upgrading js sdk. 
-// func addTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
-// 	log.Print("no timestamp on object from DB")
-	
-// 	timestamp1 := time.Now()
-// 	newTimestamp1 := timestamp1.Format("2006-01-02") + "T" + timestamp1.Format("15:04:05")
-// 	bodyInterface["timestamp"] = newTimestamp1 + ".118356Z"
-
-// 	// bodyInterface["timestamp"] = "1590957221.4570072"
-// 	fmt.Println("> after ",bodyInterface["timestamp"])
-// 	return bodyInterface
-// }
