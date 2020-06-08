@@ -228,37 +228,12 @@ func python(event Event) {
 
 // used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
+// "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
+// "2020-05-31T23:55:11.807534Z" for python
+// new timestamp format is same for js/python even though was different format on the way in
 func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println("> Error timestamp before", bodyInterface["timestamp"]) // nil for js errors, despite being on latest sdk as of 05/30/2020
-	
-	// "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
-	if (platform == "javascript") {
-		bodyInterface["timestamp"] = time.Now().Unix() 
-	}
-
-	// "2020-05-31T23:55:11.807534Z"
-	if (platform == "python") {
-		// adding .UTC() seems to have fixed it, so appears at top of Discover event feed. Universal Coordinated Time
-		// timestamp := time.Now().UTC() // HERE
-
-		// when using timestamp := time.Now() and no "Europe/London" like above, the 'after' timestamp ends up being before the 'before', and so it doesn't display on top of your Discover  eventfeed
-		// timestamp before 2020-06-02T00:09:51.365214Z
-		// timestamp after  2020-06-01T17:12:26.365214Z
-		
-		// Trying to get GMT, basically just want the error to be top-most in your Discover feed
-		// Displays 2 hours ahead. so could subtract 2 hours somewhere?
-		// loc, _ := time.LoadLocation("Europe/London")
-		// timestamp := time.Now().In(loc)
-		
-		// HERE
-		// oldTimestamp := bodyInterface["timestamp"].(string)
-		// newTimestamp := timestamp.Format("2006-01-02") + "T" + timestamp.Format("15:04:05")
-		// bodyInterface["timestamp"] = newTimestamp + oldTimestamp[19:]
-
-		// discovered that this works...
-		bodyInterface["timestamp"] = time.Now().Unix() 
-	}
-
+	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
+	bodyInterface["timestamp"] = time.Now().Unix() 
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
 	return bodyInterface
 }
