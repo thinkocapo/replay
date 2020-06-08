@@ -80,6 +80,7 @@ def forward():
     print('> FORWARD')
 
     # TODO https://github.com/thinkocapo/undertaker/issues/48
+    # TODO exception.platform may have been available, as well as exception.sdk
     def make(headers):
         request_headers = {}
         user_agent = request.headers.get('User-Agent').lower()
