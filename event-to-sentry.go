@@ -185,7 +185,6 @@ func javascript(event Event) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
 	fmt.Printf("\n> javascript event response\n", string(responseData))
 }
 
@@ -199,7 +198,7 @@ func python(event Event) {
 		bodyInterface = updateTimestamp(bodyInterface)
 	}
 	if (event._type == "transaction") {
-		// bodyInterface = updateTimestamps3(bodyInterface, "python", decimal.NewFromString)
+		// bodyInterface = updateTimestamps3(bodyInterface, decimal.NewFromString)
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
 
@@ -255,13 +254,12 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
 	if (platform == "python") {	
-		// TODO rename as parentStartTime (i.e. object from Go's Time package) and parentStartTimeString, because parentStartTimestamp follows that logically	
-		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
-		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-		t1String := fmt.Sprint(t1.UnixNano())
-		t2String := fmt.Sprint(t2.UnixNano())
-		parentStartTimestamp, _ = decimal.NewFromString(t1String[:10] + "." + t1String[10:])
-		parentEndTimestamp, _ = decimal.NewFromString(t2String[:10] + "." + t2String[10:])
+		parentStart, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
+		parentEnd, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
+		parentStartTime := fmt.Sprint(parentStart.UnixNano())
+		parentEndTime := fmt.Sprint(parentEnd.UnixNano())
+		parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
+		parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
 	}
 	// JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
 	if (platform == "javascript") {
@@ -300,12 +298,12 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 
 		var spanStartTimestamp, spanEndTimestamp decimal.Decimal
 		if (platform == "python") {
-			t1, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
-			t2, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
-			t1String := fmt.Sprint(t1.UnixNano())
-			t2String := fmt.Sprint(t2.UnixNano())
-			spanStartTimestamp, _ = decimal.NewFromString(t1String[:10] + "." + t1String[10:])
-			spanEndTimestamp, _ = decimal.NewFromString(t2String[:10] + "." + t2String[10:])
+			spanStart, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
+			spanEnd, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
+			spanStartTime := fmt.Sprint(spanStart.UnixNano())
+			spanEndTime := fmt.Sprint(spanEnd.UnixNano())
+			spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
+			spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
 		}
 		if (platform == "javascript") {
 			spanStartTimestamp = decimal.NewFromFloat(sp["start_timestamp"].(float64))
