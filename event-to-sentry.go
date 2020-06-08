@@ -105,6 +105,9 @@ func init() {
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
 	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONTEST_SAAS"))
+	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -154,7 +157,7 @@ func javascript(event Event) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "javascript")
+		bodyInterface = updateTimestamp(bodyInterface)
 	}
 	if (event._type == "transaction") {
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
@@ -164,6 +167,7 @@ func javascript(event Event) {
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
+	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["javascript"].storeEndpoint()
 	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
@@ -192,7 +196,7 @@ func python(event Event) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "python")
+		bodyInterface = updateTimestamp(bodyInterface)
 	}
 	if (event._type == "transaction") {
 		// bodyInterface = updateTimestamps3(bodyInterface, "python", decimal.NewFromString)
@@ -204,6 +208,7 @@ func python(event Event) {
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
 	
+	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["python"].storeEndpoint()
 	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
@@ -349,6 +354,11 @@ func undertake(bodyInterface map[string]interface{}) {
 	}
 	tags := bodyInterface["tags"].(map[string]interface{})
 	tags["undertaker"] = "is_here"
+
+	// Optional - overwrite the platform (make sure matches the DSN's project type)
+	// bodyInterface["platform"] = "ruby"
+	// Optional - overwrite what the transaction's title will display as in Discover
+	// bodyInterface["transaction"] = "eprescription/:id"
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
