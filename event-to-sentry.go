@@ -231,7 +231,7 @@ func python(event Event) {
 // "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
 // "2020-05-31T23:55:11.807534Z" for python
 // new timestamp format is same for js/python even though was different format on the way in
-func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
 	bodyInterface["timestamp"] = time.Now().Unix() 
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
