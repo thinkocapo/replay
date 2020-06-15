@@ -27,18 +27,20 @@ conn = sqlite3.connect(path_to_database)
 try:
     with conn:
         cur = conn.cursor()
-    
+        rows = []
+
         _id = sys.argv[1] if len(sys.argv) > 1 else None
         if _id==None:
-            cur.execute("SELECT * FROM events ORDER BY id DESC LIMIT 1;")
+            cur.execute("SELECT * FROM events ORDER BY id DESC;") # LIMIT 1
+            rows = cur.fetchall()    
+            print('TOTAL ROWS: ', len(rows))
         else:
             cur.execute("SELECT * FROM events WHERE id=?", [_id])
+            rows = cur.fetchall()
 
-        # cur.execute("SELECT * FROM events")
-
-        rows = cur.fetchall()
+        # rows = cur.fetchall()
         # TODO - update with attribute/metadata like a count* from query, as this isn't accurate if only selecing 1 by Id
-        print('TOTAL ROWS: ', len(rows))
+        # print('TOTAL ROWS: ', len(rows))
 
         # print('Most recent sqlite id:', rows[len(rows)-1][0]) # is latest??
  
@@ -62,7 +64,7 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            'buffer': json.loads(buffer), # TODO add flag for 'include body' in query
+            # 'buffer': json.loads(buffer), # TODO add flag for 'include body' in query
             'headers': json.loads(headers)
         }
         print(json.dumps(output, indent=2))
