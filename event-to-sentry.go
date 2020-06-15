@@ -105,12 +105,15 @@ func init() {
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
 	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONTEST_SAAS"))
+	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
 
-	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
 func main() {
@@ -154,7 +157,7 @@ func javascript(event Event) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "javascript")
+		bodyInterface = updateTimestamp(bodyInterface)
 	}
 	if (event._type == "transaction") {
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
@@ -164,6 +167,7 @@ func javascript(event Event) {
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
+	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["javascript"].storeEndpoint()
 	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
@@ -181,7 +185,6 @@ func javascript(event Event) {
 	responseData, responseDataErr := ioutil.ReadAll(response.Body)
 	if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// TODO this prints nicely if response is coming from Self-Hosted. Not the case when sending to Hosted sentry
 	fmt.Printf("\n> javascript event response\n", string(responseData))
 }
 
@@ -192,10 +195,10 @@ func python(event Event) {
 	bodyInterface = replaceEventId(bodyInterface)
 
 	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface, "python")
+		bodyInterface = updateTimestamp(bodyInterface)
 	}
 	if (event._type == "transaction") {
-		// bodyInterface = updateTimestamps3(bodyInterface, "python", decimal.NewFromString)
+		// bodyInterface = updateTimestamps3(bodyInterface, decimal.NewFromString)
 		bodyInterface = updateTimestamps(bodyInterface, "python")
 	}
 
@@ -204,6 +207,7 @@ func python(event Event) {
 	bodyBytesPost := marshalJSON(bodyInterface)
 	buf := encodeGzip(bodyBytesPost)
 	
+	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["python"].storeEndpoint()
 	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
@@ -231,7 +235,7 @@ func python(event Event) {
 // "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
 // "2020-05-31T23:55:11.807534Z" for python
 // new timestamp format is same for js/python even though was different format on the way in
-func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
 	bodyInterface["timestamp"] = time.Now().Unix() 
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
@@ -250,13 +254,12 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
 	if (platform == "python") {	
-		// TODO rename as parentStartTime (i.e. object from Go's Time package) and parentStartTimeString, because parentStartTimestamp follows that logically	
-		t1, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
-		t2, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-		t1String := fmt.Sprint(t1.UnixNano())
-		t2String := fmt.Sprint(t2.UnixNano())
-		parentStartTimestamp, _ = decimal.NewFromString(t1String[:10] + "." + t1String[10:])
-		parentEndTimestamp, _ = decimal.NewFromString(t2String[:10] + "." + t2String[10:])
+		parentStart, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
+		parentEnd, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
+		parentStartTime := fmt.Sprint(parentStart.UnixNano())
+		parentEndTime := fmt.Sprint(parentEnd.UnixNano())
+		parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
+		parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
 	}
 	// JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
 	if (platform == "javascript") {
@@ -295,12 +298,12 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 
 		var spanStartTimestamp, spanEndTimestamp decimal.Decimal
 		if (platform == "python") {
-			t1, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
-			t2, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
-			t1String := fmt.Sprint(t1.UnixNano())
-			t2String := fmt.Sprint(t2.UnixNano())
-			spanStartTimestamp, _ = decimal.NewFromString(t1String[:10] + "." + t1String[10:])
-			spanEndTimestamp, _ = decimal.NewFromString(t2String[:10] + "." + t2String[10:])
+			spanStart, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
+			spanEnd, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
+			spanStartTime := fmt.Sprint(spanStart.UnixNano())
+			spanEndTime := fmt.Sprint(spanEnd.UnixNano())
+			spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
+			spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
 		}
 		if (platform == "javascript") {
 			spanStartTimestamp = decimal.NewFromFloat(sp["start_timestamp"].(float64))
@@ -349,6 +352,11 @@ func undertake(bodyInterface map[string]interface{}) {
 	}
 	tags := bodyInterface["tags"].(map[string]interface{})
 	tags["undertaker"] = "is_here"
+
+	// Optional - overwrite the platform (make sure matches the DSN's project type)
+	// bodyInterface["platform"] = "ruby"
+	// Optional - overwrite what the transaction's title will display as in Discover
+	// bodyInterface["transaction"] = "eprescription/:id"
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
