@@ -113,7 +113,7 @@ func init() {
 	id = flag.String("id", "", "id of event in sqlite database")
 	flag.Parse()
 
-	db, _ = sql.Open("sqlite3", "am-transactions-sqlite.db")
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
 func main() {
