@@ -51,14 +51,21 @@ See your event in Sentry at `localhost:9000`
 
 **Cronjobs**  
 Cronjob on Macbook that sends events in the background
+`crontab -e` to open up your Mac's crontab manager
 ```
-# crontab -e, 
-1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
+# every minute
+1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+1-59 * * * * cd /<path>/<to>/undertaker/ && ./event-to-sentry
 
-# every minute, every day of the week M-F, send all events in the db
-# * * * * 1-5 cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry --all
+# every minute, every day of the week M-F
+# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+# * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
 
-# crontab -l, to see what's set
+# every 5 minutes
+# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry-neil --all
+# */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
+
+# crontab -l, to list cronjobs
 ```
 
 https://crontab.guru/
@@ -75,6 +82,8 @@ Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
 https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
 
 https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
+
+6 events in the db was 57kb
 
 ## Todo
 
