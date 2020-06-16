@@ -49,7 +49,7 @@ python3 event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
-**OPTIONAL**  
+**Cronjobs**  
 Cronjob on Macbook that sends events in the background
 ```
 # crontab -e, 
@@ -58,7 +58,7 @@ Cronjob on Macbook that sends events in the background
 # every minute, every day of the week M-F, send all events in the db
 # * * * * 1-5 cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry --all
 
-# crontab -l, to close/save
+# crontab -l, to see what's set
 ```
 
 https://crontab.guru/
