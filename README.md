@@ -24,7 +24,7 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 1. `git clone getsentry/onpremise` and `./install.sh`
 2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 3. `pip3 install -r ./python/requirements.txt`
-4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv`
+4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv github.com/shopspring/decimal`
 
 ## Run
 Get your proxy and Sentry instance running first.
@@ -49,13 +49,26 @@ python3 event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
-**OPTIONAL**  
+**Cronjobs**  
 Cronjob on Macbook that sends events in the background
+`crontab -e` to open up your Mac's crontab manager
 ```
-# crontab -e
-1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
-# crontab -l
+# every minute
+1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+1-59 * * * * cd /<path>/<to>/undertaker/ && ./event-to-sentry
+
+# every minute, every day of the week M-F
+# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+# * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
+
+# every 5 minutes
+# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry-neil --all
+# */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
+
+# crontab -l, to list cronjobs
 ```
+
+https://crontab.guru/
 
 ## Notes
 See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py
@@ -69,6 +82,8 @@ Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
 https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
 
 https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
+
+6 events in the db was 57kb
 
 ## Todo
 
