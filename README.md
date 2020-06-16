@@ -24,7 +24,7 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 1. `git clone getsentry/onpremise` and `./install.sh`
 2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 3. `pip3 install -r ./python/requirements.txt`
-4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv`
+4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv github.com/shopspring/decimal`
 
 ## Run
 Get your proxy and Sentry instance running first.
