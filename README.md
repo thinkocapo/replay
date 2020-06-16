@@ -85,6 +85,8 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 
 6 events in the db was 57kb
 
+`go build -o event-to-sentry-<name> event-to-sentry.go` for who it's for
+
 ## Todo
 
 - Android errors/crashes/sessions
