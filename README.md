@@ -52,10 +52,16 @@ See your event in Sentry at `localhost:9000`
 **OPTIONAL**  
 Cronjob on Macbook that sends events in the background
 ```
-# crontab -e
+# crontab -e, 
 1-59 * * * * cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry
-# crontab -l
+
+# every minute, every day of the week M-F, send all events in the db
+# * * * * 1-5 cd /home/wcap/thinkocapo/event-maker/ && ./event-to-sentry --all
+
+# crontab -l, to close/save
 ```
+
+https://crontab.guru/
 
 ## Notes
 See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py

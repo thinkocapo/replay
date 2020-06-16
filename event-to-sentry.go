@@ -146,6 +146,8 @@ func main() {
 		if !*all {
 			rows.Close()
 		}
+
+		time.Sleep(250 * time.Millisecond)
 	}
 	rows.Close()
 }
@@ -351,7 +353,7 @@ func undertake(bodyInterface map[string]interface{}) {
 		bodyInterface["tags"] = make(map[string]interface{})
 	}
 	tags := bodyInterface["tags"].(map[string]interface{})
-	tags["undertaker"] = "is_here"
+	tags["undertaker"] = "crontab"
 
 	// Optional - overwrite the platform (make sure matches the DSN's project type)
 	// bodyInterface["platform"] = "ruby"
