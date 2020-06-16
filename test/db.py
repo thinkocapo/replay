@@ -31,26 +31,15 @@ try:
 
         _id = sys.argv[1] if len(sys.argv) > 1 else None
         if _id==None:
-            cur.execute("SELECT * FROM events ORDER BY id DESC;") # LIMIT 1
+            cur.execute("SELECT * FROM events ORDER BY id;") # LIMIT 1
             rows = cur.fetchall()    
             print('TOTAL ROWS: ', len(rows))
         else:
             cur.execute("SELECT * FROM events WHERE id=?", [_id])
             rows = cur.fetchall()
 
-        # rows = cur.fetchall()
-        # TODO - update with attribute/metadata like a count* from query, as this isn't accurate if only selecing 1 by Id
-        # print('TOTAL ROWS: ', len(rows))
-
-        # print('Most recent sqlite id:', rows[len(rows)-1][0]) # is latest??
- 
-        # TODO - iterate through all rows and print
-        # most recently added row
-        row = rows[-1]
+        row = rows[-1]        
         
-        # row by selection
-        # row = rows[0]
-
         # <read-write buffer ptr 0x562a8e765e30, size 1522 at 0x562a8e765df0>
         # <type 'buffer'>
 
@@ -60,17 +49,18 @@ try:
         buffer = row[3]
         headers = row[4]
 
+        # TODO add flag for 'include body' in query
         output = {
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            # 'buffer': json.loads(buffer), # TODO add flag for 'include body' in query
+            'buffer': json.loads(buffer), 
             'headers': json.loads(headers)
         }
         print(json.dumps(output, indent=2))
     
         # logs different depending on if you saved bytes or gzipped bytes
-        print('type(buffer)', type(buffer))
+        # print('type(buffer)', type(buffer))
 
         # old for python
         # json_body = decompress_gzip(buffer)
