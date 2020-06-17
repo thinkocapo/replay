@@ -54,15 +54,15 @@ Cronjob on Macbook that sends events in the background
 `crontab -e` to open up your Mac's crontab manager
 ```
 # every minute
-1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
 1-59 * * * * cd /<path>/<to>/undertaker/ && ./event-to-sentry
 
 # every minute, every day of the week M-F
-# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
 # * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
 
 # every 5 minutes
-# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry-neil --all
+# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry-neil --all
 # */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
 
 # crontab -l, to list cronjobs
