@@ -29,6 +29,7 @@ try:
         cur = conn.cursor()
         rows = []
 
+        _buffer = sys.argv[2] if len(sys.argv) > 2 else None
         _id = sys.argv[1] if len(sys.argv) > 1 else None
         if _id==None:
             cur.execute("SELECT * FROM events ORDER BY id;") # LIMIT 1
@@ -54,9 +55,11 @@ try:
             'id': sqlite_id,
             'platform': event_name,
             'type': event_type,
-            # 'buffer': json.loads(buffer), 
             'headers': json.loads(headers)
         }
+        if _buffer == '-b':
+            print('_buffer', _buffer)
+            output['buffer'] = json.loads(buffer)
         print(json.dumps(output, indent=2))
     
         # logs different depending on if you saved bytes or gzipped bytes
