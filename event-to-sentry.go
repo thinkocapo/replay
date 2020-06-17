@@ -163,6 +163,10 @@ func javascript(event Event) {
 	}
 	if (event._type == "transaction") {
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
+		if (bodyInterface["transaction"] == "http://localhost:5000/") {
+			fmt.Printf("\n> TOOL STORE DEMO\n")
+			bodyInterface["transaction"] = "http://toolstoredemo.com/"
+		}
 	}
 
 	undertake(bodyInterface)
