@@ -103,8 +103,8 @@ func init() {
 	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
-	projects["javascript"] = parseDSN(os.Getenv("DSN_REACT_SAAS"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHONTEST_SAAS"))
+	projects["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
 	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
 	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
@@ -164,8 +164,21 @@ func javascript(event Event) {
 	if (event._type == "transaction") {
 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
 		if (bodyInterface["transaction"] == "http://localhost:5000/") {
-			fmt.Printf("\n> TOOL STORE DEMO\n")
 			bodyInterface["transaction"] = "http://toolstoredemo.com/"
+
+			request := bodyInterface["request"].(map[string]interface{})
+			request["url"] = "http://toolstoredemo.com/"
+
+			tags := bodyInterface["tags"].(map[string]interface{})
+			tags["url"] = "http://toolstoredemo.com/"
+
+			spans := bodyInterface["spans"].([]interface{})
+			for _, v1 := range spans {
+				v := v1.(map[string]interface{})
+				if (v["span_id"] == "9cbd476918dcc9b4") {
+					v["description"] = "GET http://toolstoredemo.com/tools"
+				}
+			}
 		}
 	}
 
@@ -299,8 +312,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	// fmt.Printf("\n> before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
 	for _, span := range data["spans"].([]interface{}) {
 		sp := span.(map[string]interface{})
-		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
-		fmt.Printf("\n> both updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
 
 		var spanStartTimestamp, spanEndTimestamp decimal.Decimal
 		if (platform == "python") {
@@ -332,8 +345,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
 		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
-		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
-		fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 	}
 	// TESt for making sure that the span object was updated by reference. E.g. 1591467416.0387652 should now be 1591476953.491206959
 	// fmt.Printf("\n> after ", firstSpan["start_timestamp"])
