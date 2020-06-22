@@ -198,13 +198,13 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> javascript event response\n", string(responseData))
+	// fmt.Printf("\n> javascript event response\n", string(responseData))
 }
 
 func python(event Event) {
@@ -240,13 +240,13 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	// response, requestErr := httpClient.Do(request)
+	// if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	// if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> python event response: %v\n", string(responseData))
+	// fmt.Printf("\n> python event response: %v\n", string(responseData))
 }
 
 // used for ERRORS
@@ -331,7 +331,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-	
+		
+		// should use newParentStartTimestamp instead of spanStartTimestamp?
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
