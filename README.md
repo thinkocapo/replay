@@ -54,15 +54,15 @@ Cronjob on Macbook that sends events in the background
 `crontab -e` to open up your Mac's crontab manager
 ```
 # every minute
-1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
 1-59 * * * * cd /<path>/<to>/undertaker/ && ./event-to-sentry
 
 # every minute, every day of the week M-F
-# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry --all
+# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
 # * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
 
 # every 5 minutes
-# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./event-to-sentry-neil --all
+# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry-neil --all
 # */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
 
 # crontab -l, to list cronjobs
@@ -85,19 +85,16 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 
 6 events in the db was 57kb
 
+`go build -o bin/event-to-sentry-<name> event-to-sentry.go` for who it's for
+
 ## Todo
 
 - Android errors/crashes/sessions
 
 - sentry-cli for Release for js events from Database, so they're minified
 - sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
-- when loading events from database, should be able to set this same day/month/year as the release, so it'll get associated in Sentry.io
-
 - proxy.py platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
-- write a proxy.go, but make sure Mobile stuff works in proxy.py first
 - event-to-sentry.go var DATABASE_PATH
 - improve use of log.Fatal vs panic, error handling
-- add and test 'X-Sentry-Auth' or whatever will get used for ApplicationManagement tracing 
-- which request.header indicates what kind of sdk/event it's from? user-agent for now. Or...  
 - how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
 - proxy that any developer can run locally, which forwards to their Sentry of choice, as well as a cloud db ("crowdsourced")
