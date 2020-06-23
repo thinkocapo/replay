@@ -201,13 +201,17 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil { fmt.Println(requestErr) }
-
-	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	// if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-	// fmt.Printf("\n> javascript event response\n", string(responseData))
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil { fmt.Println(requestErr) }
+	
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil { log.Fatal(responseDataErr) }
+	
+		fmt.Printf("\n> javascript event response\n", string(responseData))
+	} else {
+		fmt.Printf("\n> javascript event IGNORED\n")
+	}
 }
 
 func python(event Event) {
