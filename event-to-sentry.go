@@ -27,6 +27,7 @@ var httpClient = &http.Client{}
 var (
 	all *bool
 	id *string
+	ignore *bool
 	db *sql.DB
 	dsn DSN
 	SENTRY_URL string 
@@ -111,6 +112,8 @@ func init() {
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
+	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+
 	flag.Parse()
 
 	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
@@ -147,7 +150,7 @@ func main() {
 			rows.Close()
 		}
 
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(450 * time.Millisecond)
 	}
 	rows.Close()
 }
@@ -240,13 +243,18 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil { fmt.Println(requestErr) }
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil { fmt.Println(requestErr) }
 
-	// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	// if responseDataErr != nil { log.Fatal(responseDataErr) }
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	// fmt.Printf("\n> python event response: %v\n", string(responseData))
+		fmt.Printf("\n> python event response: %v\n", string(responseData))
+	} else {
+		fmt.Printf("\n> python event IGNORED\n")
+	}
+	
 }
 
 // used for ERRORS
@@ -290,6 +298,14 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	
 	// PARENT TRACE
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+	// 1. Identify the end time / delta is same every time, in Discover, put Discover link here
+	// 2. Adjust the parentDifference +/- 5%
+	// Note - if Span stretches beyond width of the Trace's newEndTimestamp
+	fmt.Printf("\n> ****** PARENT DIFFERENCE              *********", parentDifference)
+	rate, _ := decimal.NewFromString(".2")
+	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+	fmt.Printf("\n> ****** PARENT DIFFERENCE w/ x Percent *********", parentDifference)
+
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
