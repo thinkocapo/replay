@@ -14,6 +14,7 @@ import (
 	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +28,7 @@ var httpClient = &http.Client{}
 var (
 	all *bool
 	id *string
+	ignore *bool
 	db *sql.DB
 	dsn DSN
 	SENTRY_URL string 
@@ -111,6 +113,8 @@ func init() {
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
+	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+
 	flag.Parse()
 
 	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
@@ -147,7 +151,7 @@ func main() {
 			rows.Close()
 		}
 
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 	}
 	rows.Close()
 }
@@ -186,9 +190,8 @@ func javascript(event Event) {
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
-	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["javascript"].storeEndpoint()
-	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+	// fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
@@ -198,18 +201,22 @@ func javascript(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
-
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
-
-	fmt.Printf("\n> javascript event response\n", string(responseData))
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil { fmt.Println(requestErr) }
+	
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil { log.Fatal(responseDataErr) }
+	
+		fmt.Printf("\n> javascript event response\n", string(responseData))
+	} else {
+		fmt.Printf("\n> javascript event IGNORED\n")
+	}
 }
 
 func python(event Event) {
 	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
-	// bodyBytes := decodeGzip(bodyBytesCompressed)
+	// bodyBytes := decodeGzip(bodyBytesCompressed) no more, because done on its way into the database
 	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
@@ -240,13 +247,18 @@ func python(event Event) {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil { fmt.Println(requestErr) }
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil { fmt.Println(requestErr) }
 
-	responseData, responseDataErr := ioutil.ReadAll(response.Body)
-	if responseDataErr != nil { log.Fatal(responseDataErr) }
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-	fmt.Printf("\n> python event response: %v\n", string(responseData))
+		fmt.Printf("\n> python event response: %v\n", string(responseData))
+	} else {
+		fmt.Printf("\n> python event IGNORED\n")
+	}
+	
 }
 
 // used for ERRORS
@@ -267,8 +279,8 @@ func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
 // Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
+	// fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+	// fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 	
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
@@ -289,7 +301,16 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	}
 	
 	// PARENT TRACE
+	// Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+	fmt.Printf("\n> parentDifference before", parentDifference)
+	rand.Seed(time.Now().UnixNano())
+	percentage := 0.01 + rand.Float64() * (0.20 - 0.01)
+	fmt.Println("\n> percentage", percentage)
+	rate := decimal.NewFromFloat(percentage)
+	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+	fmt.Printf("\n> parentDifference after", parentDifference)
+
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
@@ -330,8 +351,13 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+		fmt.Println("> spanDifference before", spanDifference)
+		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+		fmt.Println("> spanDifference after", spanDifference)
+
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-	
+		
+		// should use newParentStartTimestamp instead of spanStartTimestamp?
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
@@ -345,8 +371,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
 		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
-		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
-		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
+		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
+		fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 	}
 	// TESt for making sure that the span object was updated by reference. E.g. 1591467416.0387652 should now be 1591476953.491206959
 	// fmt.Printf("\n> after ", firstSpan["start_timestamp"])
