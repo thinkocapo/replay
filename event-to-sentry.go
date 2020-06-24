@@ -151,7 +151,7 @@ func main() {
 			rows.Close()
 		}
 
-		time.Sleep(450 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 	}
 	rows.Close()
 }
@@ -216,7 +216,7 @@ func javascript(event Event) {
 
 func python(event Event) {
 	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
-	// bodyBytes := decodeGzip(bodyBytesCompressed)
+	// bodyBytes := decodeGzip(bodyBytesCompressed) no more, because done on its way into the database
 	bodyInterface := unmarshalJSON(event.bodyBytes)
 	bodyInterface = replaceEventId(bodyInterface)
 
@@ -301,18 +301,15 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	}
 	
 	// PARENT TRACE
-	// 1. Identify the end time / delta is same every time, in Discover, put Discover link here
-	// 2. Adjust the parentDifference between .01 and .2 (1% and 20% difference)
-	// 3. adjust every span with same 'end timestamp' so they'll always line up with Parent Trace
-	// TODO adjust the rate in negative percentage too
+	// Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	fmt.Printf("\n> ****** PARENT DIFFERENCE                 *********", parentDifference)
+	fmt.Printf("\n> parentDifference before", parentDifference)
 	rand.Seed(time.Now().UnixNano())
 	percentage := 0.01 + rand.Float64() * (0.20 - 0.01)
-	fmt.Println("\n> ++++++ percentage", percentage)
+	fmt.Println("\n> percentage", percentage)
 	rate := decimal.NewFromFloat(percentage)
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-	fmt.Printf("\n> ****** PARENT DIFFERENCE updated by rate *********", parentDifference)
+	fmt.Printf("\n> parentDifference after", parentDifference)
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
@@ -354,6 +351,10 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+		fmt.Println("> spanDifference before", spanDifference)
+		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+		fmt.Println("> spanDifference after", spanDifference)
+
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 		
 		// should use newParentStartTimestamp instead of spanStartTimestamp?
@@ -370,8 +371,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
 		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
-		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
-		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
+		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
+		fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 	}
 	// TESt for making sure that the span object was updated by reference. E.g. 1591467416.0387652 should now be 1591476953.491206959
 	// fmt.Printf("\n> after ", firstSpan["start_timestamp"])
