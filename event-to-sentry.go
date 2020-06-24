@@ -14,6 +14,7 @@ import (
 	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -189,9 +190,8 @@ func javascript(event Event) {
 
 	bodyBytesPost := marshalJSON(bodyInterface)
 	
-	// TODO control the project from cli, which you want to send to
 	SENTRY_URL = projects["javascript"].storeEndpoint()
-	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+	// fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
@@ -279,8 +279,8 @@ func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
 // Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
+	// fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+	// fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 	
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
@@ -301,14 +301,18 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	}
 	
 	// PARENT TRACE
-	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
 	// 1. Identify the end time / delta is same every time, in Discover, put Discover link here
-	// 2. Adjust the parentDifference +/- 5%
-	// Note - if Span stretches beyond width of the Trace's newEndTimestamp
-	fmt.Printf("\n> ****** PARENT DIFFERENCE              *********", parentDifference)
-	rate, _ := decimal.NewFromString(".2")
+	// 2. Adjust the parentDifference between .01 and .2 (1% and 20% difference)
+	// 3. adjust every span with same 'end timestamp' so they'll always line up with Parent Trace
+	// TODO adjust the rate in negative percentage too
+	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+	fmt.Printf("\n> ****** PARENT DIFFERENCE                 *********", parentDifference)
+	rand.Seed(time.Now().UnixNano())
+	percentage := 0.01 + rand.Float64() * (0.20 - 0.01)
+	fmt.Println("\n> ++++++ percentage", percentage)
+	rate := decimal.NewFromFloat(percentage)
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-	fmt.Printf("\n> ****** PARENT DIFFERENCE w/ x Percent *********", parentDifference)
+	fmt.Printf("\n> ****** PARENT DIFFERENCE updated by rate *********", parentDifference)
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
