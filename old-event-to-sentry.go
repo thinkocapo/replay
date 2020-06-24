@@ -120,61 +120,6 @@ func init() {
 	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(bodyInterface)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	return encodeGzip(bodyByts)
-	// buf := encodeGzip(bodyBytes)
-	// return buf
-}
-type BodyEncoder func(map[string]interface{}) []byte
-type Timestamper func(map[string]interface{}) map[string]interface{}
-type Headers func(*Request) *Request
-
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, Headers, string ) {
-	body := unmarshalJSON(event.bodyBytes)
-	
-	JAVASCRIPT := event._type == "javascript"
-	PYTHON := event._type == "python"
-	
-	ERROR := event.name == "error"
-	TRANSACTION := event.name == "transaction"
-
-	storeEndpointJavascript := projects["javascript"].storeEndpoint()
-	storeEndpointPython := projects["python"].storeEndpoint()
-
-	switch {
-		case JAVASCRIPT && TRANSACTION:
-			return body, updateTimestamps, jsEncoder, storeEndpointJavascript
-		case JAVASCRIPT && ERROR:
-			return body, updateTimestamp, jsEncoder, storeEndpointJavascript
-		case PYTHON && TRANSACTION:
-			return body, updateTimestamps, pyEncoder, storeEndpointPython
-		case PYTHON && ERROR:
-			return body, updateTimestamp, pyEncoder, storeEndpointPython
-	}
-	// TODO could put encoder and storeEndpoint in a separate function?
-	// parsing body, updating eventId and timestamps
-	// vs
-	// encoder and storeEndpoint
-	// ^ timestamp+encoder are only things decided in this decodeEvent
-
-}
-func makeRequest(requestBody []byte, requestHeaders map[string]interface{}, storeEndpoint) *Request{
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, requestBody) // &buf
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
-	// headerInterface := unmarshalJSON(event.headers)
-	// TODO
-	for _, v := range headers {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
-
-	return request
-}
-
 func main() {
 	defer db.Close()
 	
@@ -195,25 +140,11 @@ func main() {
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
-		body, timestamper, bodyEncoder, headers, storeEndpoint = decodeEvent(event)
-
-		body = replaceEventId(body)
-		body = timestamper(body)
-		requestBody := bodyEncoder(body)
-		requestHeaders := headers
-
-		request := makeRequest(requestBody, requestHeaders, storeEndpoint)
-
-		if !*ignore {
-			response, requestErr := httpClient.Do(request)
-			if requestErr != nil { fmt.Println(requestErr) }
-		
-			responseData, responseDataErr := ioutil.ReadAll(response.Body)
-			if responseDataErr != nil { log.Fatal(responseDataErr) }
-		
-			fmt.Printf("> %s event response %s\n", event._type, string(responseData))
-		} else {
-			fmt.Printf("> %s event IGNORED", event._type)
+		if (event.name == "javascript") {
+			javascript(event)
+		}
+		if (event.name == "python") {
+			python(event)
 		}
 
 		if !*all {
