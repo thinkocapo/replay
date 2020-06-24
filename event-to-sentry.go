@@ -165,13 +165,13 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 func makeRequest(requestBody []byte, requestHeaders map[string]interface{}, storeEndpoint) *Request{
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, requestBody) // &buf
 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-
+	
 	// headerInterface := unmarshalJSON(event.headers)
-	// TODO
+
+	// TODO - headers are map[string]string that need be iterated through
 	for _, v := range headers {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
-
 	return request
 }
 
@@ -225,110 +225,110 @@ func main() {
 	rows.Close()
 }
 
-func javascript(event Event) {
-	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
+// func javascript(event Event) {
+// 	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
 	
-	bodyInterface := unmarshalJSON(event.bodyBytes)
-	bodyInterface = replaceEventId(bodyInterface)
+// 	bodyInterface := unmarshalJSON(event.bodyBytes)
+// 	bodyInterface = replaceEventId(bodyInterface)
 
-	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface)
-	}
-	if (event._type == "transaction") {
-		bodyInterface = updateTimestamps(bodyInterface, "javascript")
-		if (bodyInterface["transaction"] == "http://localhost:5000/") {
-			bodyInterface["transaction"] = "http://toolstoredemo.com/"
+// 	if (event._type == "error") {
+// 		bodyInterface = updateTimestamp(bodyInterface)
+// 	}
+// 	if (event._type == "transaction") {
+// 		bodyInterface = updateTimestamps(bodyInterface, "javascript")
+// 		if (bodyInterface["transaction"] == "http://localhost:5000/") {
+// 			bodyInterface["transaction"] = "http://toolstoredemo.com/"
 
-			request := bodyInterface["request"].(map[string]interface{})
-			request["url"] = "http://toolstoredemo.com/"
+// 			request := bodyInterface["request"].(map[string]interface{})
+// 			request["url"] = "http://toolstoredemo.com/"
 
-			tags := bodyInterface["tags"].(map[string]interface{})
-			tags["url"] = "http://toolstoredemo.com/"
+// 			tags := bodyInterface["tags"].(map[string]interface{})
+// 			tags["url"] = "http://toolstoredemo.com/"
 
-			spans := bodyInterface["spans"].([]interface{})
-			for _, v1 := range spans {
-				v := v1.(map[string]interface{})
-				if (v["span_id"] == "9cbd476918dcc9b4") {
-					v["description"] = "GET http://toolstoredemo.com/tools"
-				}
-			}
-		}
-	}
+// 			spans := bodyInterface["spans"].([]interface{})
+// 			for _, v1 := range spans {
+// 				v := v1.(map[string]interface{})
+// 				if (v["span_id"] == "9cbd476918dcc9b4") {
+// 					v["description"] = "GET http://toolstoredemo.com/tools"
+// 				}
+// 			}
+// 		}
+// 	}
 
-	undertake(bodyInterface)
+// 	undertake(bodyInterface)
 
-	bodyBytesPost := marshalJSON(bodyInterface)
+// 	bodyBytesPost := marshalJSON(bodyInterface)
 	
-	SENTRY_URL = projects["javascript"].storeEndpoint()
-	// fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+// 	SENTRY_URL = projects["javascript"].storeEndpoint()
+// 	// fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
-	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+// 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
+// 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 	
-	headerInterface := unmarshalJSON(event.headers)
-	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
+// 	headerInterface := unmarshalJSON(event.headers)
+// 	for _, v := range [4]string{"Accept-Encoding","Content-Length","Content-Type","User-Agent"} {
+// 		request.Header.Set(v, headerInterface[v].(string))
+// 	}
 	
-	if !*ignore {
-		response, requestErr := httpClient.Do(request)
-		if requestErr != nil { fmt.Println(requestErr) }
+// 	if !*ignore {
+// 		response, requestErr := httpClient.Do(request)
+// 		if requestErr != nil { fmt.Println(requestErr) }
 	
-		responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		if responseDataErr != nil { log.Fatal(responseDataErr) }
+// 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+// 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 	
-		fmt.Printf("\n> javascript event response\n", string(responseData))
-	} else {
-		fmt.Printf("\n> javascript event IGNORED\n")
-	}
-}
+// 		fmt.Printf("\n> javascript event response\n", string(responseData))
+// 	} else {
+// 		fmt.Printf("\n> javascript event IGNORED\n")
+// 	}
+// }
 
-func python(event Event) {
-	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
-	// bodyBytes := decodeGzip(bodyBytesCompressed) no more, because done on its way into the database
-	bodyInterface := unmarshalJSON(event.bodyBytes)
-	bodyInterface = replaceEventId(bodyInterface)
+// func python(event Event) {
+// 	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
+// 	// bodyBytes := decodeGzip(bodyBytesCompressed) no more, because done on its way into the database
+// 	bodyInterface := unmarshalJSON(event.bodyBytes)
+// 	bodyInterface = replaceEventId(bodyInterface)
 
-	if (event._type == "error") {
-		bodyInterface = updateTimestamp(bodyInterface)
-	}
-	if (event._type == "transaction") {
-		// bodyInterface = updateTimestamps3(bodyInterface, decimal.NewFromString)
-		bodyInterface = updateTimestamps(bodyInterface, "python")
-	}
+// 	if (event._type == "error") {
+// 		bodyInterface = updateTimestamp(bodyInterface)
+// 	}
+// 	if (event._type == "transaction") {
+// 		// bodyInterface = updateTimestamps3(bodyInterface, decimal.NewFromString)
+// 		bodyInterface = updateTimestamps(bodyInterface, "python")
+// 	}
 
-	undertake(bodyInterface)
+// 	undertake(bodyInterface)
 	
-	bodyBytesPost := marshalJSON(bodyInterface)
-	buf := encodeGzip(bodyBytesPost)
+// 	bodyBytesPost := marshalJSON(bodyInterface)
+// 	buf := encodeGzip(bodyBytesPost)
 	
-	// TODO control the project from cli, which you want to send to
-	SENTRY_URL = projects["python"].storeEndpoint()
-	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+// 	// TODO control the project from cli, which you want to send to
+// 	SENTRY_URL = projects["python"].storeEndpoint()
+// 	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
 
-	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
+// 	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+// 	if errNewRequest != nil { log.Fatalln(errNewRequest) }
 
-	headerInterface := unmarshalJSON(event.headers)
+// 	headerInterface := unmarshalJSON(event.headers)
 
-	// Including X-Sentry-Auth causes, "multiple authorization payloads requested". Why was it being used at one point here? Was it needed for JS errors? It's not used for transactions
-	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
+// 	// Including X-Sentry-Auth causes, "multiple authorization payloads requested". Why was it being used at one point here? Was it needed for JS errors? It's not used for transactions
+// 	for _, v := range [5]string{"Accept-Encoding","Content-Length","Content-Encoding","Content-Type","User-Agent"} {
+// 		request.Header.Set(v, headerInterface[v].(string))
+// 	}
 
-	if !*ignore {
-		response, requestErr := httpClient.Do(request)
-		if requestErr != nil { fmt.Println(requestErr) }
+// 	if !*ignore {
+// 		response, requestErr := httpClient.Do(request)
+// 		if requestErr != nil { fmt.Println(requestErr) }
 
-		responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		if responseDataErr != nil { log.Fatal(responseDataErr) }
+// 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+// 		if responseDataErr != nil { log.Fatal(responseDataErr) }
 
-		fmt.Printf("\n> python event response: %v\n", string(responseData))
-	} else {
-		fmt.Printf("\n> python event IGNORED\n")
-	}
+// 		fmt.Printf("\n> python event response: %v\n", string(responseData))
+// 	} else {
+// 		fmt.Printf("\n> python event IGNORED\n")
+// 	}
 	
-}
+// }
 
 // used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
