@@ -68,7 +68,7 @@ func parseDSN(rawurl string) *DSN {
 		host = "localhost:9000"
 	}
 
-	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
+	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,
@@ -137,16 +137,14 @@ func pyEncoder(body map[string]interface{}) []byte {
 type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
-// type Headers func(*Request) *Request
-
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
 
-	JAVASCRIPT := event._type == "javascript"
-	PYTHON := event._type == "python"
+	JAVASCRIPT := event.name == "javascript"
+	PYTHON := event.name == "python"
 
-	ERROR := event.name == "error"
-	TRANSACTION := event.name == "transaction"
+	ERROR := event._type == "error"
+	TRANSACTION := event._type == "transaction"
 
 	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be sliiight differences in initial testing
 	// then could just save the right headers to the database, and not have to deal with this here.
@@ -206,9 +204,12 @@ func main() {
 		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
 
 		body = replaceEventId(body)
-		body = timestamper(body, event._type)
-		requestBody := bodyEncoder(body)
+		body = timestamper(body, event.name)
 
+		// Custom Transformations
+		undertake(body)
+
+		requestBody := bodyEncoder(body)
 		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
 
 		if !*ignore {
@@ -256,8 +257,8 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
 // Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	// fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	// fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
+	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
@@ -360,10 +361,9 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	if _, ok := bodyInterface["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
-	// fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("> event_id after", bodyInterface["event_id"])
+	fmt.Println("> event_id updated", bodyInterface["event_id"])
 	return bodyInterface
 }
 
