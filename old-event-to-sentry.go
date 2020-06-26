@@ -68,7 +68,7 @@ func parseDSN(rawurl string) *DSN {
 		host = "localhost:9000"
 	}
 
-	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
+	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,
@@ -125,62 +125,6 @@ func init() {
 	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(body)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	buf := encodeGzip(bodyBytes)
-	return buf.Bytes()
-}
-
-type BodyEncoder func(map[string]interface{}) []byte
-type Timestamper func(map[string]interface{}, string) map[string]interface{}
-
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := unmarshalJSON(event.bodyBytes)
-
-	JAVASCRIPT := event.name == "javascript"
-	PYTHON := event.name == "python"
-
-	ERROR := event._type == "error"
-	TRANSACTION := event._type == "transaction"
-
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be sliiight differences in initial testing
-	// then could just save the right headers to the database, and not have to deal with this here.
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-
-	storeEndpointJavascript := projects["javascript"].storeEndpoint()
-	storeEndpointPython := projects["python"].storeEndpoint()
-
-	switch {
-	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
-	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpointJavascript
-	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpointPython
-	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpointPython
-	}
-
-	// TODO need return an error and nil's
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
-}
-
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
-	if errNewRequest != nil {
-		log.Fatalln(errNewRequest)
-	}
-	headerInterface := unmarshalJSON(eventHeaders)
-	for _, v := range headerKeys {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
-	return request
-}
-
 func main() {
 	defer db.Close()
 
@@ -201,31 +145,11 @@ func main() {
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
-
-		body = replaceEventId(body)
-		body = timestamper(body, event.name)
-
-		// Custom Transformations
-		undertake(body)
-
-		requestBody := bodyEncoder(body)
-		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
-
-		if !*ignore {
-			response, requestErr := httpClient.Do(request)
-			if requestErr != nil {
-				fmt.Println(requestErr)
-			}
-
-			responseData, responseDataErr := ioutil.ReadAll(response.Body)
-			if responseDataErr != nil {
-				log.Fatal(responseDataErr)
-			}
-
-			fmt.Printf("> %s event response %s\n", event._type, string(responseData))
-		} else {
-			fmt.Printf("> %s event IGNORED", event._type)
+		if event.name == "javascript" {
+			javascript(event)
+		}
+		if event.name == "python" {
+			python(event)
 		}
 
 		if !*all {
@@ -237,17 +161,132 @@ func main() {
 	rows.Close()
 }
 
+func javascript(event Event) {
+	fmt.Sprintf("> JAVASCRIPT %v %v", event.name, event._type)
+
+	bodyInterface := unmarshalJSON(event.bodyBytes)
+	bodyInterface = replaceEventId(bodyInterface)
+
+	if event._type == "error" {
+		bodyInterface = updateTimestamp(bodyInterface)
+	}
+	if event._type == "transaction" {
+		bodyInterface = updateTimestamps(bodyInterface, "javascript")
+		if bodyInterface["transaction"] == "http://localhost:5000/" {
+			bodyInterface["transaction"] = "http://toolstoredemo.com/"
+
+			request := bodyInterface["request"].(map[string]interface{})
+			request["url"] = "http://toolstoredemo.com/"
+
+			tags := bodyInterface["tags"].(map[string]interface{})
+			tags["url"] = "http://toolstoredemo.com/"
+
+			spans := bodyInterface["spans"].([]interface{})
+			for _, v1 := range spans {
+				v := v1.(map[string]interface{})
+				if v["span_id"] == "9cbd476918dcc9b4" {
+					v["description"] = "GET http://toolstoredemo.com/tools"
+				}
+			}
+		}
+	}
+
+	undertake(bodyInterface)
+
+	bodyBytesPost := marshalJSON(bodyInterface)
+
+	SENTRY_URL = projects["javascript"].storeEndpoint()
+	// fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, bytes.NewReader(bodyBytesPost))
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+
+	headerInterface := unmarshalJSON(event.headers)
+	for _, v := range [4]string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil {
+			fmt.Println(requestErr)
+		}
+
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil {
+			log.Fatal(responseDataErr)
+		}
+
+		fmt.Printf("\n> javascript event response\n", string(responseData))
+	} else {
+		fmt.Printf("\n> javascript event IGNORED\n")
+	}
+}
+
+func python(event Event) {
+	fmt.Sprintf("> PYTHON %v %v", event.name, event._type)
+	// bodyBytes := decodeGzip(bodyBytesCompressed) no more, because done on its way into the database
+	bodyInterface := unmarshalJSON(event.bodyBytes)
+	bodyInterface = replaceEventId(bodyInterface)
+
+	if event._type == "error" {
+		bodyInterface = updateTimestamp(bodyInterface)
+	}
+	if event._type == "transaction" {
+		// bodyInterface = updateTimestamps3(bodyInterface, decimal.NewFromString)
+		bodyInterface = updateTimestamps(bodyInterface, "python")
+	}
+
+	undertake(bodyInterface)
+
+	bodyBytesPost := marshalJSON(bodyInterface)
+	buf := encodeGzip(bodyBytesPost)
+
+	// TODO control the project from cli, which you want to send to
+	SENTRY_URL = projects["python"].storeEndpoint()
+	fmt.Printf("> storeEndpoint %v", SENTRY_URL)
+
+	request, errNewRequest := http.NewRequest("POST", SENTRY_URL, &buf)
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+
+	headerInterface := unmarshalJSON(event.headers)
+
+	// Including X-Sentry-Auth causes, "multiple authorization payloads requested". Why was it being used at one point here? Was it needed for JS errors? It's not used for transactions
+	for _, v := range [5]string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"} {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+
+	if !*ignore {
+		response, requestErr := httpClient.Do(request)
+		if requestErr != nil {
+			fmt.Println(requestErr)
+		}
+
+		responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		if responseDataErr != nil {
+			log.Fatal(responseDataErr)
+		}
+
+		fmt.Printf("\n> python event response: %v\n", string(responseData))
+	} else {
+		fmt.Printf("\n> python event IGNORED\n")
+	}
+
+}
+
 // used for ERRORS
 // js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
 // "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
 // "2020-05-31T23:55:11.807534Z" for python
 // new timestamp format is same for js/python even though was different format on the way in
-func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
+func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
 	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
 	bodyInterface["timestamp"] = time.Now().Unix()
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
-
-	fmt.Println("platform string", platform)
 	return bodyInterface
 }
 
@@ -257,8 +296,8 @@ func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
 // Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
+	// fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
+	// fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
 
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
@@ -361,9 +400,10 @@ func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{}
 	if _, ok := bodyInterface["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
+	// fmt.Println("> before",bodyInterface["event_id"])
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("> event_id updated", bodyInterface["event_id"])
+	fmt.Println("> event_id after", bodyInterface["event_id"])
 	return bodyInterface
 }
 
