@@ -1,23 +1,27 @@
 package main
 
 import (
-	_ "github.com/mattn/go-sqlite3"
 	"bytes"
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
+
+	_ "github.com/mattn/go-sqlite3"
+
 	// "github.com/buger/jsonparser"
-	"github.com/google/uuid"
-	"github.com/joho/godotenv"
-	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	"github.com/shopspring/decimal"
+
 	// "strconv"
 	"strings"
 	"time"
@@ -26,24 +30,24 @@ import (
 var httpClient = &http.Client{}
 
 var (
-	all *bool
-	id *string
-	ignore *bool
-	db *sql.DB
-	dsn DSN
-	SENTRY_URL string 
-	exists bool
-	projects map[string]*DSN
+	all        *bool
+	id         *string
+	ignore     *bool
+	db         *sql.DB
+	dsn        DSN
+	SENTRY_URL string
+	exists     bool
+	projects   map[string]*DSN
 )
 
-type DSN struct { 
-	host string
-	rawurl string
-	key string
+type DSN struct {
+	host      string
+	rawurl    string
+	key       string
 	projectId string
 }
 
-func parseDSN(rawurl string) (*DSN) {
+func parseDSN(rawurl string) *DSN {
 	key := strings.Split(rawurl, "@")[0][7:]
 
 	uri, err := url.Parse(rawurl)
@@ -55,12 +59,12 @@ func parseDSN(rawurl string) (*DSN) {
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
-	
+
 	var host string
-	if (strings.Contains(rawurl, "ingest.sentry.io")) {
+	if strings.Contains(rawurl, "ingest.sentry.io") {
 		host = "ingest.sentry.io"
 	}
-	if (strings.Contains(rawurl, "@localhost:")) {
+	if strings.Contains(rawurl, "@localhost:") {
 		host = "localhost:9000"
 	}
 
@@ -76,32 +80,33 @@ func parseDSN(rawurl string) (*DSN) {
 // Could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
 func (d DSN) storeEndpoint() string {
 	var fullurl string
-	if (d.host == "ingest.sentry.io") {
-		fullurl = fmt.Sprint("https://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	if d.host == "ingest.sentry.io" {
+		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
 	}
-	if (d.host == "localhost:9000") {
-		fullurl = fmt.Sprint("http://",d.host,"/api/",d.projectId,"/store/?sentry_key=",d.key,"&sentry_version=7")
+	if d.host == "localhost:9000" {
+		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
 	}
 	return fullurl
 }
 
 type Event struct {
-	id int
+	id          int
 	name, _type string
-	headers []byte
-	bodyBytes []byte
+	headers     []byte
+	bodyBytes   []byte
 }
+
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.name, e._type)
 }
 
 func init() {
 	if err := godotenv.Load(); err != nil {
-        log.Print("No .env file found")
+		log.Print("No .env file found")
 	}
 
 	projects = make(map[string]*DSN)
-	
+
 	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
 	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
 	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
@@ -121,53 +126,64 @@ func init() {
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(bodyInterface)
+	return marshalJSON(body)
 }
 func pyEncoder(body map[string]interface{}) []byte {
 	bodyBytes := marshalJSON(body)
-	return encodeGzip(bodyByts)
+	buf := encodeGzip(bodyBytes)
+
+	return buf
+	// return buf
+
 	// buf := encodeGzip(bodyBytes)
 	// return buf
 }
-type BodyEncoder func(map[string]interface{}) []byte
-type Timestamper func(map[string]interface{}) map[string]interface{}
-type Headers func(*Request) *Request
 
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, Headers, string ) {
+type BodyEncoder func(map[string]interface{}) []byte
+type Timestamper func(map[string]interface{}, string) map[string]interface{}
+
+// type Headers func(*Request) *Request
+
+func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
-	
+
 	JAVASCRIPT := event._type == "javascript"
 	PYTHON := event._type == "python"
-	
+
 	ERROR := event.name == "error"
 	TRANSACTION := event.name == "transaction"
+
+	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be sliiight differences in initial testing
+	// then could just save the right headers to the database, and not have to deal with this here.
+	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 
 	storeEndpointJavascript := projects["javascript"].storeEndpoint()
 	storeEndpointPython := projects["python"].storeEndpoint()
 
 	switch {
-		case JAVASCRIPT && TRANSACTION:
-			return body, updateTimestamps, jsEncoder, storeEndpointJavascript
-		case JAVASCRIPT && ERROR:
-			return body, updateTimestamp, jsEncoder, storeEndpointJavascript
-		case PYTHON && TRANSACTION:
-			return body, updateTimestamps, pyEncoder, storeEndpointPython
-		case PYTHON && ERROR:
-			return body, updateTimestamp, pyEncoder, storeEndpointPython
+	case JAVASCRIPT && TRANSACTION:
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
+	case JAVASCRIPT && ERROR:
+		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpointJavascript
+	case PYTHON && TRANSACTION:
+		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpointPython
+	case PYTHON && ERROR:
+		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpointPython
 	}
-	// TODO could put encoder and storeEndpoint in a separate function?
-	// parsing body, updating eventId and timestamps vs. encoder and storeEndpoint
-	// ^ timestamp+encoder are only things decided in this decodeEvent
 
+	// TODO need return an error and nil's
+	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
 }
-func makeRequest(requestBody []byte, requestHeaders map[string]interface{}, storeEndpoint) *Request{
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, requestBody) // &buf
-	if errNewRequest != nil { log.Fatalln(errNewRequest) }
-	
-	// headerInterface := unmarshalJSON(event.headers)
 
-	// TODO - headers are map[string]string that need be iterated through
-	for _, v := range headers {
+func buildRequest(requestBody []byte, requestHeaders []string, eventHeaders []byte, storeEndpoint string) *http.Request {
+	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+
+	headerInterface := unmarshalJSON(eventHeaders)
+	for _, v := range requestHeaders {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	return request
@@ -175,16 +191,16 @@ func makeRequest(requestBody []byte, requestHeaders map[string]interface{}, stor
 
 func main() {
 	defer db.Close()
-	
+
 	query := ""
-	if (*id == "") {
+	if *id == "" {
 		query = "SELECT * FROM events ORDER BY id DESC"
 	} else {
 		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
 	}
 
 	rows, err := db.Query(query)
-	
+
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
 	}
@@ -193,22 +209,26 @@ func main() {
 		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
-		body, timestamper, bodyEncoder, headers, storeEndpoint = decodeEvent(event)
+		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
 
 		body = replaceEventId(body)
-		body = timestamper(body)
+		body = timestamper(body, event._type)
 		requestBody := bodyEncoder(body)
-		requestHeaders := headers
+		requestHeaders := headerKeys
 
-		request := makeRequest(requestBody, requestHeaders, storeEndpoint)
+		request := buildRequest(requestBody, requestHeaders, event.headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
-			if requestErr != nil { fmt.Println(requestErr) }
-		
+			if requestErr != nil {
+				fmt.Println(requestErr)
+			}
+
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
-			if responseDataErr != nil { log.Fatal(responseDataErr) }
-		
+			if responseDataErr != nil {
+				log.Fatal(responseDataErr)
+			}
+
 			fmt.Printf("> %s event response %s\n", event._type, string(responseData))
 		} else {
 			fmt.Printf("> %s event IGNORED", event._type)
@@ -228,10 +248,12 @@ func main() {
 // "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
 // "2020-05-31T23:55:11.807534Z" for python
 // new timestamp format is same for js/python even though was different format on the way in
-func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{} {
+func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
 	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
-	bodyInterface["timestamp"] = time.Now().Unix() 
+	bodyInterface["timestamp"] = time.Now().Unix()
 	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
+
+	fmt.Println("platform string", platform)
 	return bodyInterface
 }
 
@@ -243,10 +265,10 @@ func updateTimestamp(bodyInterface map[string]interface{}) map[string]interface{
 func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
 	// fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
 	// fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
-	
+
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
-	if (platform == "python") {	
+	if platform == "python" {
 		parentStart, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
 		parentEnd, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
 		parentStartTime := fmt.Sprint(parentStart.UnixNano())
@@ -255,19 +277,19 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
 	}
 	// JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
-	if (platform == "javascript") {
+	if platform == "javascript" {
 		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
 		// make into a 'decimal' class type for logging or else it logs as "1.5914674155654302e+09" instead of 1591467415.5654302
 		parentStartTimestamp = decimal.NewFromFloat(data["start_timestamp"].(float64))
-		parentEndTimestamp = decimal.NewFromFloat(data["timestamp"].(float64))	
+		parentEndTimestamp = decimal.NewFromFloat(data["timestamp"].(float64))
 	}
-	
+
 	// PARENT TRACE
 	// Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
 	fmt.Printf("\n> parentDifference before", parentDifference)
 	rand.Seed(time.Now().UnixNano())
-	percentage := 0.01 + rand.Float64() * (0.20 - 0.01)
+	percentage := 0.01 + rand.Float64()*(0.20-0.01)
 	fmt.Println("\n> percentage", percentage)
 	rate := decimal.NewFromFloat(percentage)
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
@@ -277,7 +299,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
-	if (!newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference)) {
+	if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
 		fmt.Printf("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
 	}
 
@@ -299,7 +321,7 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
 
 		var spanStartTimestamp, spanEndTimestamp decimal.Decimal
-		if (platform == "python") {
+		if platform == "python" {
 			spanStart, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
 			spanEnd, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
 			spanStartTime := fmt.Sprint(spanStart.UnixNano())
@@ -307,9 +329,9 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 			spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
 			spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
 		}
-		if (platform == "javascript") {
+		if platform == "javascript" {
 			spanStartTimestamp = decimal.NewFromFloat(sp["start_timestamp"].(float64))
-			spanEndTimestamp = decimal.NewFromFloat(sp["timestamp"].(float64))		
+			spanEndTimestamp = decimal.NewFromFloat(sp["timestamp"].(float64))
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
@@ -318,14 +340,14 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		fmt.Println("> spanDifference after", spanDifference)
 
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-		
+
 		// should use newParentStartTimestamp instead of spanStartTimestamp?
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
-	
-		if (!newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference)) {
+
+		if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
 			fmt.Printf("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
 
@@ -342,19 +364,19 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
-	if _, ok := bodyInterface["event_id"]; !ok { 
+	if _, ok := bodyInterface["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
 	// fmt.Println("> before",bodyInterface["event_id"])
-	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "") 
+	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	bodyInterface["event_id"] = uuid4
-	fmt.Println("> event_id after",bodyInterface["event_id"])
+	fmt.Println("> event_id after", bodyInterface["event_id"])
 	return bodyInterface
 }
 
 // Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
 func undertake(bodyInterface map[string]interface{}) {
-	if (bodyInterface["tags"] == nil) {
+	if bodyInterface["tags"] == nil {
 		bodyInterface["tags"] = make(map[string]interface{})
 	}
 	tags := bodyInterface["tags"].(map[string]interface{})
@@ -397,8 +419,10 @@ func unmarshalJSON(bytes []byte) map[string]interface{} {
 }
 
 func marshalJSON(bodyInterface map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(bodyInterface) 
-	if errBodyBytes != nil { fmt.Println(errBodyBytes)}
+	bodyBytes, errBodyBytes := json.Marshal(bodyInterface)
+	if errBodyBytes != nil {
+		fmt.Println(errBodyBytes)
+	}
 	return bodyBytes
 }
 
