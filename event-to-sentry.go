@@ -131,12 +131,7 @@ func jsEncoder(body map[string]interface{}) []byte {
 func pyEncoder(body map[string]interface{}) []byte {
 	bodyBytes := marshalJSON(body)
 	buf := encodeGzip(bodyBytes)
-
-	return buf
-	// return buf
-
-	// buf := encodeGzip(bodyBytes)
-	// return buf
+	return buf.Bytes()
 }
 
 type BodyEncoder func(map[string]interface{}) []byte
@@ -176,14 +171,13 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
 }
 
-func buildRequest(requestBody []byte, requestHeaders []string, eventHeaders []byte, storeEndpoint string) *http.Request {
+func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
-
 	headerInterface := unmarshalJSON(eventHeaders)
-	for _, v := range requestHeaders {
+	for _, v := range headerKeys {
 		request.Header.Set(v, headerInterface[v].(string))
 	}
 	return request
@@ -214,9 +208,8 @@ func main() {
 		body = replaceEventId(body)
 		body = timestamper(body, event._type)
 		requestBody := bodyEncoder(body)
-		requestHeaders := headerKeys
 
-		request := buildRequest(requestBody, requestHeaders, event.headers, storeEndpoint)
+		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
