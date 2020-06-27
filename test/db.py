@@ -20,7 +20,9 @@ def decompress_gzip(bytes_encoded_data):
 
 # if path is outside of directory, must use absolute path like /home/user/database.db
 # path_to_database = r"sqlite.db"
-path_to_database = r"am-transactions-sqlite.db"
+# path_to_database = r"am-transactions-sqlite.db"
+path_to_database = r"tracing-example.db"
+print(path_to_database)
 
 conn = sqlite3.connect(path_to_database)
 
@@ -34,7 +36,7 @@ try:
         if _id==None:
             cur.execute("SELECT * FROM events ORDER BY id;") # LIMIT 1
             rows = cur.fetchall()    
-            print('TOTAL ROWS: ', len(rows))
+            print('TOTAL ROWSz: ', len(rows))
         else:
             cur.execute("SELECT * FROM events WHERE id=?", [_id])
             rows = cur.fetchall()

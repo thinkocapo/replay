@@ -87,6 +87,9 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 
 `go build -o bin/event-to-sentry-<name> event-to-sentry.go` for who it's for
 
+to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the mapped URL in tracing-example's .env like:  
+`SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
+
 ## Todo
 
 - Android errors/crashes/sessions
