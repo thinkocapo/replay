@@ -83,18 +83,22 @@ https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints 
 
 https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
 
-6 events in the db was 57kb
+6 events in the am-transactions-sqlite.db was 57kb
+19 events tracing-example was 92kb
 
 `go build -o bin/event-to-sentry-<name> event-to-sentry.go` for who it's for
 
+to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the mapped URL in tracing-example's .env like:  
+`SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
+
 ## Todo
+- database path needs be read from .env by test/*, Makefile, proxy and event-to-sentry
+- test that the check for empty DSN  is foolproof
+- tracing-example to 3 different Python DSN's
+- break up event-to-sentry.go into different files (Package?) e.g. timestamp functions
 
 - Android errors/crashes/sessions
-
-- sentry-cli for Release for js events from Database, so they're minified
-- sentry-cli should create a release and associate commits, use a Release# that relates to day of the week or day/month/year
-- proxy.py platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
-- event-to-sentry.go var DATABASE_PATH
-- improve use of log.Fatal vs panic, error handling
-- how to read sentry_key from incoming request at proxy level? so then proxy can check a .env and figure out which DSN (projectId) to send to....
-- proxy that any developer can run locally, which forwards to their Sentry of choice, as well as a cloud db ("crowdsourced")
+- set Release according to CalVer
+- sqlite model needs 'platform, eventType', instead of 'name, type'
+- read sentry_key from X-Sentry-Auth, assuming it's always there, and could check in .env for which DSN to use.
+- improve log formats and error handling
