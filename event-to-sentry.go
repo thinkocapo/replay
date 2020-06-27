@@ -58,6 +58,7 @@ func parseDSN(rawurl string) *DSN {
 	if idx == -1 {
 		log.Fatal("missing projectId in dsn")
 	}
+	// TODO check if ProjectId is empty
 	projectId := uri.Path[idx+1:]
 
 	var host string
