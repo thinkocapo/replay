@@ -36,7 +36,7 @@ try:
         if _id==None:
             cur.execute("SELECT * FROM events ORDER BY id;") # LIMIT 1
             rows = cur.fetchall()    
-            print('TOTAL ROWSz: ', len(rows))
+            print('TOTAL ROWS: ', len(rows))
         else:
             cur.execute("SELECT * FROM events WHERE id=?", [_id])
             rows = cur.fetchall()
