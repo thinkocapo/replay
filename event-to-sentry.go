@@ -58,7 +58,6 @@ func parseDSN(rawurl string) *DSN {
 	if idx == -1 {
 		log.Fatal("missing projectId in dsn")
 	}
-	// TODO check if ProjectId is empty
 	projectId := uri.Path[idx+1:]
 
 	var host string
@@ -68,7 +67,15 @@ func parseDSN(rawurl string) *DSN {
 	if strings.Contains(rawurl, "@localhost:") {
 		host = "localhost:9000"
 	}
-
+	if host == "" {
+		log.Fatal("missing host")
+	}
+	if len(key) != 32 {
+		log.Fatal("missing key length 32")
+	}
+	if projectId == "" {
+		log.Fatal("missing project Id")
+	}
 	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
@@ -86,6 +93,9 @@ func (d DSN) storeEndpoint() string {
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if fullurl == "" {
+		log.Fatal("problem with fullurl")
 	}
 	return fullurl
 }
