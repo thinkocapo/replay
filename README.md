@@ -95,7 +95,7 @@ to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http
 `SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
 
 ## Todo
-- database path needs be read from .env by test/*, Makefile, proxy and event-to-sentry
+- database path needs be read from .env by Makefile, proxy and event-to-sentry
 - tracing-example to 3 different Python DSN's
 - break up event-to-sentry.go into different files (Package?) e.g. timestamp functions
 
