@@ -1,3 +1,6 @@
+all:
+	go build -o bin/event-to-sentry *.go
+
 proxy:
 	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run -p 3001
 proxyhttps:

@@ -28,14 +28,14 @@ import (
 var httpClient = &http.Client{}
 
 var (
-	all        *bool
-	id         *string
-	ignore     *bool
-	db         *sql.DB
-	dsn        DSN
-	SENTRY_URL string
-	exists     bool
-	projects   map[string]*DSN
+	all         *bool
+	id          *string
+	ignore      *bool
+	db          *sql.DB
+	dsn         DSN
+	SENTRY_URL  string
+	exists      bool
+	projectDSNs map[string]*DSN
 )
 
 type DSN struct {
@@ -113,17 +113,17 @@ func init() {
 		log.Print("No .env file found")
 	}
 
-	projects = make(map[string]*DSN)
+	projectDSNs = make(map[string]*DSN)
 
 	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
-	projects["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
-	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
-	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
-	projects["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	projects["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO_COUNTRIES"))
-	projects["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY_RNG"))
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -146,6 +146,34 @@ func pyEncoder(body map[string]interface{}) []byte {
 type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
+func matchDSN(projectDSNs map[string]*DSN, event Event) string {
+	platform := event.name
+	headers := unmarshalJSON(event.headers)
+
+	xSentryAuth := headers["X-Sentry-Auth"].(string)
+	fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
+
+	for _, projectDSN := range projectDSNs {
+		// fmt.Println("projectDSN", keyName, projectDSN.key)
+		// TODO remove the leading slash from the key
+		if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
+			fmt.Println("> match", projectDSN)
+			return projectDSN.storeEndpoint()
+		}
+	}
+	// fmt.Println("> event was made by a DSN that was not yours")
+
+	var storeEndpoint string
+	if platform == "javascript" {
+		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
+	} else if platform == "python" {
+		storeEndpoint = projectDSNs["python"].storeEndpoint()
+	} else {
+		log.Fatal("platform type not supported")
+	}
+	return storeEndpoint
+}
+
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
 
@@ -155,31 +183,32 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	ERROR := event._type == "error"
 	TRANSACTION := event._type == "transaction"
 
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be sliiight differences in initial testing
+	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
 	// then could just save the right headers to the database, and not have to deal with this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 
-	storeEndpointJavascript := projects["javascript"].storeEndpoint()
-	storeEndpointPython := projects["python"].storeEndpoint()
+	storeEndpoint := matchDSN(projectDSNs, event)
+	// storeEndpointPython := matchDSN(projectDSNs, event)
 
-	// 1 iterate through headers
-	// 2 if Sentry-Auth-Token matches a DSN <-- DSN's are in projects   map[string]*DSN
-	// 3 re-assign storeEndpointPython using that match
-	// 4.a could pass DSN's at run-time. or make that optional at least.
+	// TODO could check for a run-time DSN mapping file. this way, wouldn't have to bake them into the executable.
+
+	fmt.Printf("> storeEndpoint %T %v \n", storeEndpoint, storeEndpoint)
+	// fmt.Printf("> storeEndpointJavascript %T %v ", storeEndpointJavascript, storeEndpointJavascript)
+
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint //Javascript
 	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpointJavascript
+		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpointPython
+		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpointPython
+		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
 
 	// TODO need return an error and nil's
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
+	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
 func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
