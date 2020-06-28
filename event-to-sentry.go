@@ -83,7 +83,6 @@ func parseDSN(rawurl string) *DSN {
 	}
 }
 
-// Could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if d.host == "ingest.sentry.io" {
@@ -163,6 +162,10 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	storeEndpointJavascript := projects["javascript"].storeEndpoint()
 	storeEndpointPython := projects["python"].storeEndpoint()
 
+	// 1 iterate through headers
+	// 2 if Sentry-Auth-Token matches a DSN <-- DSN's are in projects   map[string]*DSN
+	// 3 re-assign storeEndpointPython using that match
+	// 4.a could pass DSN's at run-time. or make that optional at least.
 	switch {
 	case JAVASCRIPT && TRANSACTION:
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
@@ -215,7 +218,6 @@ func main() {
 		body = replaceEventId(body)
 		body = timestamper(body, event.name)
 
-		// Custom Transformations
 		undertake(body)
 
 		requestBody := bodyEncoder(body)
