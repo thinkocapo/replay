@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
 from gzip import GzipFile
 import json
 from six import BytesIO
+import os
 import sqlite3
+load_dotenv()
 
 # Functions from getsentry/sentry-python
 def decompress_gzip(bytes_encoded_data):
@@ -15,12 +18,12 @@ def decompress_gzip(bytes_encoded_data):
     except Exception as e:
         raise e
 
-# if path is outside of directory, must use absolute path like /home/user/database.db
-# path_to_database = r"sqlite.db"
-# path_to_database = r"am-transactions-sqlite.db"
-path_to_database = r"tracing-example.db"
+SQLITE = os.getenv('SQLITE')
+database = SQLITE or os.getcwd() + "/sqlite.db"
 
-conn = sqlite3.connect(path_to_database)
+print("> database", database)
+
+conn = sqlite3.connect(database)
 
 sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
                                         id integer PRIMARY KEY,
