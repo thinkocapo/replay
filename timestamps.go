@@ -48,13 +48,13 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 
 	// Parent Trace
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	fmt.Print("\n> parentDifference before", parentDifference)
+	// fmt.Print("\n> parentDifference before", parentDifference)
 	rand.Seed(time.Now().UnixNano())
 	percentage := 0.01 + rand.Float64()*(0.20-0.01)
-	fmt.Println("\n> percentage", percentage)
+	// fmt.Println("\n> percentage", percentage)
 	rate := decimal.NewFromFloat(percentage)
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-	fmt.Print("\n> parentDifference after", parentDifference)
+	// fmt.Print("\n> parentDifference after", parentDifference)
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
@@ -92,9 +92,9 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-		fmt.Println("> spanDifference before", spanDifference)
+		// fmt.Println("> spanDifference before", spanDifference)
 		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-		fmt.Println("> spanDifference after", spanDifference)
+		// fmt.Println("> spanDifference after", spanDifference)
 
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 
@@ -112,8 +112,8 @@ func updateTimestamps(data map[string]interface{}, platform string) map[string]i
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
 		// logging with decimal for readability and convertability
-		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
-		fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
+		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
 	}
 	return data
 }
