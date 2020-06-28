@@ -100,7 +100,6 @@ to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http
 
 ## Todo
 - tracing-example to 3 different Python DSN's
-- break up event-to-sentry.go into different files (Package?) e.g. timestamp functions
 
 - Android errors/crashes/sessions
 - set Release according to CalVer

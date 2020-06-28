@@ -116,13 +116,14 @@ func init() {
 	projects = make(map[string]*DSN)
 
 	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
-	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
-	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
 	projects["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
 	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
 	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projects["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	projects["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO_COUNTRIES"))
+	projects["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY_RNG"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -309,10 +310,3 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	}
 	return bodyBytes
 }
-
-//////////////////////////////////////////////////////////////////////////
-// example type add func(a int, b int) int
-// https://golang.org/pkg/go/types/
-// func updateTimestamps3(data map[string]interface{}, platform string, dec func(*decimal.Decimal) decimal.Decimal) map[string]interface{} {
-// 	return data
-// }
