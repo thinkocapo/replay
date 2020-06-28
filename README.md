@@ -75,6 +75,9 @@ See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which deci
 
 `python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
 
+`python3 test/db.py 5' gets the 5th item
+`python3 test/dby.py 5 -b' gets the 5th item and prints its body
+
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
 Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
@@ -93,7 +96,6 @@ to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http
 
 ## Todo
 - database path needs be read from .env by test/*, Makefile, proxy and event-to-sentry
-- test that the check for empty DSN  is foolproof
 - tracing-example to 3 different Python DSN's
 - break up event-to-sentry.go into different files (Package?) e.g. timestamp functions
 

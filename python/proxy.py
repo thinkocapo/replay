@@ -28,16 +28,12 @@ print("""
                                                                                  
 """)
 
-
-
 SENTRY=''
 
 # Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# AM Transactions can't be sent to any self-hosted SEntry instance as of 05/30/2020 
+# AM Transactions can't be sent to any self-hosted Sentry instance as of 05/30/2020 
 # https://github.com/getsentry/sentry/releases
 def sentryUrl(DSN):
-    print('> sentryUrl')
-
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
         # assumes single-digit projectId right now
@@ -53,9 +49,6 @@ def sentryUrl(DSN):
         # return "https://o87286.ingest.sentry.io/api/1428657/store/?sentry_key=0d52d5f4e8a64f5ab2edce50d88a7626&sentry_version=7" # will-frontend-react in SAAS
         # it ^ reached SaaS sentry.io
 
-
-# DATABASE - Must be full absolute path to sqlite database file
-# sqlite.db will get created if doesn't exist
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
@@ -71,8 +64,6 @@ with sqlite3.connect(database) as db:
                                             headers BLOB
                                         ); """)
     cursor.close()
-
-########################  STEP 1  #########################
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
