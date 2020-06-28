@@ -107,3 +107,5 @@ projectId := rawurl[len(url)-1:]
 
 
 // Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
+
+// Could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
