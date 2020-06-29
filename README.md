@@ -24,7 +24,6 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 1. `git clone getsentry/onpremise` and `./install.sh`
 2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 3. `pip3 install -r ./python/requirements.txt`
-4. `go get github.com/google/uuid github.com/mattn/go-sqlite3 github.com/joho/godotenv github.com/shopspring/decimal`
 
 ## Run
 Get your proxy and Sentry instance running first.
@@ -40,9 +39,16 @@ python3 event.py
 ```
 **STEP2**  
 ```
-go run event-to-sentry.go
-go run event-to-sentry.go --id=<id>
-go run event-to-sentry.go --all
+go build -o bin/event-to-sentry *.go
+./bin/event-to-sentry
+./bin/event-to-sentry --id=<id>
+./bin/event-to-sentry --id=<id> -i
+./bin/event-to-sentry --all
+
+go build -o bin/event-to-sentry-<name> *.go
+./bin/event-to-sentry-<name>
+
+// or
 
 python3 event-to-sentry.py
 python3 event-to-sentry.py <id>
@@ -75,6 +81,9 @@ See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which deci
 
 `python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
 
+`python3 test/db.py 5' gets the 5th item
+`python3 test/dby.py 5 -b' gets the 5th item and prints its body
+
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
 Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
@@ -86,16 +95,11 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 6 events in the am-transactions-sqlite.db was 57kb
 19 events tracing-example was 92kb
 
-`go build -o bin/event-to-sentry-<name> event-to-sentry.go` for who it's for
-
 to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the mapped URL in tracing-example's .env like:  
 `SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
 
 ## Todo
-- database path needs be read from .env by test/*, Makefile, proxy and event-to-sentry
-- test that the check for empty DSN  is foolproof
 - tracing-example to 3 different Python DSN's
-- break up event-to-sentry.go into different files (Package?) e.g. timestamp functions
 
 - Android errors/crashes/sessions
 - set Release according to CalVer
