@@ -16,6 +16,8 @@ http = urllib3.PoolManager()
 
 app = Flask(__name__)
 # app.run(ssl_context='adhoc') # flask run --cert=adhoc
+
+app.run(threaded=True)
 CORS(app)
 
 print("""
