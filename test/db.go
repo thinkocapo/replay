@@ -1,79 +1,78 @@
-package main
+// package main
 
-import (
-	"database/sql"
-	"fmt"
-	_ "github.com/mattn/go-sqlite3"
-	
-	"bytes"
-	"compress/gzip"
-	"io/ioutil"
-	
-	"strconv"
-	"github.com/buger/jsonparser"
+// import (
+// 	"database/sql"
+// 	"fmt"
+// 	_ "github.com/mattn/go-sqlite3"
 
-	// "encoding/json"
-	// "io/ioutil"
-	// "log"
-	// "net/http"
-	// "os"
-	// "time"
-	// "github.com/getsentry/sentry-go"
-	// sentryhttp "github.com/getsentry/sentry-go/http"
-)
+// 	"bytes"
+// 	"compress/gzip"
+// 	"io/ioutil"
 
-// This tests how many records are in your sqlite database
-func main() {
+// 	"strconv"
+// 	"github.com/buger/jsonparser"
 
+// 	// "encoding/json"
+// 	// "io/ioutil"
+// 	// "log"
+// 	// "net/http"
+// 	// "os"
+// 	// "time"
+// 	// "github.com/getsentry/sentry-go"
+// 	// sentryhttp "github.com/getsentry/sentry-go/http"
+// )
 
-	fmt.Println("Let's connect Sqlite")
-	db, _ := sql.Open("sqlite3", "sqlite.db")
-	fmt.Println("Let's connect Sqlite", db)
+// // This tests how many records are in your sqlite database
+// func main() {
 
-	rows, err := db.Query("SELECT * FROM events")
-	if err != nil {
-		fmt.Println("We got Error", err)
-	}
-	
-	for rows.Next() {
-		var id int
-		var name string
-		var _type string
-		var body []byte
-		var headers string
-		rows.Scan(&id, &name, &_type, &body, &headers)
+// 	fmt.Println("Let's connect Sqlite")
+// 	db, _ := sql.Open("sqlite3", "sqlite.db")
+// 	fmt.Println("Let's connect Sqlite", db)
 
-		fmt.Println(headers)
+// 	rows, err := db.Query("SELECT * FROM events")
+// 	if err != nil {
+// 		fmt.Println("We got Error", err)
+// 	}
 
-		// only for body (Gzipped)
-		r, err := gzip.NewReader(bytes.NewReader(body))
-		if err != nil {
-			fmt.Println(err)
-		}
-		body, err = ioutil.ReadAll(r)
-		if err != nil {
-			fmt.Println(err)
-		}
-		
-		event_id, err := jsonparser.GetString(body, "event_id")
+// 	for rows.Next() {
+// 		var id int
+// 		var name string
+// 		var _type string
+// 		var body []byte
+// 		var headers string
+// 		rows.Scan(&id, &name, &_type, &body, &headers)
 
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("id", strconv.Itoa(id), event_id)
+// 		fmt.Println(headers)
 
-	}
+// 		// only for body (Gzipped)
+// 		r, err := gzip.NewReader(bytes.NewReader(body))
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
+// 		body, err = ioutil.ReadAll(r)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
 
-	// fmt.Println("LENGTH", len(rows))
-	rows.Close()
-}
-// https://dev.to/fevziomurtekin/using-sqlite-in-go-programming-3g2c
-// https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
+// 		event_id, err := jsonparser.GetString(body, "event_id")
 
-// type Event struct {
-// 	id         int
-// 	name   string
-// 	// type    string
-// 	payload []byte
-// 	headers []byte
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
+// 		fmt.Println("id", strconv.Itoa(id), event_id)
+
+// 	}
+
+// 	// fmt.Println("LENGTH", len(rows))
+// 	rows.Close()
 // }
+// // https://dev.to/fevziomurtekin/using-sqlite-in-go-programming-3g2c
+// // https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
+
+// // type Event struct {
+// // 	id         int
+// // 	name   string
+// // 	// type    string
+// // 	payload []byte
+// // 	headers []byte
+// // }

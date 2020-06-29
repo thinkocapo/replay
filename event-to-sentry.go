@@ -13,14 +13,12 @@ import (
 	// "github.com/buger/jsonparser"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/shopspring/decimal"
 
 	// "strconv"
 	"strings"
@@ -30,14 +28,14 @@ import (
 var httpClient = &http.Client{}
 
 var (
-	all        *bool
-	id         *string
-	ignore     *bool
-	db         *sql.DB
-	dsn        DSN
-	SENTRY_URL string
-	exists     bool
-	projects   map[string]*DSN
+	all         *bool
+	id          *string
+	ignore      *bool
+	db          *sql.DB
+	dsn         DSN
+	SENTRY_URL  string
+	exists      bool
+	projectDSNs map[string]*DSN
 )
 
 type DSN struct {
@@ -58,7 +56,6 @@ func parseDSN(rawurl string) *DSN {
 	if idx == -1 {
 		log.Fatal("missing projectId in dsn")
 	}
-	// TODO check if ProjectId is empty
 	projectId := uri.Path[idx+1:]
 
 	var host string
@@ -68,7 +65,15 @@ func parseDSN(rawurl string) *DSN {
 	if strings.Contains(rawurl, "@localhost:") {
 		host = "localhost:9000"
 	}
-
+	if host == "" {
+		log.Fatal("missing host")
+	}
+	if len(key) != 33 {
+		log.Fatal("missing key length 33")
+	}
+	if projectId == "" {
+		log.Fatal("missing project Id")
+	}
 	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
@@ -78,7 +83,6 @@ func parseDSN(rawurl string) *DSN {
 	}
 }
 
-// Could make a DSN field called 'storeEndpoint' and use this function there to assign the value, during parseDSN
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if d.host == "ingest.sentry.io" {
@@ -86,6 +90,9 @@ func (d DSN) storeEndpoint() string {
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if fullurl == "" {
+		log.Fatal("problem with fullurl")
 	}
 	return fullurl
 }
@@ -106,16 +113,17 @@ func init() {
 		log.Print("No .env file found")
 	}
 
-	projects = make(map[string]*DSN)
+	projectDSNs = make(map[string]*DSN)
 
 	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
-	// projects["javascript"] = parseDSN(os.Getenv("DSN_REACT"))
-	// projects["python"] = parseDSN(os.Getenv("DSN_PYTHON"))
-	projects["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	projects["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	projects["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
-	projects["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
-	projects["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
 	all = flag.Bool("all", false, "send all events or 1 event from database")
 	id = flag.String("id", "", "id of event in sqlite database")
@@ -138,6 +146,34 @@ func pyEncoder(body map[string]interface{}) []byte {
 type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
+func matchDSN(projectDSNs map[string]*DSN, event Event) string {
+	platform := event.name
+	headers := unmarshalJSON(event.headers)
+
+	xSentryAuth := headers["X-Sentry-Auth"].(string)
+	fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
+
+	for _, projectDSN := range projectDSNs {
+		// fmt.Println("projectDSN", keyName, projectDSN.key)
+		// TODO remove the leading slash from the key
+		if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
+			fmt.Println("> match", projectDSN)
+			return projectDSN.storeEndpoint()
+		}
+	}
+	// fmt.Println("> event was made by a DSN that was not yours")
+
+	var storeEndpoint string
+	if platform == "javascript" {
+		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
+	} else if platform == "python" {
+		storeEndpoint = projectDSNs["python"].storeEndpoint()
+	} else {
+		log.Fatal("platform type not supported")
+	}
+	return storeEndpoint
+}
+
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
 
@@ -147,27 +183,32 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	ERROR := event._type == "error"
 	TRANSACTION := event._type == "transaction"
 
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be sliiight differences in initial testing
+	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
 	// then could just save the right headers to the database, and not have to deal with this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 
-	storeEndpointJavascript := projects["javascript"].storeEndpoint()
-	storeEndpointPython := projects["python"].storeEndpoint()
+	storeEndpoint := matchDSN(projectDSNs, event)
+	// storeEndpointPython := matchDSN(projectDSNs, event)
+
+	// TODO could check for a run-time DSN mapping file. this way, wouldn't have to bake them into the executable.
+
+	fmt.Printf("> storeEndpoint %T %v \n", storeEndpoint, storeEndpoint)
+	// fmt.Printf("> storeEndpointJavascript %T %v ", storeEndpointJavascript, storeEndpointJavascript)
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint //Javascript
 	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpointJavascript
+		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpointPython
+		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpointPython
+		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
 
 	// TODO need return an error and nil's
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpointJavascript
+	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
 func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
@@ -207,7 +248,6 @@ func main() {
 		body = replaceEventId(body)
 		body = timestamper(body, event.name)
 
-		// Custom Transformations
 		undertake(body)
 
 		requestBody := bodyEncoder(body)
@@ -236,126 +276,6 @@ func main() {
 		time.Sleep(300 * time.Millisecond)
 	}
 	rows.Close()
-}
-
-// used for ERRORS
-// js timestamps https://github.com/getsentry/sentry-javascript/pull/2575
-// "1590946750" but as of 06/07/2020 the 'timestamp' property comes in as <nil>. do not need to set the extra decimals
-// "2020-05-31T23:55:11.807534Z" for python
-// new timestamp format is same for js/python even though was different format on the way in
-func updateTimestamp(bodyInterface map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println("> Error timestamp before", bodyInterface["timestamp"])
-	bodyInterface["timestamp"] = time.Now().Unix()
-	fmt.Println("> Error timestamp after ", bodyInterface["timestamp"])
-
-	fmt.Println("platform string", platform)
-	return bodyInterface
-}
-
-// used for TRANSACTIONS
-// start/end here is same as the sdk's start_timestamp/timestamp, and start_timestamp is only present in transactions
-// For future reference, data.contexts.trace.span_id is the Parent Trace and at one point I thoguht I saw data.entries with spans. Disregarding it for now.
-// Subtraction arithmetic needed on the decimals via Floats, so avoid Int's
-// Better to put as Float64 before serialization. also keep to 7 decimal places as the range sent by sdk's is 4 to 7
-func updateTimestamps(data map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp before %v (%T) \n", data["start_timestamp"], data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps PARENT       timestamp before %v (%T)", data["timestamp"], data["timestamp"])
-
-	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
-	// PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
-	if platform == "python" {
-		parentStart, _ := time.Parse(time.RFC3339Nano, data["start_timestamp"].(string)) // integer?
-		parentEnd, _ := time.Parse(time.RFC3339Nano, data["timestamp"].(string))
-		parentStartTime := fmt.Sprint(parentStart.UnixNano())
-		parentEndTime := fmt.Sprint(parentEnd.UnixNano())
-		parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
-		parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
-	}
-	// JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
-	if platform == "javascript" {
-		// in sqlite it was float64, not a string. or rather, Go is making it a float64 upon reading from db? not sure
-		// make into a 'decimal' class type for logging or else it logs as "1.5914674155654302e+09" instead of 1591467415.5654302
-		parentStartTimestamp = decimal.NewFromFloat(data["start_timestamp"].(float64))
-		parentEndTimestamp = decimal.NewFromFloat(data["timestamp"].(float64))
-	}
-
-	// PARENT TRACE
-	// Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
-	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	fmt.Printf("\n> parentDifference before", parentDifference)
-	rand.Seed(time.Now().UnixNano())
-	percentage := 0.01 + rand.Float64()*(0.20-0.01)
-	fmt.Println("\n> percentage", percentage)
-	rate := decimal.NewFromFloat(percentage)
-	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-	fmt.Printf("\n> parentDifference after", parentDifference)
-
-	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
-	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
-
-	if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
-		fmt.Printf("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
-	}
-
-	data["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
-	data["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
-
-	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and mirrors what the javascript() function does
-	// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
-	fmt.Printf("\n> both updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(data["start_timestamp"].(float64)), data["start_timestamp"])
-	fmt.Printf("> both updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(data["timestamp"].(float64)), data["timestamp"])
-
-	// SPAN
-	// TEST for making sure that the span object was updated by reference
-	// firstSpan := data["spans"].([]interface{})[0].(map[string]interface{})
-	// fmt.Printf("\n> before ", decimal.NewFromFloat(firstSpan["start_timestamp"].(float64)))
-	for _, span := range data["spans"].([]interface{}) {
-		sp := span.(map[string]interface{})
-		// fmt.Printf("\n> both updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
-		// fmt.Printf("\n> both updatetimestamps SPAN       timestamp before %v (%T)\n", sp["timestamp"]	, sp["timestamp"])
-
-		var spanStartTimestamp, spanEndTimestamp decimal.Decimal
-		if platform == "python" {
-			spanStart, _ := time.Parse(time.RFC3339Nano, sp["start_timestamp"].(string))
-			spanEnd, _ := time.Parse(time.RFC3339Nano, sp["timestamp"].(string))
-			spanStartTime := fmt.Sprint(spanStart.UnixNano())
-			spanEndTime := fmt.Sprint(spanEnd.UnixNano())
-			spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
-			spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
-		}
-		if platform == "javascript" {
-			spanStartTimestamp = decimal.NewFromFloat(sp["start_timestamp"].(float64))
-			spanEndTimestamp = decimal.NewFromFloat(sp["timestamp"].(float64))
-		}
-
-		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-		fmt.Println("> spanDifference before", spanDifference)
-		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-		fmt.Println("> spanDifference after", spanDifference)
-
-		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-
-		// should use newParentStartTimestamp instead of spanStartTimestamp?
-		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
-		unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
-		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
-
-		if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
-			fmt.Printf("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
-		}
-
-		sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
-		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
-
-		// logging with decimal just so it's more readable and convertible in https://www.epochconverter.com/, because the 'Float' form is like 1.5914674155654302e+09
-		fmt.Printf("\n> both updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
-		fmt.Printf("\n> both updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(sp["timestamp"].(float64)), sp["timestamp"])
-	}
-	// TESt for making sure that the span object was updated by reference. E.g. 1591467416.0387652 should now be 1591476953.491206959
-	// fmt.Printf("\n> after ", firstSpan["start_timestamp"])
-	return data
 }
 
 func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
@@ -419,10 +339,3 @@ func marshalJSON(bodyInterface map[string]interface{}) []byte {
 	}
 	return bodyBytes
 }
-
-//////////////////////////////////////////////////////////////////////////
-// example type add func(a int, b int) int
-// https://golang.org/pkg/go/types/
-// func updateTimestamps3(data map[string]interface{}, platform string, dec func(*decimal.Decimal) decimal.Decimal) map[string]interface{} {
-// 	return data
-// }
