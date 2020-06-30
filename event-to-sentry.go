@@ -150,18 +150,20 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	platform := event.name
 	headers := unmarshalJSON(event.headers)
 
-	xSentryAuth := headers["X-Sentry-Auth"].(string)
-	fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
-
-	for _, projectDSN := range projectDSNs {
-		// fmt.Println("projectDSN", keyName, projectDSN.key)
-		// TODO remove the leading slash from the key
-		if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
-			fmt.Println("> match", projectDSN)
-			return projectDSN.storeEndpoint()
+	if headers["X-Sentry-Auth"] != nil {
+		xSentryAuth := headers["X-Sentry-Auth"].(string)
+		fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
+	
+		for _, projectDSN := range projectDSNs {
+			// fmt.Println("projectDSN", keyName, projectDSN.key)
+			// TODO remove the leading slash from the key
+			if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
+				fmt.Println("> match", projectDSN)
+				return projectDSN.storeEndpoint()
+			}
 		}
 	}
-	// fmt.Println("> event was made by a DSN that was not yours")
+	fmt.Println("> event was made by a DSN that was not yours")
 
 	var storeEndpoint string
 	if platform == "javascript" {
