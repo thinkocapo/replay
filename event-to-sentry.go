@@ -130,8 +130,10 @@ func init() {
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 
 	flag.Parse()
-
-	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+	
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS_SQLITE"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
