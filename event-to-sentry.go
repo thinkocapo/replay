@@ -163,7 +163,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 			}
 		}
 	}
-	fmt.Println("> event was made by a DSN that was not yours")
+	fmt.Println("> event was made by a DSN that was not yours, or it's Javascript event which lacks X-Sentry-Auth (dsn key) so we can't match it")
 
 	var storeEndpoint string
 	if platform == "javascript" {
