@@ -273,7 +273,7 @@ func main() {
 			rows.Close()
 		}
 
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 	rows.Close()
 }
