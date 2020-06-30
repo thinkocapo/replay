@@ -17,14 +17,15 @@ Good for test data automation. Do not have to maintain +10 different app and sdk
 `event-to-sentry.go` loads events from sqlite and sends them to Sentry, without using an sdk.
 
 ## Setup
-tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
 
-use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
+1. Enter your DSN's in `.env`. Both the proxy.py and event-to-sentry.go will use this.
+2. `pip3 install -r ./python/requirements.txt` for the proxy
+3. `go build -o bin/event-to-sentry *.go`
 
-1. `git clone getsentry/onpremise` and `./install.sh`
-2. DSN's in `.env`, and select right DSN in `proxy.py`, note DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
-3. `pip3 install -r ./python/requirements.txt`
+4. update dsn's in your source app, to point to proxy...optional?
+DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
 
+Generating your DSN's from `getsentry/onpremise` is optional, as it doesn't currently support transactions.
 ## Run
 Get your proxy and Sentry instance running first.
 ```
@@ -34,7 +35,9 @@ make proxy
 docker-compose up
 ```
 **STEP1**  
+Send events to proxy... 
 ```
+# optional
 python3 event.py
 ```
 **STEP2**  
@@ -48,10 +51,6 @@ go build -o bin/event-to-sentry *.go
 go build -o bin/event-to-sentry-<name> *.go
 ./bin/event-to-sentry-<name>
 
-// or
-
-python3 event-to-sentry.py
-python3 event-to-sentry.py <id>
 ```
 See your event in Sentry at `localhost:9000`
 
@@ -98,11 +97,24 @@ https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. 
 to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the mapped URL in tracing-example's .env like:  
 `SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
 
-## Todo
-- tracing-example to 3 different Python DSN's
+`python-dotenv` vs `dotenv`
 
-- Android errors/crashes/sessions
+tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
+
+use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
+
+
+## Todo
+- retest toolstore errors/tx's
+- remove leading slash
+- readme updates
+- tracing-example vs toolstore support. both db's
+- pass a DSN's file at run-time
+
+- Mobile android errors/crashes/sessions
+- update tracing-example's endpoint names.
 - set Release according to CalVer
+
 - sqlite model needs 'platform, eventType', instead of 'name, type'
 - read sentry_key from X-Sentry-Auth, assuming it's always there, and could check in .env for which DSN to use.
 - improve log formats and error handling
