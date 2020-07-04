@@ -105,14 +105,11 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 
 
 ## Todo
-- retest toolstore errors/tx's
 - remove leading slash
-- readme updates
-- tracing-example vs toolstore support. both db's
-- pass a DSN's file at run-time
+- pass a DSN's file at run-time, consider db too
 
-- Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names.
+- Mobile android errors/crashes/sessions
 - set Release according to CalVer
 
 - sqlite model needs 'platform, eventType', instead of 'name, type'

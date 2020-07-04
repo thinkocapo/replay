@@ -131,8 +131,9 @@ func init() {
 
 	flag.Parse()
 	
-	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
-	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS_SQLITE"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS"))
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS_TIMEOUT"))
 	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 }
 
@@ -202,7 +203,7 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint //Javascript
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
