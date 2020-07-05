@@ -105,7 +105,6 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 
 
 ## Todo
-- remove leading slash
 - pass a DSN's file at run-time, consider db too
 - update tracing-example's endpoint names.
 

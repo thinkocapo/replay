@@ -303,6 +303,10 @@ func undertake(bodyInterface map[string]interface{}) {
 	// 	user := bodyInterface["user"].(map[string]interface{})
 	// 	user["email"] = "theuser@go.com"
 	// }
+
+	// release
+	// Date.now()
+	// <month>.<week> week is based on 01-07 is week1, 08-14 is week2, so forth
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
