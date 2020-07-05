@@ -13,6 +13,7 @@ import (
 	// "github.com/buger/jsonparser"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -127,12 +128,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 
 	if headers["X-Sentry-Auth"] != nil {
 		xSentryAuth := headers["X-Sentry-Auth"].(string)
-		fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
-
 		for _, projectDSN := range projectDSNs {
-			// fmt.Println("projectDSN", keyName, projectDSN.key)
-			// TODO remove the leading slash from the key
-			// if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
 			if strings.Contains(xSentryAuth, projectDSN.key) {
 				fmt.Println("> match", projectDSN)
 				return projectDSN.storeEndpoint()
@@ -167,12 +163,8 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-	// storeEndpointPython := matchDSN(projectDSNs, event)
-
-	// TODO could check for a run-time DSN mapping file. this way, wouldn't have to bake them into the executable.
 
 	fmt.Printf("> storeEndpoint %T %v \n", storeEndpoint, storeEndpoint)
-	// fmt.Printf("> storeEndpointJavascript %T %v ", storeEndpointJavascript, storeEndpointJavascript)
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
@@ -290,7 +282,6 @@ func replaceEventId(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-// Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
 func undertake(body map[string]interface{}) {
 	if body["tags"] == nil {
 		body["tags"] = make(map[string]interface{})
@@ -298,11 +289,19 @@ func undertake(body map[string]interface{}) {
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "crontab"
 
-	// if body["user"] == nil {
-	// 	body["user"] = make(map[string]interface{})
-	// 	user := body["user"].(map[string]interface{})
-	// 	user["email"] = "theuser@go.com"
-	// }
+	// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
+	if body["user"] == nil {
+		body["user"] = make(map[string]interface{})
+		user := body["user"].(map[string]interface{})
+		rand.Seed(time.Now().UnixNano())
+		alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+		var alphanumeric string
+		for i := 0; i < 3; i++ {
+			alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
+		}
+		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+	}
+	fmt.Println("> USER", body["user"])
 
 	fmt.Println("> release before", body["release"])
 	date := time.Now()
@@ -321,7 +320,6 @@ func undertake(body map[string]interface{}) {
 	release := fmt.Sprint(int(date.Month()), ".", week)
 	body["release"] = release
 	fmt.Println("> release after", body["release"])
-	// <month>.<week> week is based on 01-07 is week1, 08-14 is week2, so forth
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
