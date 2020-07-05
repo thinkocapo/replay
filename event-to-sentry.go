@@ -46,7 +46,8 @@ type DSN struct {
 }
 
 func parseDSN(rawurl string) *DSN {
-	key := strings.Split(rawurl, "@")[0][7:]
+	// key := strings.Split(rawurl, "@")[0][7:]
+	key := strings.Split(rawurl, "@")[0][8:]
 
 	uri, err := url.Parse(rawurl)
 	if err != nil {
@@ -68,8 +69,8 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) != 33 {
-		log.Fatal("missing key length 33")
+	if len(key) != 32 {
+		log.Fatal("missing key length 32")
 	}
 	if projectId == "" {
 		log.Fatal("missing project Id")
@@ -108,35 +109,6 @@ func (e Event) String() string {
 	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.name, e._type)
 }
 
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-
-	projectDSNs = make(map[string]*DSN)
-
-	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
-	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
-	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
-	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
-	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
-
-	all = flag.Bool("all", false, "send all events or 1 event from database")
-	id = flag.String("id", "", "id of event in sqlite database")
-	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-
-	flag.Parse()
-	
-	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
-	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS"))
-	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_AM_TRANSACTIONS_TIMEOUT"))
-	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
-}
-
 func jsEncoder(body map[string]interface{}) []byte {
 	return marshalJSON(body)
 }
@@ -156,11 +128,12 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	if headers["X-Sentry-Auth"] != nil {
 		xSentryAuth := headers["X-Sentry-Auth"].(string)
 		fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
-	
+
 		for _, projectDSN := range projectDSNs {
 			// fmt.Println("projectDSN", keyName, projectDSN.key)
 			// TODO remove the leading slash from the key
-			if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
+			// if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
+			if strings.Contains(xSentryAuth, projectDSN.key) {
 				fmt.Println("> match", projectDSN)
 				return projectDSN.storeEndpoint()
 			}
@@ -228,6 +201,30 @@ func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, 
 	return request
 }
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+
+	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
+	projectDSNs = make(map[string]*DSN)
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
+
+	all = flag.Bool("all", false, "send all events or 1 event from database")
+	id = flag.String("id", "", "id of event in sqlite database")
+	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+	flag.Parse()
+
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+}
+
 func main() {
 	defer db.Close()
 
@@ -269,7 +266,7 @@ func main() {
 				log.Fatal(responseDataErr)
 			}
 
-			fmt.Printf("> %s event response %s\n", event._type, string(responseData))
+			fmt.Printf("> event type: %s, response: %s\n", event._type, string(responseData))
 		} else {
 			fmt.Printf("> %s event IGNORED", event._type)
 		}
@@ -306,7 +303,6 @@ func undertake(bodyInterface map[string]interface{}) {
 	// 	user := bodyInterface["user"].(map[string]interface{})
 	// 	user["email"] = "theuser@go.com"
 	// }
-
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
