@@ -301,10 +301,12 @@ func undertake(bodyInterface map[string]interface{}) {
 	tags := bodyInterface["tags"].(map[string]interface{})
 	tags["undertaker"] = "crontab"
 
-	// Optional - overwrite the platform (make sure matches the DSN's project type)
-	// bodyInterface["platform"] = "ruby"
-	// Optional - overwrite what the transaction's title will display as in Discover
-	// bodyInterface["transaction"] = "eprescription/:id"
+	// if bodyInterface["user"] == nil {
+	// 	bodyInterface["user"] = make(map[string]interface{})
+	// 	user := bodyInterface["user"].(map[string]interface{})
+	// 	user["email"] = "theuser@go.com"
+	// }
+
 }
 
 ////////////////////////////  UTILS  /////////////////////////////////////////
