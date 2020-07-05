@@ -198,8 +198,8 @@ func init() {
 
 	// Must use SAAS for Performance Transactions as getsentry/sentry 10.0.0 doesn't include Performance yet
 	projectDSNs = make(map[string]*DSN)
-	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS")) // ternary for .env vs cli
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))         // ternary for .env vs cli
 	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
 	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
 	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
