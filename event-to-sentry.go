@@ -241,6 +241,7 @@ func main() {
 
 		body = replaceEventId(body)
 		body = timestamper(body, event.name)
+		body = user(body)
 
 		undertake(body)
 
@@ -272,6 +273,7 @@ func main() {
 	rows.Close()
 }
 
+// same eventId cannot be accepted twice by Sentry
 func replaceEventId(body map[string]interface{}) map[string]interface{} {
 	if _, ok := body["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
@@ -282,14 +284,9 @@ func replaceEventId(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-func undertake(body map[string]interface{}) {
-	if body["tags"] == nil {
-		body["tags"] = make(map[string]interface{})
-	}
-	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "crontab"
-
-	// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
+// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
+// so it's better to never miss setting the user from the SDK
+func user(body map[string]interface{}) map[string]interface{} {
 	if body["user"] == nil {
 		body["user"] = make(map[string]interface{})
 		user := body["user"].(map[string]interface{})
@@ -302,6 +299,15 @@ func undertake(body map[string]interface{}) {
 		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 	}
 	fmt.Println("> USER", body["user"])
+	return body
+}
+
+func undertake(body map[string]interface{}) {
+	if body["tags"] == nil {
+		body["tags"] = make(map[string]interface{})
+	}
+	tags := body["tags"].(map[string]interface{})
+	tags["undertaker"] = "crontab"
 
 	fmt.Println("> release before", body["release"])
 	date := time.Now()
