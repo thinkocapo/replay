@@ -2,9 +2,7 @@ package main
 
 import (
 	"bytes"
-	"compress/gzip"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
 
@@ -135,7 +133,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 			}
 		}
 	}
-	fmt.Println("> event was made by a DSN that was not yours, or it's Javascript event which lacks X-Sentry-Auth (dsn key) so we can't match it")
+	// fmt.Println("> event was made by a DSN that was not yours, or it's Javascript event which lacks X-Sentry-Auth (dsn key) so we can't match it")
 
 	var storeEndpoint string
 	if platform == "javascript" {
@@ -164,7 +162,7 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	storeEndpoint := matchDSN(projectDSNs, event)
 
-	fmt.Printf("> storeEndpoint %T %v \n", storeEndpoint, storeEndpoint)
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
@@ -198,7 +196,7 @@ func init() {
 		log.Print("No .env file found")
 	}
 
-	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
+	// Must use SAAS for Performance Transactions as getsentry/sentry 10.0.0 doesn't include Performance yet
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
@@ -239,9 +237,10 @@ func main() {
 
 		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
 
-		body = replaceEventId(body)
-		body = timestamper(body, event.name)
+		body = eventId(body)
+		body = release(body)
 		body = user(body)
+		body = timestamper(body, event.name)
 
 		undertake(body)
 
@@ -259,9 +258,9 @@ func main() {
 				log.Fatal(responseDataErr)
 			}
 
-			fmt.Printf("> event type: %s, response: %s\n", event._type, string(responseData))
+			fmt.Printf("\n> event type: %s, response: %s\n", event._type, string(responseData))
 		} else {
-			fmt.Printf("> %s event IGNORED", event._type)
+			fmt.Printf("\n> %s event IGNORED", event._type)
 		}
 
 		if !*all {
@@ -274,13 +273,33 @@ func main() {
 }
 
 // same eventId cannot be accepted twice by Sentry
-func replaceEventId(body map[string]interface{}) map[string]interface{} {
+func eventId(body map[string]interface{}) map[string]interface{} {
 	if _, ok := body["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	body["event_id"] = uuid4
 	fmt.Println("> event_id updated", body["event_id"])
+	return body
+}
+
+func release(body map[string]interface{}) map[string]interface{} {
+	date := time.Now()
+	day := date.Day()
+	var week int
+	switch {
+	case day <= 7:
+		week = 1
+	case day >= 8 && day <= 14:
+		week = 2
+	case day >= 15 && day <= 21:
+		week = 3
+	case day >= 22:
+		week = 4
+	}
+	release := fmt.Sprint(int(date.Month()), ".", week)
+	body["release"] = release
+	fmt.Println("> release updated", body["release"])
 	return body
 }
 
@@ -298,7 +317,7 @@ func user(body map[string]interface{}) map[string]interface{} {
 		}
 		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 	}
-	fmt.Println("> USER", body["user"])
+	// fmt.Println("> user", body["user"])
 	return body
 }
 
@@ -308,60 +327,4 @@ func undertake(body map[string]interface{}) {
 	}
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "crontab"
-
-	fmt.Println("> release before", body["release"])
-	date := time.Now()
-	day := date.Day()
-	var week int
-	switch {
-	case day <= 7:
-		week = 1
-	case day >= 8 && day <= 14:
-		week = 2
-	case day >= 15 && day <= 21:
-		week = 3
-	case day >= 22:
-		week = 4
-	}
-	release := fmt.Sprint(int(date.Month()), ".", week)
-	body["release"] = release
-	fmt.Println("> release after", body["release"])
-}
-
-////////////////////////////  UTILS  /////////////////////////////////////////
-func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
-	if err != nil {
-		fmt.Println(err)
-	}
-	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return
-}
-
-func encodeGzip(b []byte) bytes.Buffer {
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
-	w.Write(b)
-	w.Close()
-	// return buf.Bytes()
-	return buf
-}
-
-func unmarshalJSON(bytes []byte) map[string]interface{} {
-	var _interface map[string]interface{}
-	if err := json.Unmarshal(bytes, &_interface); err != nil {
-		panic(err)
-	}
-	return _interface
-}
-
-func marshalJSON(bodyInterface map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(bodyInterface)
-	if errBodyBytes != nil {
-		fmt.Println(errBodyBytes)
-	}
-	return bodyBytes
 }
