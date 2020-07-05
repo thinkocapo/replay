@@ -280,32 +280,47 @@ func main() {
 	rows.Close()
 }
 
-func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
-	if _, ok := bodyInterface["event_id"]; !ok {
+func replaceEventId(body map[string]interface{}) map[string]interface{} {
+	if _, ok := body["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-	bodyInterface["event_id"] = uuid4
-	fmt.Println("> event_id updated", bodyInterface["event_id"])
-	return bodyInterface
+	body["event_id"] = uuid4
+	fmt.Println("> event_id updated", body["event_id"])
+	return body
 }
 
 // Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
-func undertake(bodyInterface map[string]interface{}) {
-	if bodyInterface["tags"] == nil {
-		bodyInterface["tags"] = make(map[string]interface{})
+func undertake(body map[string]interface{}) {
+	if body["tags"] == nil {
+		body["tags"] = make(map[string]interface{})
 	}
-	tags := bodyInterface["tags"].(map[string]interface{})
+	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "crontab"
 
-	// if bodyInterface["user"] == nil {
-	// 	bodyInterface["user"] = make(map[string]interface{})
-	// 	user := bodyInterface["user"].(map[string]interface{})
+	// if body["user"] == nil {
+	// 	body["user"] = make(map[string]interface{})
+	// 	user := body["user"].(map[string]interface{})
 	// 	user["email"] = "theuser@go.com"
 	// }
 
-	// release
-	// Date.now()
+	fmt.Println("> release before", body["release"])
+	date := time.Now()
+	day := date.Day()
+	var week int
+	switch {
+	case day <= 7:
+		week = 1
+	case day >= 8 && day <= 14:
+		week = 2
+	case day >= 15 && day <= 21:
+		week = 3
+	case day >= 22:
+		week = 4
+	}
+	release := fmt.Sprint(int(date.Month()), ".", week)
+	body["release"] = release
+	fmt.Println("> release after", body["release"])
 	// <month>.<week> week is based on 01-07 is week1, 08-14 is week2, so forth
 }
 
