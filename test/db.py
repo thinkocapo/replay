@@ -57,7 +57,7 @@ try:
         # <type 'buffer'>
 
         sqlite_id = row[0]
-        event_name = row[1]
+        event_platform = row[1]
         event_type = row[2]
         body = row[3] # buffer
         headers = row[4]
@@ -65,7 +65,7 @@ try:
         # TODO add flag for 'include body' in query
         output = {
             'id': sqlite_id,
-            'platform': event_name,
+            'platform': event_platform,
             'type': event_type,
             'headers': json.loads(headers)
         }
