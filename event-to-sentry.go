@@ -99,13 +99,13 @@ func (d DSN) storeEndpoint() string {
 
 type Event struct {
 	id          int
-	name, _type string
+	platform, _type string
 	headers     []byte
 	bodyBytes   []byte
 }
 
 func (e Event) String() string {
-	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.name, e._type)
+	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.platform, e._type)
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
@@ -121,7 +121,7 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.name
+	platform := event.platform
 	headers := unmarshalJSON(event.headers)
 
 	if headers["X-Sentry-Auth"] != nil {
@@ -149,8 +149,8 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
 
-	JAVASCRIPT := event.name == "javascript"
-	PYTHON := event.name == "python"
+	JAVASCRIPT := event.platform == "javascript"
+	PYTHON := event.platform == "python"
 
 	ERROR := event._type == "error"
 	TRANSACTION := event._type == "transaction"
@@ -232,7 +232,7 @@ func main() {
 	}
 	for rows.Next() {
 		var event Event
-		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
+		rows.Scan(&event.id, &event.platform, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
 		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
@@ -240,7 +240,7 @@ func main() {
 		body = eventId(body)
 		body = release(body)
 		body = user(body)
-		body = timestamper(body, event.name)
+		body = timestamper(body, event.platform)
 
 		undertake(body)
 

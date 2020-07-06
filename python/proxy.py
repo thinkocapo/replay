@@ -56,11 +56,10 @@ database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
 
 with sqlite3.connect(database) as db:
-    # TODO platform, eventType instead of name, type. for now, re-purpose 'name' as 'platform' and 'type' as 'eventType'
     cursor = db.cursor()
     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
                                             id integer PRIMARY KEY,
-                                            name text,
+                                            platform text,
                                             type text,
                                             data BLOB,
                                             headers BLOB
@@ -125,7 +124,7 @@ def save():
     request_headers = {}
     user_agent = request.headers.get('User-Agent').lower()
     
-    data = ''
+    body = ''
     if 'python' in user_agent:
 
         event_platform = 'python'
@@ -135,7 +134,7 @@ def save():
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
 
-        data = decompress_gzip(request.data)
+        body = decompress_gzip(request.data)
 
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
 
@@ -146,11 +145,11 @@ def save():
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
 
-        data = request.data
+        body = request.data
 
-    insert_query = ''' INSERT INTO events(name,type,data,headers)
+    insert_query = ''' INSERT INTO events(platform,type,body,headers)
               VALUES(?,?,?,?) '''
-    record = (event_platform, event_type, data, json.dumps(request_headers))
+    record = (event_platform, event_type, body, json.dumps(request_headers))
     try:
         with sqlite3.connect(database) as db:
             cursor = db.cursor()
@@ -169,7 +168,7 @@ def save_and_forward():
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
         request_headers[key] = request.headers.get(key)
 
-    insert_query = ''' INSERT INTO events(name,type,data,headers)
+    insert_query = ''' INSERT INTO events(platform,type,body,headers)
               VALUES(?,?,?,?) '''
     record = ('python', 'example', request.data, json.dumps(request_headers)) # type(json.dumps(request_headers)) <type 'str'>
 
