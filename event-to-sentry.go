@@ -168,6 +168,7 @@ func init() {
 	flag.Parse()
 
 	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
 }
 
 func main() {
