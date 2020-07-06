@@ -106,11 +106,7 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 
 ## Todo
 - pass a DSN's file at run-time, consider db too
-- update tracing-example's endpoint names.
+- sqlite model needs 'platform, eventType', instead of 'name, type'
 
 - Mobile android errors/crashes/sessions
-- set Release according to CalVer
-
-- sqlite model needs 'platform, eventType', instead of 'name, type'
-- read sentry_key from X-Sentry-Auth, assuming it's always there, and could check in .env for which DSN to use.
-- improve log formats and error handling
+- update tracing-example's endpoint names.
