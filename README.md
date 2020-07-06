@@ -18,14 +18,24 @@ Good for test data automation. Do not have to maintain +10 different app and sdk
 
 ## Setup
 
-1. Enter your DSN's in `.env`. Both the proxy.py and event-to-sentry.go will use this.
+1. Enter your DSN's in `.env`  
+Both the proxy.py and event-to-sentry.go will use this.
+DSN's from `getsentry/onpremise` do not support transactions as of 07/01/20
+```
+// go build -o bin/event-to-sentry-toolstore *.go
+DSN_JAVASCRIPT_SAAS
+DSN_PYTHON_SAAS
+```
+or
+```
+// go build -o bin/event-to-sentry-tracing-example *.go
+DSN_PYTHON_GATEWAY
+DSN_PYTHON_DJANGO
+DSN_PYTHON_CELERY
+```
 2. `pip3 install -r ./python/requirements.txt` for the proxy
-3. `go build -o bin/event-to-sentry *.go`
+3. `go build -o bin/event-to-sentry-toolstore *.go` or `go build -o bin/event-to-sentry-tracing-example *.go` depending on DSN's in .env
 
-4. update dsn's in your source app, to point to proxy...optional?
-DSN_REACT vs DSN_FLASK depends on which you're sending through the proxy
-
-Generating your DSN's from `getsentry/onpremise` is optional, as it doesn't currently support transactions.
 ## Run
 Get your proxy and Sentry instance running first.
 ```
@@ -87,26 +97,24 @@ The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's
 
 Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
 
-https://develop.sentry.dev/sdk/store for info on what the real Sentry endpoints are doing
+https://develop.sentry.dev/sdk/store for info on the Sentry store endpoint
 
 https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
 
 6 events in the am-transactions-sqlite.db was 57kb
 19 events tracing-example was 92kb
 
-to use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the mapped URL in tracing-example's .env like:  
+To use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the ngrok address in tracing-example's .env like:  
 `SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
-
-`python-dotenv` vs `dotenv`
 
 tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
 
 use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
 
+`python-dotenv` vs `dotenv`
 
 ## Todo
 - pass a DSN's file at run-time, consider db too
-- sqlite model needs 'platform, eventType', instead of 'name, type'
 
 - Mobile android errors/crashes/sessions
-- update tracing-example's endpoint names.
+- update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
