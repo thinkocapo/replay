@@ -146,51 +146,6 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := unmarshalJSON(event.bodyBytes)
-
-	JAVASCRIPT := event.platform == "javascript"
-	PYTHON := event.platform == "python"
-
-	ERROR := event._type == "error"
-	TRANSACTION := event._type == "transaction"
-
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
-	// then could just save the right headers to the database, and not have to deal with this here.
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-
-	storeEndpoint := matchDSN(projectDSNs, event)
-
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
-
-	switch {
-	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
-	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
-	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
-	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
-	}
-
-	// TODO need return an error and nil's
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
-}
-
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
-	if errNewRequest != nil {
-		log.Fatalln(errNewRequest)
-	}
-	headerInterface := unmarshalJSON(eventHeaders)
-	for _, v := range headerKeys {
-		request.Header.Set(v, headerInterface[v].(string))
-	}
-	return request
-}
-
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -270,6 +225,51 @@ func main() {
 		time.Sleep(1000 * time.Millisecond)
 	}
 	rows.Close()
+}
+
+func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
+	body := unmarshalJSON(event.bodyBytes)
+
+	JAVASCRIPT := event.platform == "javascript"
+	PYTHON := event.platform == "python"
+
+	ERROR := event._type == "error"
+	TRANSACTION := event._type == "transaction"
+
+	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
+	// then could just save the right headers to the database, and not have to deal with this here.
+	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+
+	storeEndpoint := matchDSN(projectDSNs, event)
+
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+
+	switch {
+	case JAVASCRIPT && TRANSACTION:
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+	case JAVASCRIPT && ERROR:
+		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
+	case PYTHON && TRANSACTION:
+		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
+	case PYTHON && ERROR:
+		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
+	}
+
+	// TODO need return an error and nil's
+	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+}
+
+func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
+	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+	headerInterface := unmarshalJSON(eventHeaders)
+	for _, v := range headerKeys {
+		request.Header.Set(v, headerInterface[v].(string))
+	}
+	return request
 }
 
 // same eventId cannot be accepted twice by Sentry

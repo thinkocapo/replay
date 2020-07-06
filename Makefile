@@ -11,9 +11,6 @@ eventsentry:
 eventsentrypy:
 	python3 event-to-sentry.py
 
-resetdb:
-	removedb createdb
-	
 createdb:
 	python3 test/create-db.py
 removedb:

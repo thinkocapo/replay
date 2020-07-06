@@ -88,10 +88,9 @@ https://crontab.guru/
 ## Notes
 See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py
 
-`python3 test/db.py` and `go run test/db.go` are for showing total row count and most recent event.
-
-`python3 test/db.py 5' gets the 5th item
-`python3 test/dby.py 5 -b' gets the 5th item and prints its body
+`python3 test/db.py` is for showing total row count and most recent event.  
+`python3 test/db.py 5` gets the 5th item  
+`python3 test/dby.py 5 -b` gets the 5th item and prints its body  
 
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
 
