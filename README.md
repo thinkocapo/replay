@@ -117,3 +117,29 @@ use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data
 
 - Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sentry-cli releases -o testorg-az new -p proxy 0.0.2
+
+sentry-cli releases -o testorg-az -p proxy set-commits --local 0.0.2
+
+
+
+
+
+

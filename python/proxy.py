@@ -107,24 +107,24 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
+import sentry_sdk
+sentry_sdk.init(
+    dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
+    release='0.0.1'    
+)
+
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
+    raise Exception("api save 832")
     print('> SAVING')
-
-    # print('> type(request.data)', type(request.data))
-    # print('> type(request_headers)', type(request.headers))
-    # for header in request.headers.to_wsgi_list():
-    #     print(header)
-    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-    # json.dumps(json.loads(request.data),indent=2)
 
     event_platform = ''
     event_type = ''
     request_headers = {}
     user_agent = request.headers.get('User-Agent').lower()
-    
     body = ''
+
     if 'python' in user_agent:
 
         event_platform = 'python'
@@ -163,6 +163,13 @@ def save():
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
+
+    # print('> type(request.data)', type(request.data))
+    # print('> type(request_headers)', type(request.headers))
+    # for header in request.headers.to_wsgi_list():
+    #     print(header)
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # json.dumps(json.loads(request.data),indent=2)
 
     request_headers = {}
     for key in ['Host','Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
