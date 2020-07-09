@@ -181,7 +181,7 @@ func init() {
 	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
 	fmt.Println("> db flag", *db)
-	if *id == "" {
+	if *db == "" {
 		database, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
 	} else {
 		database, _ = sql.Open("sqlite3", *db)
