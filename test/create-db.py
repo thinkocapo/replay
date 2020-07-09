@@ -27,9 +27,9 @@ conn = sqlite3.connect(database)
 
 sql_table_events = """ CREATE TABLE IF NOT EXISTS events (
                                         id integer PRIMARY KEY,
-                                        name text,
+                                        platform text,
                                         type text,
-                                        data BLOB,
+                                        body BLOB,
                                         headers BLOB
                                     ); """
 

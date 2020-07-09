@@ -2,9 +2,7 @@ package main
 
 import (
 	"bytes"
-	"compress/gzip"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
 
@@ -13,6 +11,7 @@ import (
 	// "github.com/buger/jsonparser"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -46,7 +45,8 @@ type DSN struct {
 }
 
 func parseDSN(rawurl string) *DSN {
-	key := strings.Split(rawurl, "@")[0][7:]
+	// key := strings.Split(rawurl, "@")[0][7:]
+	key := strings.Split(rawurl, "@")[0][8:]
 
 	uri, err := url.Parse(rawurl)
 	if err != nil {
@@ -68,8 +68,8 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) != 33 {
-		log.Fatal("missing key length 33")
+	if len(key) != 32 {
+		log.Fatal("missing key length 32")
 	}
 	if projectId == "" {
 		log.Fatal("missing project Id")
@@ -99,39 +99,13 @@ func (d DSN) storeEndpoint() string {
 
 type Event struct {
 	id          int
-	name, _type string
+	platform, _type string
 	headers     []byte
 	bodyBytes   []byte
 }
 
 func (e Event) String() string {
-	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.name, e._type)
-}
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-
-	projectDSNs = make(map[string]*DSN)
-
-	// Must use SAAS for AM Performance Transactions as https://github.com/getsentry/sentry's Release 10.0.0 doesn't include Performance yet
-	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
-	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
-	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
-	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
-
-	all = flag.Bool("all", false, "send all events or 1 event from database")
-	id = flag.String("id", "", "id of event in sqlite database")
-	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-
-	flag.Parse()
-
-	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.platform, e._type)
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
@@ -147,21 +121,19 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.name
+	platform := event.platform
 	headers := unmarshalJSON(event.headers)
 
-	xSentryAuth := headers["X-Sentry-Auth"].(string)
-	fmt.Printf("> xSentryAuth %v \n", xSentryAuth)
-
-	for _, projectDSN := range projectDSNs {
-		// fmt.Println("projectDSN", keyName, projectDSN.key)
-		// TODO remove the leading slash from the key
-		if strings.Contains(xSentryAuth, projectDSN.key[1:]) {
-			fmt.Println("> match", projectDSN)
-			return projectDSN.storeEndpoint()
+	if headers["X-Sentry-Auth"] != nil {
+		xSentryAuth := headers["X-Sentry-Auth"].(string)
+		for _, projectDSN := range projectDSNs {
+			if strings.Contains(xSentryAuth, projectDSN.key) {
+				fmt.Println("> match", projectDSN)
+				return projectDSN.storeEndpoint()
+			}
 		}
 	}
-	// fmt.Println("> event was made by a DSN that was not yours")
+	// fmt.Println("> event was made by a DSN that was not yours, or it's Javascript event which lacks X-Sentry-Auth (dsn key) so we can't match it")
 
 	var storeEndpoint string
 	if platform == "javascript" {
@@ -174,11 +146,93 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+
+	// Must use SAAS for Performance Transactions as getsentry/sentry 10.0.0 doesn't include Performance yet
+	projectDSNs = make(map[string]*DSN)
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS")) // ternary for .env vs cli
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))         // ternary for .env vs cli
+	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
+	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
+	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
+
+	all = flag.Bool("all", false, "send all events or 1 event from database")
+	id = flag.String("id", "", "id of event in sqlite database")
+	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+	flag.Parse()
+
+	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
+}
+
+func main() {
+	defer db.Close()
+
+	query := ""
+	if *id == "" {
+		query = "SELECT * FROM events ORDER BY id DESC"
+	} else {
+		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
+	}
+
+	rows, err := db.Query(query)
+
+	if err != nil {
+		fmt.Println("Failed to load rows", err)
+	}
+	for rows.Next() {
+		var event Event
+		rows.Scan(&event.id, &event.platform, &event._type, &event.bodyBytes, &event.headers)
+		fmt.Println(event)
+
+		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
+
+		body = eventId(body)
+		body = release(body)
+		body = user(body)
+		body = timestamper(body, event.platform)
+
+		undertake(body)
+
+		requestBody := bodyEncoder(body)
+		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
+
+		if !*ignore {
+			response, requestErr := httpClient.Do(request)
+			if requestErr != nil {
+				fmt.Println(requestErr)
+			}
+
+			responseData, responseDataErr := ioutil.ReadAll(response.Body)
+			if responseDataErr != nil {
+				log.Fatal(responseDataErr)
+			}
+
+			fmt.Printf("\n> event type: %s, response: %s\n", event._type, string(responseData))
+		} else {
+			fmt.Printf("\n> %s event IGNORED", event._type)
+		}
+
+		if !*all {
+			rows.Close()
+		}
+
+		time.Sleep(1000 * time.Millisecond)
+	}
+	rows.Close()
+}
+
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := unmarshalJSON(event.bodyBytes)
 
-	JAVASCRIPT := event.name == "javascript"
-	PYTHON := event.name == "python"
+	JAVASCRIPT := event.platform == "javascript"
+	PYTHON := event.platform == "python"
 
 	ERROR := event._type == "error"
 	TRANSACTION := event._type == "transaction"
@@ -189,16 +243,12 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-	// storeEndpointPython := matchDSN(projectDSNs, event)
 
-	// TODO could check for a run-time DSN mapping file. this way, wouldn't have to bake them into the executable.
-
-	fmt.Printf("> storeEndpoint %T %v \n", storeEndpoint, storeEndpoint)
-	// fmt.Printf("> storeEndpointJavascript %T %v ", storeEndpointJavascript, storeEndpointJavascript)
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint //Javascript
+		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
@@ -223,119 +273,59 @@ func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, 
 	return request
 }
 
-func main() {
-	defer db.Close()
-
-	query := ""
-	if *id == "" {
-		query = "SELECT * FROM events ORDER BY id DESC"
-	} else {
-		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
-	}
-
-	rows, err := db.Query(query)
-
-	if err != nil {
-		fmt.Println("Failed to load rows", err)
-	}
-	for rows.Next() {
-		var event Event
-		rows.Scan(&event.id, &event.name, &event._type, &event.bodyBytes, &event.headers)
-		fmt.Println(event)
-
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
-
-		body = replaceEventId(body)
-		body = timestamper(body, event.name)
-
-		undertake(body)
-
-		requestBody := bodyEncoder(body)
-		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
-
-		if !*ignore {
-			response, requestErr := httpClient.Do(request)
-			if requestErr != nil {
-				fmt.Println(requestErr)
-			}
-
-			responseData, responseDataErr := ioutil.ReadAll(response.Body)
-			if responseDataErr != nil {
-				log.Fatal(responseDataErr)
-			}
-
-			fmt.Printf("> %s event response %s\n", event._type, string(responseData))
-		} else {
-			fmt.Printf("> %s event IGNORED", event._type)
-		}
-
-		if !*all {
-			rows.Close()
-		}
-
-		time.Sleep(300 * time.Millisecond)
-	}
-	rows.Close()
-}
-
-func replaceEventId(bodyInterface map[string]interface{}) map[string]interface{} {
-	if _, ok := bodyInterface["event_id"]; !ok {
+// same eventId cannot be accepted twice by Sentry
+func eventId(body map[string]interface{}) map[string]interface{} {
+	if _, ok := body["event_id"]; !ok {
 		log.Print("no event_id on object from DB")
 	}
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-	bodyInterface["event_id"] = uuid4
-	fmt.Println("> event_id updated", bodyInterface["event_id"])
-	return bodyInterface
+	body["event_id"] = uuid4
+	fmt.Println("> event_id updated", body["event_id"])
+	return body
 }
 
-// Python Error Events do not have 'tags' attribute, if no custom tags were set...? "Sometimes there's no tags attribute yet (typically if no custom tags were set, at least for ERr EVents". Transactions come with a few tags by default, by the sdk.
-func undertake(bodyInterface map[string]interface{}) {
-	if bodyInterface["tags"] == nil {
-		bodyInterface["tags"] = make(map[string]interface{})
+func release(body map[string]interface{}) map[string]interface{} {
+	date := time.Now()
+	day := date.Day()
+	var week int
+	switch {
+	case day <= 7:
+		week = 1
+	case day >= 8 && day <= 14:
+		week = 2
+	case day >= 15 && day <= 21:
+		week = 3
+	case day >= 22:
+		week = 4
 	}
-	tags := bodyInterface["tags"].(map[string]interface{})
+	release := fmt.Sprint(int(date.Month()), ".", week)
+	body["release"] = release
+	fmt.Println("> release updated", body["release"])
+	return body
+}
+
+// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
+// so it's better to never miss setting the user from the SDK
+func user(body map[string]interface{}) map[string]interface{} {
+	if body["user"] == nil {
+		body["user"] = make(map[string]interface{})
+		user := body["user"].(map[string]interface{})
+		rand.Seed(time.Now().UnixNano())
+		alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+		var alphanumeric string
+		for i := 0; i < 3; i++ {
+			alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
+		}
+		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+	}
+	// fmt.Println("> user", body["user"])
+	return body
+}
+
+func undertake(body map[string]interface{}) {
+	if body["tags"] == nil {
+		body["tags"] = make(map[string]interface{})
+	}
+	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "crontab"
-
-	// Optional - overwrite the platform (make sure matches the DSN's project type)
-	// bodyInterface["platform"] = "ruby"
-	// Optional - overwrite what the transaction's title will display as in Discover
-	// bodyInterface["transaction"] = "eprescription/:id"
-}
-
-////////////////////////////  UTILS  /////////////////////////////////////////
-func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
-	if err != nil {
-		fmt.Println(err)
-	}
-	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return
-}
-
-func encodeGzip(b []byte) bytes.Buffer {
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
-	w.Write(b)
-	w.Close()
-	// return buf.Bytes()
-	return buf
-}
-
-func unmarshalJSON(bytes []byte) map[string]interface{} {
-	var _interface map[string]interface{}
-	if err := json.Unmarshal(bytes, &_interface); err != nil {
-		panic(err)
-	}
-	return _interface
-}
-
-func marshalJSON(bodyInterface map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(bodyInterface)
-	if errBodyBytes != nil {
-		fmt.Println(errBodyBytes)
-	}
-	return bodyBytes
 }
