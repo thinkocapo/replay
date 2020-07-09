@@ -15,7 +15,5 @@ createdb:
 	python3 test/create-db.py
 removedb:
 	python3 test/remove-db.py
-resetdb:
-	removedb testdb
 testdb:
 	python3 test/db.py
