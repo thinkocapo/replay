@@ -19,16 +19,19 @@ SDK's create events and `python/proxy.py` intercepts "undertakes" the events on 
 
 1. Enter your DSN's in `.env`  
 ```
-// for the Tool Store data set (go build -o bin/event-to-sentry-toolstore-gcp *.go)
+// for the Tool Store data set (go build -o bin/event-to-sentry-toolstore *.go)
 DSN_JAVASCRIPT_SAAS=
 DSN_PYTHON_SAAS=
 
 or
 
-// for the Gateway/Microservices/Celery dataset (go build -o bin/event-to-sentry-tracing-example-multiproject *.go)
+// for the Gateway/Microservices/Celery dataset (go build -o bin/event-to-sentry-tracing-example *.go)
 DSN_PYTHON_GATEWAY=
 DSN_PYTHON_DJANGO=
 DSN_PYTHON_CELERY=
+
+// set this here as your default or pass it at runtime using --db=
+SQLITE=
 ```
 
 2. `pip3 install -r ./python/requirements.txt` for the proxy  

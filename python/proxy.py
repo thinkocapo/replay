@@ -68,8 +68,7 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
-    # TODO https://github.com/thinkocapo/undertaker/issues/48
-    # TODO exception.platform may have been available, as well as exception.sdk
+    # TODO exception.platform may have been available, as well as exception.sdk https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
         user_agent = request.headers.get('User-Agent').lower()
