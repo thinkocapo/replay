@@ -12,8 +12,10 @@ https://<key>@<organization>sentry.io/<project>
 https://<key>@localhost:9000/<project>
 
 An original (unmodified) DSN will send event directly to Sentry
-SDK requires that DSN ends in a number. Use zero's for proxy endpoints so no confusion with Project Id's
+SDK requires that DSN ends in a number. Zero's didn't work.
 # SENTRY_SELF_HOSTED = 'localhost:9000'
+
+Could do 'python event.py -s for "save" or -f for "forward" or -sf for "save_and_forward"
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
@@ -21,11 +23,9 @@ DSN = os.getenv('DSN_PYTHONTEST')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 
-# FORWARD, SAVE, SAVE_AND_FORWARD = '/00', '/01', '/02' if using cli, like 'python event.py -s for "save" or -f for "forward" or -sf for "save_and_forward"
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
 MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
-# print('MODIFIED_DSN_FORWARD', MODIFIED_DSN_FORWARD)
 
 # proxy saves the event to database. Doesn't send to Senry.
 MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
@@ -42,7 +42,7 @@ def stacktrace():
 def app():
     # stacktrace()
     
-    # Exception literals will not have stack traces
+    # Exception literals do not have stack traces
     sentry_sdk.capture_exception(Exception("Five0Ten"))
 
 def dsn_and_proxy_check():
@@ -66,13 +66,3 @@ if __name__ == '__main__':
     dsn_and_proxy_check()
     initialize_sentry()
     app()
-
-
-# I didn't like this
-# def dsn(string):
-#     return KEY + '@'+ PROXY + string
-# MODIFIED_DSN_FORWARD = dsn('/00')
-# MODIFIED_DSN_SAVE = dsn('/01')
-# MODIFIED_DSN_SAVE_AND_FORWARD = dsn('/02')
-
-# Ideally, should decide from cli which, like 'python event.py -s' or '-f' or '-sf'
