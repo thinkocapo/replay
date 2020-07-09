@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 from flask import Flask, request, json, abort
 from flask_cors import CORS
 import json
-# import sentry_sdk
-# from sentry_sdk.integrations.flask import FlaskIntegration
 from services import compress_gzip, decompress_gzip, get_event_type
 import sqlite3
 import string # ?
@@ -15,7 +13,6 @@ load_dotenv()
 http = urllib3.PoolManager()
 
 app = Flask(__name__)
-# app.run(ssl_context='adhoc') # flask run --cert=adhoc
 
 app.run(threaded=True)
 CORS(app)
