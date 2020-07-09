@@ -30,7 +30,10 @@ var (
 	all         *bool
 	id          *string
 	ignore      *bool
-	db          *sql.DB
+	database	*sql.DB
+	db			*string
+	js			*string
+	py			*string
 	dsn         DSN
 	SENTRY_URL  string
 	exists      bool
@@ -124,6 +127,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	platform := event.platform
 	headers := unmarshalJSON(event.headers)
 
+	// only python events have X-Sentry-Auth
 	if headers["X-Sentry-Auth"] != nil {
 		xSentryAuth := headers["X-Sentry-Auth"].(string)
 		for _, projectDSN := range projectDSNs {
@@ -133,8 +137,8 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 			}
 		}
 	}
-	// fmt.Println("> event was made by a DSN that was not yours, or it's Javascript event which lacks X-Sentry-Auth (dsn key) so we can't match it")
-
+	
+	// event was made by a DSN that was not yours, so we can't match it, use default javascript/python DSN in .env
 	var storeEndpoint string
 	if platform == "javascript" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
@@ -151,10 +155,24 @@ func init() {
 		log.Print("No .env file found")
 	}
 
-	// Must use SAAS for Performance Transactions as getsentry/sentry 10.0.0 doesn't include Performance yet
+	all = flag.Bool("all", false, "send all events or 1 event from database")
+	id = flag.String("id", "", "id of event in sqlite database")
+	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+	db = flag.String("db", "", "path-to-database.db")
+	js = flag.String("js", "", "javascript DSN")
+	py = flag.String("py", "", "python DSN")
+	flag.Parse()
+
+	// Use SAAS DSN's for Tx's as getsentry/sentry 10.0.0 doesn't include Tx's yet
 	projectDSNs = make(map[string]*DSN)
-	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS")) // ternary for .env vs cli
-	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))         // ternary for .env vs cli
+	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	if (*js != "") {
+		projectDSNs["javascript"] = parseDSN(*js)
+	}
+	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	if (*py != "") {
+		projectDSNs["python"] = parseDSN(*py)
+	}
 	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
 	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
 	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
@@ -162,17 +180,16 @@ func init() {
 	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	all = flag.Bool("all", false, "send all events or 1 event from database")
-	id = flag.String("id", "", "id of event in sqlite database")
-	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-	flag.Parse()
-
-	db, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
-	// db, _ = sql.Open("sqlite3", os.Getenv("SQLITE_TRACING_EXAMPLE_MULTIPROJECT"))
+	fmt.Println("> db flag", *db)
+	if *id == "" {
+		database, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+	} else {
+		database, _ = sql.Open("sqlite3", *db)
+	}
 }
 
 func main() {
-	defer db.Close()
+	defer database.Close()
 
 	query := ""
 	if *id == "" {
@@ -181,7 +198,7 @@ func main() {
 		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
 	}
 
-	rows, err := db.Query(query)
+	rows, err := database.Query(query)
 
 	if err != nil {
 		fmt.Println("Failed to load rows", err)
@@ -284,6 +301,7 @@ func eventId(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
+// CalVer-lite
 func release(body map[string]interface{}) map[string]interface{} {
 	date := time.Now()
 	day := date.Day()
