@@ -19,18 +19,18 @@ SDK's create events and `python/proxy.py` intercepts "undertakes" the events on 
 
 1. Enter your DSN's in `.env`  
 ```
-// for the Tool Store data set (go build -o bin/event-to-sentry-toolstore *.go)
+// for the Tool Store data set
 DSN_JAVASCRIPT_SAAS=
 DSN_PYTHON_SAAS=
 
 or
 
-// for the Gateway/Microservices/Celery dataset (go build -o bin/event-to-sentry-tracing-example *.go)
+// for the Gateway/Microservices/Celery dataset
 DSN_PYTHON_GATEWAY=
 DSN_PYTHON_DJANGO=
 DSN_PYTHON_CELERY=
 
-// set this here as your default or pass it at runtime using --db=
+// set this here as your default or pass it at runtime using --db
 SQLITE=
 ```
 
@@ -73,12 +73,12 @@ Use the proxy if you want to create your own data set
 make proxy
 ```
 
-2. Modify your app's DSN so it will point to the proxy. See `python/event.py` for how to do this.
+2. Modify your app's DSN so it will point to the proxy. See [python/event.py](./python/event.py) for how to do this.
 
 3. Create errors in your app, so the events get sent to the proxy.
 
 4. Check your events saved to the database
-`python3 test/db.py` or make testdb
+`python3 test/db.py` or `make testdb`
 
 If your apps are in a VPC/network that you can't run the proxy inside of, then you can expose the proxy's port 3001 via ngrok
 1. `ngrok http 3001`
@@ -133,29 +133,6 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 ## Todo
 - Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sentry-cli releases -o testorg-az new -p proxy 0.0.2
-
-sentry-cli releases -o testorg-az -p proxy set-commits --local 0.0.2
-
-
-
 
 
 
