@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 from flask import Flask, request, json, abort
 from flask_cors import CORS
 import json
-# import sentry_sdk
-# from sentry_sdk.integrations.flask import FlaskIntegration
 from services import compress_gzip, decompress_gzip, get_event_type
 import sqlite3
 import string # ?
@@ -15,7 +13,6 @@ load_dotenv()
 http = urllib3.PoolManager()
 
 app = Flask(__name__)
-# app.run(ssl_context='adhoc') # flask run --cert=adhoc
 
 app.run(threaded=True)
 CORS(app)
@@ -32,9 +29,12 @@ print("""
 
 SENTRY=''
 
-# Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-# AM Transactions can't be sent to any self-hosted Sentry instance as of 05/30/2020 
-# https://github.com/getsentry/sentry/releases
+
+""" This is only for using the proxy to forward events directly to Sentry and NOT save them in your database
+If you're not using this, you can ignore it
+Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
+"""
 def sentryUrl(DSN):
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
@@ -47,9 +47,6 @@ def sentryUrl(DSN):
         HOST = DSN.split('@')[1].split('/')[0]
         PROJECT_ID = DSN.split('@')[1].split('/')[1] 
         return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
-        # MODIFIED_DSN_FORWARD used a dsn of "http://0d52d5f4e8a64f5ab2edce50d88a7626@o87286.ingest.sentry.io/1428657" in thinkocapo/react to call:
-        # return "https://o87286.ingest.sentry.io/api/1428657/store/?sentry_key=0d52d5f4e8a64f5ab2edce50d88a7626&sentry_version=7" # will-frontend-react in SAAS
-        # it ^ reached SaaS sentry.io
 
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
@@ -71,8 +68,7 @@ with sqlite3.connect(database) as db:
 def forward():
     print('> FORWARD')
 
-    # TODO https://github.com/thinkocapo/undertaker/issues/48
-    # TODO exception.platform may have been available, as well as exception.sdk
+    # TODO exception.platform may have been available, as well as exception.sdk https://github.com/thinkocapo/undertaker/issues/48
     def make(headers):
         request_headers = {}
         user_agent = request.headers.get('User-Agent').lower()
