@@ -80,7 +80,7 @@ make proxy
 4. Check your events saved to the database
 `python3 test/db.py` or make testdb
 
-Note - You can expose the proxy's port 3001 via ngrok, if your apps are in a VPC/network that you can't run the proxy inside of. 
+If your apps are in a VPC/network that you can't run the proxy inside of, then you can expose the proxy's port 3001 via ngrok
 1. `ngrok http 3001`
 2. put the ngrok address in your app's DSN like:  
 `SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
@@ -111,23 +111,24 @@ https://crontab.guru/
 `python3 test/db.py 5` gets the 5th event  
 `python3 test/dby.py 5 -b` gets the 5th event and prints its body  
 
+6 events in the am-transactions-sqlite.db was 57kb  
+19 events tracing-example was 92kb
+
 #### gotcha's
 The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date and time 
+
 Use python3 or else else `getvalue()` in `python/event-to-sentry.py` returns wrong data type
 
 #### other
-Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay, getsentry/gor-middleware
+Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, getsentry/gor-middleware, goreplay
 
 https://develop.sentry.dev/sdk/store for info on the Sentry store endpoint
 
-https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
+https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's an [example-payload.png](./img/example-payload.png) from javascript
 
-6 events in the am-transactions-sqlite.db was 57kb
-19 events tracing-example was 92kb
+Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
 
-tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
-
-`python-dotenv` vs `dotenv`
+`python-dotenv` vs `dotenv` if os.getenv is failing
 
 ## Todo
 - Mobile android errors/crashes/sessions
