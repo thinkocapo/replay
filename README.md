@@ -1,120 +1,136 @@
 <!-- ![The Undertaker](./img/undertaker-1.png) -->
 # The Undertaker
+The Undertaker a.k.a. Replay is an event traffic replay service.
 
 <img src="./img/undertaker-4.jpeg" width="450" height="300">  
 
-## why and what's happening?  
-Good for test data automation. Do not have to maintain +10 different app and sdk types in Heroku/GCP sending events all the time. Rather, run a single program `event-to-sentry.go` on a cronjob to send those +10 event types for you. It's free. 
+## Why?  
+Stop maintaing +10 different platform SDK's in GCP sending events all the time. Rather, run a single program `event-to-sentry.go` on a cronjob to send all those events for you. It's free. Great for automating test data.
 
 <img src="./img/event-maker-slide-2.001.png" width="450" height="300">  
 
-**STEP1**  
-`event.py` creates sdk events
+**STEP 1**  
+SDK's create events and `python/proxy.py` intercepts "undertakes" the events on their way to Sentry and saves them in sqlite
 
-`flask/proxy.py` undertakes (intercepts) events on their way to Sentry and saves them in sqlite
-
-**STEP2**  
-`event-to-sentry.go` loads events from sqlite and sends them to Sentry, without using an sdk.
+**STEP 2**  
+`event-to-sentry.go` loads the events from sqlite and relpays them to Sentry (no sdk's used in this step)
 
 ## Setup
 
 1. Enter your DSN's in `.env`  
-Both the proxy.py and event-to-sentry.go will use this.
-DSN's from `getsentry/onpremise` do not support transactions as of 07/01/20
 ```
-// go build -o bin/event-to-sentry-toolstore *.go
-DSN_JAVASCRIPT_SAAS
-DSN_PYTHON_SAAS
-```
+// for the Tool Store data set (go build -o bin/event-to-sentry-toolstore *.go)
+DSN_JAVASCRIPT_SAAS=
+DSN_PYTHON_SAAS=
+
 or
+
+// for the Gateway/Microservices/Celery dataset (go build -o bin/event-to-sentry-tracing-example *.go)
+DSN_PYTHON_GATEWAY=
+DSN_PYTHON_DJANGO=
+DSN_PYTHON_CELERY=
+
+// set this here as your default or pass it at runtime using --db=
+SQLITE=
 ```
-// go build -o bin/event-to-sentry-tracing-example *.go
-DSN_PYTHON_GATEWAY
-DSN_PYTHON_DJANGO
-DSN_PYTHON_CELERY
+
+2. `pip3 install -r ./python/requirements.txt` for the proxy  
+3.
+
 ```
-2. `pip3 install -r ./python/requirements.txt` for the proxy
-3. `go build -o bin/event-to-sentry-toolstore *.go` or `go build -o bin/event-to-sentry-tracing-example *.go` depending on DSN's in .env
+go build -o bin/event-to-sentry-<name> *.go
+
+// for Tool Store data set (javascrip, pythont, errors+transactions)
+go build -o bin/event-to-sentry-toolstore
+
+// for Gateway/Microservices/Celery dataset (python transactions)
+go build -o bin/event-to-sentry-tracing-example *.go
+```
+
+Note - Transactions are not supported if using DSN's from `getsentry/onpremise` as of 07/08/20
 
 ## Run
-Get your proxy and Sentry instance running first.
 ```
-make proxy
-
-# cd getsentry/onpremise
-docker-compose up
-```
-**STEP1**  
-Send events to proxy... 
-```
-# optional
-python3 event.py
-```
-**STEP2**  
-```
-go build -o bin/event-to-sentry *.go
+./bin/event-to-sentry-<name>
 ./bin/event-to-sentry
 ./bin/event-to-sentry --id=<id>
 ./bin/event-to-sentry --id=<id> -i
 ./bin/event-to-sentry --all
-
-go build -o bin/event-to-sentry-<name> *.go
-./bin/event-to-sentry-<name>
-
 ```
-See your event in Sentry at `localhost:9000`
-
-**Cronjobs**  
-Cronjob on Macbook that sends events in the background
-`crontab -e` to open up your Mac's crontab manager
+or use `--js` `--py` to pass DSN's when running the executable
 ```
+./bin/event-to-sentry --all --db=am-transactions-timeout-sqlite.db
+./bin/event-to-sentry --all --db=<path_to_.db> --js=<javascripti_DSN> --py=<python_DSN>
+```
+
+See your events in Sentry
+
+## Proxy (optional)
+Use the proxy if you want to create your own data set 
+
+1. Get your proxy running
+```
+make proxy
+```
+
+2. Modify your app's DSN so it will point to the proxy. See `python/event.py` for how to do this.
+
+3. Create errors in your app, so the events get sent to the proxy.
+
+4. Check your events saved to the database
+`python3 test/db.py` or make testdb
+
+If your apps are in a VPC/network that you can't run the proxy inside of, then you can expose the proxy's port 3001 via ngrok
+1. `ngrok http 3001`
+2. put the ngrok address in your app's DSN like:  
+`SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
+3. now your events will send to the proxy
+
+## Cronjobs
+Macbook's cronjob manager for sending events in the background while you work
+```
+# crontab -l, to list cronjobs
+# crontab -e to open crontab manager
+
 # every minute
-1-59 * * * * cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
 1-59 * * * * cd /<path>/<to>/undertaker/ && ./event-to-sentry
 
 # every minute, every day of the week M-F
-# * * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry --all
-# * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
+# * * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry-<name> --all
 
 # every 5 minutes
-# */5 * * * 1-5 cd /Users/wcap/thinkocapo/undertaker && ./bin/event-to-sentry-neil --all
-# */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry --all
-
-# crontab -l, to list cronjobs
+*/5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry-<name> --all
 ```
 
 https://crontab.guru/
 
 ## Notes
-See `python/event.py` for how to construct the 3 'MODIFIED' DSN types which decide which of the 3 endpoints in `proxy.py` which you can hit. Use any app+sdk with one of these MODIFIED_DSN's following the convention in proxy.py
 
-`python3 test/db.py` is for showing total row count and most recent event.  
-`python3 test/db.py 5` gets the 5th item  
-`python3 test/dby.py 5 -b` gets the 5th item and prints its body  
+#### database
+`python3 test/db.py` shows total event count and most recently saved event.  
+`python3 test/db.py 5` gets the 5th event  
+`python3 test/dby.py 5 -b` gets the 5th event and prints its body  
 
-The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date
+6 events in the am-transactions-sqlite.db was 57kb  
+19 events tracing-example was 92kb
 
-Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, goreplay
+#### gotcha's
+The timestamp from `go run event-to-sentry.go` is sometimes earlier than today's date and time 
+
+Use python3 or else else `getvalue()` in `python/event-to-sentry.py` returns wrong data type
+
+#### other
+Borrowed code from: getsentry/sentry-python, getsentry/sentry-go, getsentry/gor-middleware, goreplay
 
 https://develop.sentry.dev/sdk/store for info on the Sentry store endpoint
 
-https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's [/img/example-payload.png](./img/example-payload.png) from javascript
+https://develop.sentry.dev/sdk/event-payloads/ for what a sdk event looks like. Here's an [example-payload.png](./img/example-payload.png) from javascript
 
-6 events in the am-transactions-sqlite.db was 57kb
-19 events tracing-example was 92kb
+Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
 
-To use with getsentry/tracing-example, serve the python/proxy.py via `ngrok http 3001` and put the ngrok address in tracing-example's .env like:  
-`SENTRY_DSN=https://1f2d7bf845114ba6a5ba19ee07db6800@5b286dac3e72.ngrok.io/3`
-
-tested on: ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Python 3.6.9
-
-use python3 or else else `getvalue()` in `event-to-sentry.py` returns wrong data type ¯\_(ツ)_/¯
-
-`python-dotenv` vs `dotenv`
+`python-dotenv` vs `dotenv` if os.getenv is failing
 
 ## Todo
-- pass a DSN's file at run-time, consider db too
-
 - Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
 
