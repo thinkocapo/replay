@@ -127,6 +127,8 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	platform := event.platform
 	headers := unmarshalJSON(event.headers)
 
+	// TODO if db is tracing-example-multiproject.db, then how to route to 3 different python projects. have to know from 'event' if it was gateway, django or celery somehow.
+	// 'if event_is_from_gateway then projectDSN["gateway"]
 	// only python events have X-Sentry-Auth
 	if headers["X-Sentry-Auth"] != nil {
 		xSentryAuth := headers["X-Sentry-Auth"].(string)
@@ -176,6 +178,8 @@ func init() {
 	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
 	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
 	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+
+	// TODO if event from db was one of these, these will get used, regardless of a --js -py being passed above
 	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
 	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
