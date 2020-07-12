@@ -12,6 +12,15 @@ import uuid
 load_dotenv()
 http = urllib3.PoolManager()
 
+import sentry_sdk
+sentry_sdk.init(
+    dsn="https://b9cd20b63679421e8edfea05ab1c0a06@o87286.ingest.sentry.io/5331257",
+    release='WILL.0.2'    
+)
+
+sentry_sdk.capture_message("THIS IS A MESSAGE")
+print("SHOULD HAVE BEEN SENT \n")
+
 app = Flask(__name__)
 
 app.run(threaded=True)
@@ -103,18 +112,14 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-import sentry_sdk
-sentry_sdk.init(
-    dsn="https://b9cd20b63679421e8edfea05ab1c0a06@o87286.ingest.sentry.io/5331257",
-    release='WILL.0.1'    
-)
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     print('testing....')
-    raise Exception("api save 1157")
+    # sentry_sdk.capture_exception(Exception("save 1201"))
     print('> SAVING')
+    sentry_sdk.capture_exception(Exception("save 1202"))
 
     event_platform = ''
     event_type = ''
