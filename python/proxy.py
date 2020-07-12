@@ -113,7 +113,7 @@ sentry_sdk.init(
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     print('testing....')
-    # raise Exception("api save 832")
+    raise Exception("api save 1157")
     print('> SAVING')
 
     event_platform = ''
