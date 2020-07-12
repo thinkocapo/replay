@@ -120,7 +120,12 @@ def save():
     print('> SAVING')
     # sentry_sdk.capture_exception(Exception("save 1202"))
     print('testing....123')
-    raise Exception("hola")
+    # raise Exception("hola")
+
+    try:
+        1 / 0
+    except Exception as err:
+        sentry_sdk.capture_exception(err)
 
     event_platform = ''
     event_type = ''
