@@ -15,7 +15,7 @@ http = urllib3.PoolManager()
 import sentry_sdk
 sentry_sdk.init(
     dsn="https://b9cd20b63679421e8edfea05ab1c0a06@o87286.ingest.sentry.io/5331257",
-    release='WILL.0.2'    
+    release='WILL.0.3'    
 )
 
 sentry_sdk.capture_message("THIS IS A MESSAGE")
