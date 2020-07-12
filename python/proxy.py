@@ -105,8 +105,8 @@ def forward():
 
 import sentry_sdk
 sentry_sdk.init(
-    dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
-    release='will.0.1'    
+    dsn="https://b9cd20b63679421e8edfea05ab1c0a06@o87286.ingest.sentry.io/5331257",
+    release='WILL.0.1'    
 )
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
