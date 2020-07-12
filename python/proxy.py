@@ -106,14 +106,14 @@ def forward():
 import sentry_sdk
 sentry_sdk.init(
     dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
-    release='0.0.1'    
+    release='will.0.1'    
 )
 
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     print('testing....')
-    raise Exception("api save 832")
+    # raise Exception("api save 832")
     print('> SAVING')
 
     event_platform = ''
