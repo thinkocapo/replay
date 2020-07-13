@@ -37,8 +37,9 @@ MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 def stacktrace():
     try:
         o = {}
-        o['nowheretoebfound'] = True
+        o['nowheretoebfound']
     except Exception as err:
+        print('excepptioning...')
         sentry_sdk.capture_exception(err)
 
 def app():
