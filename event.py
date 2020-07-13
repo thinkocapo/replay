@@ -37,7 +37,8 @@ MODIFIED_DSN_SAVE_AND_FORWARD = KEY + '@'+ PROXY + '/4'
 def stacktrace():
     try:
         o = {}
-        o['nowheretoebfound']
+
+        o['prboelm again']
     except Exception as err:
         print('excepptioning...')
         sentry_sdk.capture_exception(err)
@@ -62,7 +63,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': DSN, 'release': 'WILL.0.6' }
+    params = { 'dsn': DSN, 'release': 'WILL.0.7' }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

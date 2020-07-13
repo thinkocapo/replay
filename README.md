@@ -134,5 +134,5 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 - Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
 
-sentry-cli releases -o testorg-az new -p proxy2 WILL.0.6
+sentry-cli releases -o testorg-az new -p proxy2 WILL.0.7
 sentry-cli releases -o testorg-az -p proxy2 set-commits --local WILL.0.6
