@@ -1,6 +1,6 @@
 <!-- ![The Undertaker](./img/undertaker-1.png) -->
 # The Undertaker
-The Undertaker a.k.a. Replay is an event traffic replay service.
+The Undertaker is an event traffic replay service. Re(p)lay
 
 <img src="./img/undertaker-4.jpeg" width="450" height="300">  
 
