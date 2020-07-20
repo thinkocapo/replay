@@ -109,11 +109,74 @@ sentry_sdk.init(
     release='0.0.1'    
 )
 
+@app.route('/api/5/envelope/', methods=['POST'])
+def save_envelope():
+    print('> SAVING envelope /api/5/envelope START')
+
+    print('> type(request.data)', type(request.data))
+    print('> type(request_headers)', type(request.headers))
+
+    return 'SUCCESS'
+
+# MODIFIED_DSN_SAVE MOBILE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
+@app.route('/api/5/store/', methods=['POST'])
+def save():
+    print('> SAVING /api/5/store START')
+
+    print('> type(request.data)', type(request.data))
+    print('> type(request_headers)', type(request.headers))
+    # for header in request.headers.to_wsgi_list():
+    #     print(header)
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # json.dumps(json.loads(request.data),indent=2)
+
+    # event_platform = ''
+    # event_type = ''
+    # request_headers = {}
+    # user_agent = request.headers.get('User-Agent').lower()
+    # body = ''
+
+    print('> SAVING /api/5/store END')
+    return 'SUCCESS'
+
+    # if 'python' in user_agent:
+
+    #     event_platform = 'python'
+    #     event_type = get_event_type(request.data, "python")
+    #     print('> PYTHON', event_type)
+
+    #     for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
+    #         request_headers[key] = request.headers.get(key)
+
+    #     body = decompress_gzip(request.data)
+
+    # if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+
+    #     event_platform = 'javascript'
+    #     event_type = get_event_type(request.data, "javascript")
+    #     print('> JAVASCRIPT ', event_type)
+
+    #     for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+    #         request_headers[key] = request.headers.get(key)
+
+    #     body = request.data
+
+    # insert_query = ''' INSERT INTO events(platform,type,body,headers)
+    #           VALUES(?,?,?,?) '''
+    # record = (event_platform, event_type, body, json.dumps(request_headers))
+    # try:
+    #     with sqlite3.connect(database) as db:
+    #         cursor = db.cursor()
+    #         cursor.execute(insert_query, record)
+    #         print('> SQLITE ID', cursor.lastrowid)
+    #         cursor.close()
+    #         return str(cursor.lastrowid)
+    # except Exception as err:
+    #     print("LOCAL EXCEPTION", err)
+
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
-    print('testing....')
-    raise Exception("api save 832")
     print('> SAVING')
 
     event_platform = ''
