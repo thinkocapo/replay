@@ -120,7 +120,7 @@ def save_envelope():
 
 # MODIFIED_DSN_SAVE MOBILE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/5/store/', methods=['POST'])
-def save():
+def save_mobile():
     print('> SAVING /api/5/store START')
 
     print('> type(request.data)', type(request.data))

@@ -19,7 +19,7 @@ Could do 'python event.py -s for "save" or -f for "forward" or -sf for "save_and
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
-DSN = os.getenv('DSN_PYTHONTEST')
+DSN = os.getenv('WILL_DSN_PYTHONTEST')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 
@@ -43,7 +43,7 @@ def app():
     # stacktrace()
     
     # Exception literals do not have stack traces
-    sentry_sdk.capture_exception(Exception("Five0Ten"))
+    sentry_sdk.capture_exception(Exception("my favorite error"))
 
 def dsn_and_proxy_check():
     if DSN=='':
