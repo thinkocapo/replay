@@ -111,10 +111,57 @@ import sentry_sdk
 
 @app.route('/api/5/envelope/', methods=['POST'])
 def save_mobile_envelope():
-    print('> SAVING envelope /api/5/envelope START')
+    print('\n ******* ENVELOPE ******* ')
 
-    print('> type(request.data)', type(request.data))
+    print('> /api/5/envelope ')
+
+    print('> type(request.data)', type(request.data)) # is STRING
     print('> type(request_headers)', type(request.headers))
+
+    # for header in request.headers:
+    #     print(header)
+
+    event_platform = ''
+    event_type = ''
+    request_headers = {}
+    user_agent = request.headers.get('User-Agent').lower()
+    body = ''
+
+
+    print('\nXXXXXXXXXXX')
+    print(decompress_gzip(request.data))
+    print('\nYYYYYYYYYYY')
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+
+    event_platform = 'android'
+    event_type = get_event_type(request.data, "android")
+    print('> event_type11111', event_type)
+    
+    for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
+        request_headers[key] = request.headers.get(key)
+    # print(json.dumps(request_headers,indent=2))
+
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # or for sessions:
+    print(json.dumps(decompress_gzip(request.data),indent=2))
+    
+    # TODO is not hte right type yet...
+    body = decompress_gzip(request.data)
+
+    insert_query = ''' INSERT INTO events(platform,type,body,headers)
+              VALUES(?,?,?,?) '''
+    record = (event_platform, event_type, body, json.dumps(request_headers))
+    try:
+        with sqlite3.connect(database) as db:
+            cursor = db.cursor()
+            cursor.execute(insert_query, record)
+            print('> SQLITE ID', cursor.lastrowid)
+            cursor.close()
+            return str(cursor.lastrowid)
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
+
+    print('> SAVING /api/5/envelope END')
 
     return 'SUCCESS'
 
