@@ -125,6 +125,9 @@ def save_mobile():
 
     print('> type(request.data)', type(request.data))
     print('> type(request_headers)', type(request.headers))
+    
+    print('> SAVING /api/5/store END')
+    return 'SUCCESS'
     # for header in request.headers.to_wsgi_list():
     #     print(header)
     # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
@@ -135,9 +138,6 @@ def save_mobile():
     # request_headers = {}
     # user_agent = request.headers.get('User-Agent').lower()
     # body = ''
-
-    print('> SAVING /api/5/store END')
-    return 'SUCCESS'
 
     # if 'python' in user_agent:
 
