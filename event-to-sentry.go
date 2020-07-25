@@ -129,7 +129,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 
 	// TODO if db is tracing-example-multiproject.db, then how to route to 3 different python projects. have to know from 'event' if it was gateway, django or celery somehow.
 	// if event_is_from_gateway then projectDSN["gateway"]
-	// only python events have X-Sentry-Auth
+	// python and android events have X-Sentry-Auth
 	if headers["X-Sentry-Auth"] != nil {
 		xSentryAuth := headers["X-Sentry-Auth"].(string)
 		for _, projectDSN := range projectDSNs {
@@ -146,6 +146,8 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
 	} else if platform == "python" {
 		storeEndpoint = projectDSNs["python"].storeEndpoint()
+	} else if platform == "android" {
+		storeEndpoint = projectDSNs["android"].storeEndpoint()
 	} else {
 		log.Fatal("platform type not supported")
 	}
@@ -175,9 +177,7 @@ func init() {
 	if (*py != "") {
 		projectDSNs["python"] = parseDSN(*py)
 	}
-	projectDSNs["node"] = parseDSN(os.Getenv("DSN_EXPRESS_SAAS"))
-	projectDSNs["go"] = parseDSN(os.Getenv("DSN_GO_SAAS"))
-	projectDSNs["ruby"] = parseDSN(os.Getenv("DSN_RUBY_SAAS"))
+	projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
 
 	// TODO if event from db was one of these, these will get used, regardless of a --js -py being passed above
 	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
@@ -213,7 +213,7 @@ func main() {
 		fmt.Println(event)
 
 		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
-
+		fmt.Sprint(timestamper)
 		body = eventId(body)
 		body = release(body)
 		body = user(body)
@@ -250,10 +250,27 @@ func main() {
 }
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := unmarshalJSON(event.bodyBytes)
+	// TODO
+	body1 := string(event.bodyBytes)
+	fmt.Print(body1)
+
+	var body map[string]interface{}
+	// var body map[string]interface{}
+	// if event._type != "session" {
+	// 	body = unmarshalJSON(event.bodyBytes)
+	// } else {
+	// 	body = event.bodyBytes
+	// 	// body1 := string(event.bodyBytes)
+	// 	// fmt.Print(body1)
+	// }
+
+	// OG
+	// body := unmarshalJSON(event.bodyBytes)
+
 
 	JAVASCRIPT := event.platform == "javascript"
 	PYTHON := event.platform == "python"
+	ANDROID := event.platform == "android"
 
 	ERROR := event._type == "error"
 	TRANSACTION := event._type == "transaction"
@@ -262,12 +279,19 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	// then, could just save the right headers to the database, and not have to deal with all this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+	// TEST... TODO - X-Sentry-Auth omitted
+	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"}
 
+	// TEST...
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {
+	case ANDROID && TRANSACTION:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	case ANDROID && ERROR:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case JAVASCRIPT && TRANSACTION:
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
@@ -321,7 +345,7 @@ func release(body map[string]interface{}) map[string]interface{} {
 	case day >= 22:
 		week = 4
 	}
-	release := fmt.Sprint(int(month, ".", week)
+	release := fmt.Sprint(int(month), ".", week)
 	body["release"] = release
 	fmt.Println("> release", body["release"])
 	return body

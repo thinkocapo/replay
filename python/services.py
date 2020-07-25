@@ -35,7 +35,12 @@ def get_event_type(bytes_data, platform):
     if platform == 'javascript':
         body_dict = json.loads(bytes_data)
     if platform == 'android':
-        body_dict = json.loads(decompress_gzip(bytes_data))
+        try:
+            body_dict = json.loads(decompress_gzip(bytes_data))
+        except:
+            print('it is a session', decompress_gzip(bytes_data))
+            result = 'session'
+            return result
     
     result = ''
     if 'exception' in body_dict:
