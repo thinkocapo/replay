@@ -1,4 +1,4 @@
-package main
+package mainz
 
 import (
 	"bytes"
@@ -192,7 +192,24 @@ func init() {
 	}
 }
 
-func main() {
+// TODO
+// http server - initialize and run
+// cloudstorage client - connect to cloud storage
+
+// http server - '/' endpoint
+	// parse DSN's from request
+	// parse name.db from request
+	// get name.db from cloud storage
+	// do event-to-sentry
+	// write responses for each rows.Next() - will curl request response show each? an executable from Go could
+
+// CF's TTR, blocking for 60 seconds. will I get charged?
+
+func mainz() {
+	// TODO
+	// 
+
+
 	defer database.Close()
 
 	query := ""
