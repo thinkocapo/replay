@@ -103,23 +103,12 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-import sentry_sdk
-# sentry_sdk.init(
-#     dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
-#     release='0.0.1'    
-# )
-
 @app.route('/api/5/envelope/', methods=['POST'])
 def save_mobile_envelope():
-    print('\n ******* ENVELOPE ******* ')
 
-    print('> /api/5/envelope ')
-
-    print('> type(request.data)', type(request.data)) # is STRING
-    print('> type(request_headers)', type(request.headers))
-
-    # for header in request.headers:
-    #     print(header)
+    print('\n> /api/5/envelope ')
+    print('> type(request.data)', type(request.data)) # string
+    print('> type(request.headers)', type(request.headers))
 
     event_platform = ''
     event_type = ''
@@ -127,25 +116,21 @@ def save_mobile_envelope():
     user_agent = request.headers.get('User-Agent').lower()
     body = ''
 
-
-    print('\nXXXXXXXXXXX')
-    print(decompress_gzip(request.data))
-    print('\nYYYYYYYYYYY')
-    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-
     event_platform = 'android'
     event_type = get_event_type(request.data, "android")
-    print('> event_type11111', event_type)
+    print('\n> event_type', event_type)
     
     for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
         request_headers[key] = request.headers.get(key)
-    # print(json.dumps(request_headers,indent=2))
-
-    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-    # or for sessions:
-    print(json.dumps(decompress_gzip(request.data),indent=2))
     
-    # TODO is not hte right type yet...
+    print("type", type(decompress_gzip(request.data))) # <type 'unicode'>
+    print(decompress_gzip(request.data))
+
+    # decompressed = decompress_gzip(request.data)
+    # converted = decompressed.encode("utf-8")
+    # print("type of converted", type(converted)) # <type 'string'>
+    # print(converted)
+
     body = decompress_gzip(request.data)
 
     insert_query = ''' INSERT INTO events(platform,type,body,headers)
@@ -287,3 +272,16 @@ def save_and_forward():
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
+
+# print(json.dumps(request_headers,indent=2))
+
+# regular:
+# print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+# sessions:
+# print(json.dumps(decompress_gzip(request.data),indent=2))
+
+# import sentry_sdk
+# sentry_sdk.init(
+#     dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
+#     release='0.0.1'    
+# )

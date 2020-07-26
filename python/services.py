@@ -38,7 +38,7 @@ def get_event_type(bytes_data, platform):
         try:
             body_dict = json.loads(decompress_gzip(bytes_data))
         except:
-            print('it is a session', decompress_gzip(bytes_data))
+            # print('it is a session', decompress_gzip(bytes_data))
             result = 'session'
             return result
     
