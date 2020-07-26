@@ -212,12 +212,23 @@ func main() {
 		rows.Scan(&event.id, &event.platform, &event._type, &event.bodyBytes, &event.headers)
 		fmt.Println(event)
 
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
-		fmt.Sprint(timestamper)
-		body = eventId(body)
-		body = release(body)
-		body = user(body)
-		body = timestamper(body, event.platform)
+		var body map[string]interface{}
+		var timestamper Timestamper 
+		var bodyEncoder BodyEncoder
+		var headerKeys []string
+		var storeEndpoint string
+
+		if (event._type == "session") {
+			// body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeSession(event)
+			answer := decodeSession(event)
+			fmt.Print(answer)
+		} else {
+			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+			body = eventId(body)
+			body = release(body)
+			body = user(body)
+			body = timestamper(body, event.platform)
+		}
 
 		undertake(body)
 
@@ -249,10 +260,14 @@ func main() {
 	rows.Close()
 }
 
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := unmarshalJSON(event.bodyBytes)
+// func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
+func decodeSession(event Event) (string) {
+	// TODO try []byte JSON, might work better?
+	body := unmarshalJSONArray(event.bodyBytes)
+	fmt.Print(body)
 
-	// var body map[string]interface{}
+	return "hi"
+		// var body map[string]interface{}
 	// if event._type != "session" {
 	// 	body = unmarshalJSON(event.bodyBytes)
 	// } else {
@@ -260,6 +275,10 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	// 	// body1 := string(event.bodyBytes)
 	// 	// fmt.Print(body1)
 	// }
+}
+
+func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
+	body := unmarshalJSON(event.bodyBytes)
 
 	JAVASCRIPT := event.platform == "javascript"
 	PYTHON := event.platform == "python"
