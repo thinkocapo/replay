@@ -250,11 +250,8 @@ func main() {
 }
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	// TODO
-	body1 := string(event.bodyBytes)
-	fmt.Print(body1)
+	body := unmarshalJSON(event.bodyBytes)
 
-	var body map[string]interface{}
 	// var body map[string]interface{}
 	// if event._type != "session" {
 	// 	body = unmarshalJSON(event.bodyBytes)
@@ -263,10 +260,6 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	// 	// body1 := string(event.bodyBytes)
 	// 	// fmt.Print(body1)
 	// }
-
-	// OG
-	// body := unmarshalJSON(event.bodyBytes)
-
 
 	JAVASCRIPT := event.platform == "javascript"
 	PYTHON := event.platform == "python"
@@ -279,10 +272,8 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	// then, could just save the right headers to the database, and not have to deal with all this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-	// TEST... TODO - X-Sentry-Auth omitted
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"}
+	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
 
-	// TEST...
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
