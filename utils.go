@@ -30,7 +30,7 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-func openTheEnvelope(bytes []byte) string {
+func unmarshalEnvelope(bytes []byte) []string {
 	var envelope string
 	envelope = string(bytes)
 	envelopeContents := strings.Split(envelope, "\n")
@@ -42,9 +42,7 @@ func openTheEnvelope(bytes []byte) string {
 	// if err := json.Unmarshal(bytes, &text); err != nil {
 	// 	panic(err)
 	// }
-	fmt.Printf("\n > IGNORE", text)
-	fmt.Print("Done...\n")
-	return text
+	return envelopeContents
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {

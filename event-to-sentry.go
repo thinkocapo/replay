@@ -213,26 +213,29 @@ func main() {
 		fmt.Println(event)
 
 		var body map[string]interface{}
+		var bodySession []byte
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
 		var storeEndpoint string
-
+		var requestBody []byte
 		if (event._type == "session") {
-			// body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeSession(event)
-			answer := decodeSession(event)
-			fmt.Print(answer)
+			bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
+			requestBody = bodySession
 		} else {
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
 			body = eventId(body)
 			body = release(body)
 			body = user(body)
 			body = timestamper(body, event.platform)
+			requestBody = bodyEncoder(body)
 		}
+		// fmt.Print("* * * * EVENT HEADERS * * * * *", event.headers)
 
-		undertake(body)
+		// TODO - tags on which/what header/item from the envelope?
+		// undertake(body)
 
-		requestBody := bodyEncoder(body)
+		// TODO
 		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
 
 		if !*ignore {
@@ -261,13 +264,34 @@ func main() {
 }
 
 // func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-func decodeSession(event Event) (string) {
-	// TODO try []byte JSON, might work better?
-	body := unmarshalJSONArray(event.bodyBytes)
-	fmt.Print(body)
+func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
+	
+	// WORKS
+	bodyVisible := unmarshalEnvelope(event.bodyBytes)
+	fmt.Print(bodyVisible)
 
-	return "hi"
-		// var body map[string]interface{}
+	body := event.bodyBytes
+
+	ANDROID := event.platform == "android"
+
+	ERROR := event._type == "error"
+	TRANSACTION := event._type == "transaction"
+	SESSION := event._type == "session"
+
+	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
+
+	storeEndpoint := matchDSN(projectDSNs, event)
+
+	switch {
+	case ANDROID && TRANSACTION:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	case ANDROID && ERROR:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	case ANDROID && SESSION:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	}
+
+	// var body map[string]interface{}
 	// if event._type != "session" {
 	// 	body = unmarshalJSON(event.bodyBytes)
 	// } else {
@@ -275,6 +299,8 @@ func decodeSession(event Event) (string) {
 	// 	// body1 := string(event.bodyBytes)
 	// 	// fmt.Print(body1)
 	// }
+	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
+	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 }
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
@@ -321,9 +347,16 @@ func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, 
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
+
 	headerInterface := unmarshalJSON(eventHeaders)
+
 	for _, v := range headerKeys {
-		request.Header.Set(v, headerInterface[v].(string))
+		// Connection:null on some
+		if headerInterface[v] == nil {
+			fmt.Print("PASS")
+		} else {
+			request.Header.Set(v, headerInterface[v].(string))
+		}
 	}
 	return request
 }

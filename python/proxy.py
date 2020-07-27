@@ -168,11 +168,16 @@ def save_mobile():
     event_type = get_event_type(request.data, "android")
     print('> event_type', event_type)
     
+
+    # TODO are these different if it's a session?
     for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For']:
         request_headers[key] = request.headers.get(key)
     # print(json.dumps(request_headers,indent=2))
     # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
-    body = decompress_gzip(request.data)
+    # body = decompress_gzip(request.data) # 'error: not a gzipped file' in decompress_gzip
+
+    # TODO verify always right
+    body = request.data
 
     insert_query = ''' INSERT INTO events(platform,type,body,headers)
               VALUES(?,?,?,?) '''
