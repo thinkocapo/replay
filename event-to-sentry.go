@@ -222,6 +222,8 @@ func main() {
 		if (event._type == "session") {
 			bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
 			requestBody = bodySession
+			buf := encodeGzip(requestBody) // could try jsEncoder?
+			requestBody = buf.Bytes()
 		} else {
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
 			body = eventId(body)
@@ -288,7 +290,7 @@ func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, str
 	case ANDROID && ERROR:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case ANDROID && SESSION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+		return body, updateTimestamp, jsEncoder, androidHeaders, storeEndpoint
 	}
 
 	// var body map[string]interface{}
