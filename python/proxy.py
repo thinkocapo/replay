@@ -47,6 +47,12 @@ def sentryUrl(DSN):
         HOST = DSN.split('@')[1].split('/')[0]
         PROJECT_ID = DSN.split('@')[1].split('/')[1] 
         return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    else:
+        print('\n else')
+        KEY = DSN.split('@')[0][8:]
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
 
 SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
@@ -103,6 +109,70 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
+# FORWARD
+@app.route('/api/6/store/', methods=['POST'])
+def forward_store():
+    print('> /api/6/store/ FORWARD')
+    # print('> request.headers', request.headers)
+
+    def make(headers):
+        SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
+        request_headers = {}
+        for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type','Accept-Encoding']:
+                request_headers[key] = request.headers.get(key)
+        return request_headers, SENTRY
+        
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
+
+    try:
+        print('> type(request.data)', type(request.data))
+        print('> type(request_headers)', type(request_headers))
+        # print('> request_headers', request_headers)
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+
+        # print('> nothing saved to sqlite database')
+        return 'success'
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+    return 'good'
+
+# FORWARD
+@app.route('/api/6/envelope/', methods=['POST'])
+def forward_envelope():
+    print('> /api/6/envelope/ FORWARD')
+
+    def make(headers):
+        print('0000000')
+        SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
+        request_headers = {}
+        for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
+            print('11111', key)            
+            request_headers[key] = request.headers.get(key)
+        return request_headers, SENTRY
+
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
+    try:
+        print('> type(request.data)', type(request.data))
+        print('> type(request_headers)', type(request_headers))
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+
+        print('> nothing saved to sqlite database')
+        return 'success'
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+    return 'good'
+
+# SAVE
 @app.route('/api/5/envelope/', methods=['POST'])
 def save_mobile_envelope():
 
@@ -195,7 +265,8 @@ def save_mobile():
     print('> SAVING /api/5/store END')
     return 'SUCCESS'
 
-
+###############################################################################
+# OG
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
