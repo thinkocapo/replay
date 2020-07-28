@@ -135,4 +135,5 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
 
 
-
+`export PYTHONWARNINGS="ignore:Unverified HTTPS request"` before make proxy  
+try saving request.data without decompressing first
