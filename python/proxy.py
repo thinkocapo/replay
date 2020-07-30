@@ -36,6 +36,7 @@ Must pass auth key in URL (not request headers) or else 403 CSRF error from Sent
 AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
 """
 def sentryUrl(DSN):
+    print('33333 dsn', DSN)
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
         # assumes single-digit projectId right now
@@ -83,8 +84,8 @@ def forward():
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
-                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
-                SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHONTEST'))
+                print('X SENTRY X', SENTRY)
         if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
             print('> Javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:

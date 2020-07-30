@@ -137,3 +137,6 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 
 `export PYTHONWARNINGS="ignore:Unverified HTTPS request"` before make proxy  
 try saving request.data without decompressing first
+
+
+if the request has "application/x-sentry-envelope" then store endpoint knows to treat it as a Envelope
