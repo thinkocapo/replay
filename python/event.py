@@ -25,7 +25,8 @@ PROXY = 'localhost:3001'
 
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
-MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+# MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+MODIFIED_DSN_FORWARD = KEY + '@' + 'bff0512ed254.ngrok.io' + '/2'
 
 # proxy saves the event to database. Doesn't send to Senry.
 MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
@@ -59,7 +60,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE }
+    params = { 'dsn': MODIFIED_DSN_FORWARD }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':
