@@ -19,13 +19,14 @@ Could do 'python event.py -s for "save" or -f for "forward" or -sf for "save_and
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
-DSN = os.getenv('DSN_PYTHONTEST')
+DSN = os.getenv('WILL_DSN_PYTHONTEST')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 
 
 # proxy forwards the event on to Sentry. Doesn't save to DB
-MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+# MODIFIED_DSN_FORWARD = KEY + '@' + PROXY + '/2'
+MODIFIED_DSN_FORWARD = KEY + '@' + 'bff0512ed254.ngrok.io' + '/2'
 
 # proxy saves the event to database. Doesn't send to Senry.
 MODIFIED_DSN_SAVE = KEY + '@' + PROXY + '/3'
@@ -43,7 +44,7 @@ def app():
     # stacktrace()
     
     # Exception literals do not have stack traces
-    sentry_sdk.capture_exception(Exception("Five0Ten"))
+    sentry_sdk.capture_exception(Exception("my favorite error"))
 
 def dsn_and_proxy_check():
     if DSN=='':
@@ -59,7 +60,7 @@ def dsn_and_proxy_check():
         s.close()
     
 def initialize_sentry():
-    params = { 'dsn': MODIFIED_DSN_SAVE }
+    params = { 'dsn': MODIFIED_DSN_FORWARD }
     sentry_sdk.init(params)
     
 if __name__ == '__main__':

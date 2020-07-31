@@ -1,6 +1,6 @@
 <!-- ![The Undertaker](./img/undertaker-1.png) -->
 # The Undertaker
-The Undertaker a.k.a. Replay is an event traffic replay service.
+The Undertaker is an event traffic replay service. Re(p)lay
 
 <img src="./img/undertaker-4.jpeg" width="450" height="300">  
 
@@ -135,4 +135,8 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
 
 
+`export PYTHONWARNINGS="ignore:Unverified HTTPS request"` before make proxy  
+try saving request.data without decompressing first
 
+
+if the request has "application/x-sentry-envelope" then store endpoint knows to treat it as a Envelope

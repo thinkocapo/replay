@@ -40,7 +40,6 @@ try:
     with conn:
         cur = conn.cursor()
         rows = []
-
         _body = sys.argv[2] if len(sys.argv) > 2 else None
         _id = sys.argv[1] if len(sys.argv) > 1 else None
         if _id==None:
@@ -62,16 +61,20 @@ try:
         body = row[3] # buffer
         headers = row[4]
 
-        # TODO add flag for 'include body' in query
         output = {
             'id': sqlite_id,
             'platform': event_platform,
             'type': event_type,
             'headers': json.loads(headers)
         }
+
         if _body == '-b':
             print('_body', _body)
-            output['body'] = json.loads(body)
+            try:
+                output['body'] = json.loads(body)
+            except:
+                output['body'] = body
+        
         print(json.dumps(output, indent=2))
     
 except Exception as e:
