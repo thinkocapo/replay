@@ -36,6 +36,7 @@ Must pass auth key in URL (not request headers) or else 403 CSRF error from Sent
 AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
 """
 def sentryUrl(DSN):
+    print('33333 dsn', DSN)
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
         # assumes single-digit projectId right now
@@ -44,6 +45,12 @@ def sentryUrl(DSN):
         return "http://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
     if ("ingest.sentry.io" in DSN):
         KEY = DSN.split('@')[0][8:] # 8 because of 's' in 'https'
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    else:
+        print('\n else')
+        KEY = DSN.split('@')[0][8:]
         HOST = DSN.split('@')[1].split('/')[0]
         PROJECT_ID = DSN.split('@')[1].split('/')[1] 
         return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
@@ -77,8 +84,8 @@ def forward():
             for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
                 request_headers[key] = request.headers.get(key)
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
-                # SENTRY = sentryUrl(os.getenv('DSN_PYTHON_SAAS'))
-                SENTRY = sentryUrl(os.getenv('DSN_PYTHONEAT_SAAS'))
+                SENTRY = sentryUrl(os.getenv('DSN_PYTHONTEST'))
+                print('X SENTRY X', SENTRY)
         if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
             print('> Javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
@@ -103,17 +110,167 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-import sentry_sdk
-sentry_sdk.init(
-    dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
-    release='0.0.1'    
-)
+# FORWARD
+@app.route('/api/6/store/', methods=['POST'])
+def forward_store():
+    print('> /api/6/store/ FORWARD')
+    # print('> request.headers', request.headers)
 
+    def make(headers):
+        SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
+        request_headers = {}
+        for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type','Accept-Encoding']:
+                request_headers[key] = request.headers.get(key)
+        return request_headers, SENTRY
+        
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
+
+    try:
+        print('> type(request.data)', type(request.data))
+        print('> type(request_headers)', type(request_headers))
+        # print('> request_headers', request_headers)
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+
+        # print('> nothing saved to sqlite database')
+        return 'success'
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+    return 'good'
+
+# FORWARD
+@app.route('/api/6/envelope/', methods=['POST'])
+def forward_envelope():
+    print('> /api/6/envelope/ FORWARD')
+
+    def make(headers):
+        print('0000000')
+        SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
+        request_headers = {}
+        for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
+            print('11111', key)            
+            request_headers[key] = request.headers.get(key)
+        return request_headers, SENTRY
+
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
+    try:
+        print('> type(request.data)', type(request.data))
+        print('> type(request_headers)', type(request_headers))
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+
+        print('> nothing saved to sqlite database')
+        return 'success'
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+    return 'good'
+
+# SAVE
+@app.route('/api/5/envelope/', methods=['POST'])
+def save_mobile_envelope():
+
+    print('\n> /api/5/envelope ')
+    print('> type(request.data)', type(request.data)) # string
+    print('> type(request.headers)', type(request.headers))
+
+    event_platform = ''
+    event_type = ''
+    request_headers = {}
+    user_agent = request.headers.get('User-Agent').lower()
+    body = ''
+
+    event_platform = 'android'
+    event_type = get_event_type(request.data, "android")
+    print('\n> event_type', event_type)
+    
+    for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
+        request_headers[key] = request.headers.get(key)
+    
+    print("type", type(decompress_gzip(request.data))) # <type 'unicode'>
+    print(decompress_gzip(request.data))
+
+    # decompressed = decompress_gzip(request.data)
+    # converted = decompressed.encode("utf-8")
+    # print("type of converted", type(converted)) # <type 'string'>
+    # print(converted)
+
+    body = decompress_gzip(request.data)
+
+    insert_query = ''' INSERT INTO events(platform,type,body,headers)
+              VALUES(?,?,?,?) '''
+    record = (event_platform, event_type, body, json.dumps(request_headers))
+    try:
+        with sqlite3.connect(database) as db:
+            cursor = db.cursor()
+            cursor.execute(insert_query, record)
+            print('> SQLITE ID', cursor.lastrowid)
+            cursor.close()
+            return str(cursor.lastrowid)
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
+
+    print('> SAVING /api/5/envelope END')
+
+    return 'SUCCESS'
+
+# MODIFIED_DSN_SAVE MOBILE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
+@app.route('/api/5/store/', methods=['POST'])
+def save_mobile():
+    print('> /api/5/store')
+
+    print('> type(request.data)', type(request.data)) # STRING
+    print('> type(request_headers)', type(request.headers))
+
+    event_platform = ''
+    event_type = ''
+    request_headers = {}
+    user_agent = request.headers.get('User-Agent').lower()
+    body = ''
+
+    event_platform = 'android'
+    event_type = get_event_type(request.data, "android")
+    print('> event_type', event_type)
+    
+
+    # TODO are these different if it's a session?
+    for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For']:
+        request_headers[key] = request.headers.get(key)
+    # print(json.dumps(request_headers,indent=2))
+    # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+    # body = decompress_gzip(request.data) # 'error: not a gzipped file' in decompress_gzip
+
+    # TODO verify always right
+    body = request.data
+
+    insert_query = ''' INSERT INTO events(platform,type,body,headers)
+              VALUES(?,?,?,?) '''
+    record = (event_platform, event_type, body, json.dumps(request_headers))
+    try:
+        with sqlite3.connect(database) as db:
+            cursor = db.cursor()
+            cursor.execute(insert_query, record)
+            print('> SQLITE ID', cursor.lastrowid)
+            cursor.close()
+            return str(cursor.lastrowid)
+    except Exception as err:
+        print("LOCAL EXCEPTION", err)
+
+    print('> SAVING /api/5/store END')
+    return 'SUCCESS'
+
+###############################################################################
+# OG
 # MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
-    print('testing....')
-    raise Exception("api save 832")
     print('> SAVING')
 
     event_platform = ''
@@ -192,3 +349,16 @@ def save_and_forward():
         return 'success'
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
+
+# print(json.dumps(request_headers,indent=2))
+
+# regular:
+# print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
+# sessions:
+# print(json.dumps(decompress_gzip(request.data),indent=2))
+
+# import sentry_sdk
+# sentry_sdk.init(
+#     dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
+#     release='0.0.1'    
+# )

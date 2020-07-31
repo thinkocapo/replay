@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 )
 
 func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
@@ -27,6 +28,21 @@ func encodeGzip(b []byte) bytes.Buffer {
 	w.Close()
 	// return buf.Bytes()
 	return buf
+}
+
+func unmarshalEnvelope(bytes []byte) []string {
+	var envelope string
+	envelope = string(bytes)
+	envelopeContents := strings.Split(envelope, "\n")
+
+	fmt.Print(envelopeContents[0], "\n")
+	fmt.Print(envelopeContents[1], "\n")
+	fmt.Print(envelopeContents[2], "\n")
+
+	// if err := json.Unmarshal(bytes, &text); err != nil {
+	// 	panic(err)
+	// }
+	return envelopeContents
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {

@@ -34,23 +34,28 @@ def get_event_type(bytes_data, platform):
         body_dict = json.loads(decompress_gzip(bytes_data))
     if platform == 'javascript':
         body_dict = json.loads(bytes_data)
+    if platform == 'android':
+        try:
+            body_dict = json.loads(decompress_gzip(bytes_data))
+        except:
+            # print('it is a session', decompress_gzip(bytes_data))
+            result = 'session'
+            return result
     
-    # if "type" in body_dict:
-    #     print("> type ", body_dict['type'])
-
-    # if "transaction" in body_dict:
-    #     print("> transaction ", body_dict['transaction'])
-
-    # print(json.dumps(body_dict, indent=2))
-
     result = ''
     if 'exception' in body_dict:
         result = 'error'
     else:
         result = 'transaction'
 
+    return result
+    # if "type" in body_dict:
+    #     print("> type ", body_dict['type'])
+    # if "transaction" in body_dict:
+    #     print("> transaction ", body_dict['transaction'])
+    # print(json.dumps(body_dict, indent=2))
+
     # if 'type' in body_dict:
     #     result = 'error'
     # if 'transaction' not in body_dict:
     #     result = 'error'
-    return result
