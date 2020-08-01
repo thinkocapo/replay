@@ -133,10 +133,39 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 ## Todo
 - Mobile android errors/crashes/sessions
 - update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
-
+- cloud host
 
 `export PYTHONWARNINGS="ignore:Unverified HTTPS request"` before make proxy  
 try saving request.data without decompressing first
 
-
 if the request has "application/x-sentry-envelope" then store endpoint knows to treat it as a Envelope
+
+Google Cloud SDK 303.0.0
+
+
+## Cloud
+https://cloud.google.com/go/docs/setup  
+
+gcloud functions deploy <name> --runtime go111 --trigger-http --allow-unauthenticated
+gcloud functions describe <name>  
+
+https://cloud.google.com/functions/docs/quickstart (gcloud cli)  
+https://cloud.google.com/functions/docs/quickstart#whats-next  
+https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
+"go mod tidy"
+
+
+#### Cloud Storage
+create storage bucket  
+
+//
+write cloudStorage file from cloud function,
+read cloudStorage file from cloud function,
+
+// if above fails...
+write file from local script, storage.go  
+
+(push file from cli)  
+
+write file is really for pushing data sets
+read file
