@@ -35,3 +35,6 @@ node/node_modules
 bin/*
 
 deprecated/*
+
+
+key.json

@@ -156,16 +156,40 @@ https://cloud.google.com/functions/docs/writing/specifying-dependencies-go
 
 
 #### Cloud Storage
-create storage bucket  
+1. Have a ServiceAccount and created bucket undertakerevents using ./client/new-bucket.go
+https://cloud.google.com/storage/docs/reference/libraries
+^ may need ServiceAccount permission'd
 
-//
+scrip for write/read...
+
+GCP should find SA permission and be fine...
+
+CloudFun should be able to acces it via SA
+
+1. Read CloudStorage bucketfrom cli (https://cloud.google.com/functions/docs/tutorials/storage)?
+
+2.
 write cloudStorage file from cloud function,
 read cloudStorage file from cloud function,
 
-// if above fails...
-write file from local script, storage.go  
+3. How to do Env vars!!!
 
-(push file from cli)  
+------
+
+3. if above fails...
+write file from local script, storage.go  
 
 write file is really for pushing data sets
 read file
+
+
+
+
+------
+
+NO, is for deploying, and triggering a Background Cloud Function with a Cloud Storage trigger....but only cloud storage example!
+
+
+HOW TO DO VIA APP ENGINE....
+https://cloud.google.com/appengine/docs/standard/go111/using-cloud-storage  
+not quite what i'm looking for
