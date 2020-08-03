@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	
-	// "database/sql"
 	_ "github.com/mattn/go-sqlite3"
 
 	"fmt"
@@ -15,16 +14,32 @@ import (
 	"encoding/json"
 
 	"cloud.google.com/go/storage"
-
-	// "os"
-	"strings"
 )
 
-func main () {
-	fmt.Print("000000000000")
 
+// Social struct which contains a
+// list of links
+type Event struct {
+    level string `json:"level"`
+	event_id  string `json:"event_id"`
+	timestamp string `json:"timestamp"`
+	server_name string `json:"server_name"`
+	platform string `json:"platform"`
+
+	exception interface{} `json:"exception"`
+	breadcrumbs interface{} `json:"breadcrumbs"`
+	context interface{} `json:"context"`
+	modules interface{} `json:"modules"`
+	extra interface{} `json:"extra"`
+	sdk interface{} `json:"sdk"`
+}
+
+func main () {
 	bucket := "undertakerevents"
-	object := "tracing-example-multiproject.db"
+	object := "events.json"
+	// object := "tracing-example-multiproject.db" can't unmarshallJSON on this. it's not JSON it's flat-file db sqlite
+	// object := "users.json"
+	// object := "testarray.json"
 
 	var buf1 bytes.Buffer
 	w := io.Writer(&buf1)
@@ -35,7 +50,6 @@ func main () {
 
 func downloadFile(w io.Writer, bucket, object string) ([]byte, error) {
 	fmt.Println("\ndownloadFile")
-	
 	
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -54,46 +68,29 @@ func downloadFile(w io.Writer, bucket, object string) ([]byte, error) {
 	}
 
 	data, err := ioutil.ReadAll(rc)
-	fmt.Print(string(data)) // can see text now
+	// fmt.Print(data)	
+	// fmt.Print(string(data))
 
+	// events := make([]interface{}, 0)
+	events := make([]Event, 0)
+
+	json.Unmarshal(data, &events)
+	
+	// "cannot unmarshal string into Go value of type main.Event"
+	// if err := json.Unmarshal(data, &events); err != nil {
+	// 	panic(err)
+	// }
+	
+	// prints "[{    } {    }]"
+	fmt.Println("events", events)
+
+	// event := events[0]
+	// prints [blank]
+	// fmt.Println("WORK2", event.level)
 
 	if err != nil {
 		return nil, fmt.Errorf("ioutil.ReadAll: %v", err)
 	}
-
-	// myarray := strings.Split(string(data), "{\"") // %, \", \n
-	// fmt.Println("lENGHT....", len(myarray))
-
-	// if _, err := io.Copy(os.Stdout, rc); err != nil {
-		// TODO: Handle error.
-		// fmt.Print(err)
-	// }
-	// Prints "This object contains text."
-
-
-	// fmt.Fprintf(w, "Blob %v downloaded.\n", object)
-	// NOOOOO, does not work here. no files in Cloud Functions
-	// database, _ = sql.Open("sqlite3", data)
-	// database.Query()
-
-	// PLAN OF ATTACK
-	// Can open sqlite by passing the response object rathen than sql.Open() a a flatfile.db?
-	// What else can do with rc instead of passing it to ioutil.ReadAll(rc)?
-	// Is a 'blob' how to work with blob? from ioutil.ReadAll(rc)
-		// convert to .newFile?
-		// make a file object using the rc/data?
-	// gobyexample
-
-	// DownloadFile | Getting/Reading it in a different manner?
-	
-	// Readings FlatFile in Go / Reading FlatFiles in a CLoud Function
-	// Reaing FlatFile Data from Blob
-	// CloudStorage'ing a flat-file and parsing it, deserialize?
-
-	// What does Sql.Open return?
-	
-	// AppEngine can save/write the file?
-
 	return data, nil
 }
 

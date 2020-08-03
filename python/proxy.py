@@ -59,6 +59,8 @@ SQLITE = os.getenv('SQLITE')
 database = SQLITE or os.getcwd() + "/sqlite.db"
 print("> database", database)
 
+JSON = os.getenv('JSON')
+
 with sqlite3.connect(database) as db:
     cursor = db.cursor()
     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
@@ -301,18 +303,31 @@ def save():
 
         body = request.data
 
-    insert_query = ''' INSERT INTO events(platform,type,body,headers)
-              VALUES(?,?,?,?) '''
-    record = (event_platform, event_type, body, json.dumps(request_headers))
     try:
-        with sqlite3.connect(database) as db:
-            cursor = db.cursor()
-            cursor.execute(insert_query, record)
-            print('> SQLITE ID', cursor.lastrowid)
-            cursor.close()
-            return str(cursor.lastrowid)
-    except Exception as err:
-        print("LOCAL EXCEPTION", err)
+        with open(JSON) as file:
+            current_data = json.load(file)
+
+        with open(JSON, 'w') as file:
+            current_data.append(body)
+            json.dump(current_data, file)
+
+    except Exception as exception:
+        print("LOCAL EXCEPTION", exception)
+    return "success"
+
+    # DEPRECATE
+    # insert_query = ''' INSERT INTO events(platform,type,body,headers)
+    #           VALUES(?,?,?,?) '''
+    # record = (event_platform, event_type, body, json.dumps(request_headers))
+    # try:
+    #     with sqlite3.connect(database) as db:
+    #         cursor = db.cursor()
+    #         cursor.execute(insert_query, record)
+    #         print('> SQLITE ID', cursor.lastrowid)
+    #         cursor.close()
+    #         return str(cursor.lastrowid)
+    # except Exception as err:
+    #     print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
