@@ -38,3 +38,8 @@ deprecated/*
 
 
 key.json
+
+api/read
+*read
+*key.json
+*.json
