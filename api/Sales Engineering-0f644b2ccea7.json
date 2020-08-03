@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "sales-engineering-sf",
+  "private_key_id": "0f644b2ccea78a95d2eeb4a18c46372c71422a4c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDk/w93BgF1t9Xe\nZ+si53aIbFP+4WIP6+xSAoXaPqkWUrcBcxgmiGGRpbxohOV9XR1g8X4G1rh4L4Qb\nBiNneKfO1QP2omPCKE1Kwjzoui/57TCWuuf+aXgWR9rq4ZPbiq+iMXD3XHx9hUE+\nwulO3rQUeKsfJ7DDmMp7jIGrmUzx+BLVqgU9LMoDT2Bz+pSa2jk0gLjRCtNUzXXm\n3uIJTwmPDBav4IEJ3hWccI4y5Fb1hp8Upl82jRvyON6uzCmz4uRsHCmOqWYnc04b\n7b0rA9JQeyWWn91Fkx9P/H68mPIPbBmxJh9EsJqoiaMvOI6n1qWVBciBOjtXzuUM\nZqaf1ADVAgMBAAECggEAG4XHUU4cu04Iy6YQRf3tSmjAsKvcih7YJKQue8RXtLnk\nym0PnEP8fBGgIyzD200ndIkZ1U8V1UYaudfDRhKjkpGaHBi45jNLVN6jDPKhxQdb\ntWYJ75M0DnN87YmGqJaS1Ord0bEhOkHbjWRGP8c2/BXjtUcjMOMKhQ5mYF44uAUX\nZFQ0hGiBlzBtN/q3ZA0qkvlAtSgMd0kEHgA8vecpDqRJlH8OwsefH38lUe+SM7SB\nuMmflnG7kAnOaNIh8CowrIwOqbp99YXS5R088WNErr3oN+Kn8G3csJ0tbPVOx8Sr\nlD/kIKUcsoVEy6HNxhcZnmR4njbw1pfN3W9ut7PnAQKBgQD0UOXKvRkLXh7VoQve\nj4Bod7NycFY3/L0YB/FI36jYK6bfxBycnvyB6MVjHC0LU7bRkWxILcYtzyLlPwX+\ngErpQcM3w6xNQ719OXGpg3Sx2/fACQWtWaeEcgK2xmTu97Q6r1hdedfYKnbeHQP8\n/ObM8r2kc979gwlW2BENroHJAQKBgQDv8puPElRfVrU80TIfLv6AI6oDjRXDgxyZ\nJszQPRy3WKzY1qKgppKSJWVpV1jibz3xI9vNJEdMuLkvv9Jt6nRsJX07m+gFxT1e\n+MJ0iPooT9VS/FgtAo4vl1TjL062N8YQCXd848JEKGs10b69oN2jl842zI5jR2vl\nP/Oq9bzD1QKBgQDdNOn6WKB2ZG+yqTAgAPoYnFjDgubtpk5nlblna+pqX4umCuCF\nBoZF8UXW6Mn3+YIL2YmbCKbpDyTfP+LjfbFV5Q8mTGqTQoQs/3fkLXvZFfsJyqFz\nRTuhdcDzUEpO+8QZZm2xpQJDXJ9nmAnmY+1tH1OJtMfv7VblZJh8NMaaAQKBgQCr\npK/Uo7cJUDxrmfYxymsx/NEkoysbZdHyWIgQunatTViv8LH7G80jkG6/8UTbDdqQ\ngic80yPR5R5L4vtDt4C60AKKvpc2cYbaRjbMKCRS6/Dc4TiuUfKmZqnJrlCvFqyv\nUiZQh5izKvquUDES8105JmHUX3XH3RJ4tsu20vzKVQKBgQDlTnXhILkEi/WAwcFq\nGaukwDGhMfunuV1OGCBpiDUkSP9XUmVNq1yfY/DxKmc+RngIIy99KT0GSNAoEt65\nfcCg8UoQcpnP9jItxqtwegUcM8J5zijZOZzR7yIhZHILUEzf5hkhNV2KtboycGNa\nWwuKMc3Em2hi1/o1qJnbj53M2g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "api-91@sales-engineering-sf.iam.gserviceaccount.com",
+  "client_id": "105393980131441452253",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/api-91%40sales-engineering-sf.iam.gserviceaccount.com"
+}
