@@ -5,25 +5,17 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-
 	_ "github.com/mattn/go-sqlite3"
-
-	// "github.com/buger/jsonparser"
-	// "io"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
-
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-
-	// "strconv"
 	"strings"
 	"time"
-
 	"context"
 	"cloud.google.com/go/storage"
 	"encoding/json"
@@ -108,11 +100,7 @@ func (d DSN) storeEndpoint() string {
 type Event struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
-
-	// Headers     []byte `json:"headers"`
 	Headers     map[string]string `json:"headers"`
-
-	// Body   []byte `json:"body"`
 	Body map[string]interface{} `json:"body"`
 }
 
@@ -134,11 +122,8 @@ type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	platform := event.Platform
-	// headers := unmarshalJSON(event.Headers)
 	headers := event.Headers
 
-	// if headers["X-Sentry-Auth"] != nil {
-	// 	xSentryAuth := headers["X-Sentry-Auth"].(string)
 	if headers["X-Sentry-Auth"] != "" {
 		xSentryAuth := headers["X-Sentry-Auth"]
 		for _, projectDSN := range projectDSNs {
@@ -149,7 +134,6 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 		}
 	}
 	
-	// event was made by a DSN that was not yours, so we can't match it, use default javascript/python DSN in .env
 	var storeEndpoint string
 	if platform == "javascript" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
@@ -188,7 +172,6 @@ func init() {
 	}
 	projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
 
-	// TODO if event from db was one of these, these will get used, regardless of a --js -py being passed above
 	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
 	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
@@ -211,7 +194,6 @@ func main() {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 			fmt.Println("ERROR", err)
-			// return nil, fmt.Errorf("storage.NewClient: %v", err)
 	}
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
@@ -339,8 +321,6 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	ERROR := event.Kind == "error"
 	TRANSACTION := event.Kind == "transaction"
 
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
-	// then, could just save the right headers to the database, and not have to deal with all this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
@@ -355,17 +335,14 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	case ANDROID && ERROR:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case JAVASCRIPT && TRANSACTION:
-		fmt.Printf("> JSJSJSJSJSJSJSJSJS TX\n")
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		fmt.Printf("> PYPYPYPYPYPYPY TX\n")
 		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
 		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
-
 	// TODO need return an error and nil's
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
@@ -421,8 +398,6 @@ func release(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
-// so it's better to never miss setting the user from the SDK
 func user(body map[string]interface{}) map[string]interface{} {
 	if body["user"] == nil {
 		body["user"] = make(map[string]interface{})
