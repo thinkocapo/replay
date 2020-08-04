@@ -2,11 +2,14 @@ package undertaker
 
 import (
 	// "bytes"
+	"context"
 	// "database/sql"
 	// "flag"
 	"fmt"
 	// _ "github.com/mattn/go-sqlite3"
-	// "io/ioutil"
+	"io/ioutil"
+	"encoding/json"
+	// "io"
 	// "log"
 	// "math/rand"
 	"net/http"
@@ -17,7 +20,8 @@ import (
 
 	// "github.com/joho/godotenv"
 	// "strings"
-	// "time"
+	"time"
+	"cloud.google.com/go/storage"
 )
 
 // var httpClient = &http.Client{}
@@ -202,21 +206,59 @@ import (
 	// write responses for each rows.Next() - will curl request response show each? an executable from Go could
 
 // CF's TTR, blocking for 60 seconds. will I get charged?
+type Event struct {
+    Level string `json:"level"`
+	Event_id  string `json:"event_id"`
+	Timestamp string `json:"timestamp"`
+	Server_name string `json:"server_name"`
+	Platform string `json:"platform"`
+
+	// Exception interface{} `json:"exception"`
+	// Breadcrumbs interface{} `json:"breadcrumbs"`
+	// Context interface{} `json:"context"`
+	// Modules interface{} `json:"modules"`
+	// Extra interface{} `json:"extra"`
+	// Sdk interface{} `json:"sdk"`
+}
 
 func Api(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("00000000000000000000000000000000")
 	x := myfunc()
 	fmt.Println("111111", x)
 
-
-
-	fmt.Println("22222")
-
-
 	newuuid := uuid.New().String()
 	fmt.Println("newuuid", newuuid)
-	fmt.Fprint(w, newuuid)
 
+	//	CLOUD STORAGE....
+	bucket := "undertakerevents"
+	object := "events.json"
+	// var buf1 bytes.Buffer
+	// w1 := io.Writer(&buf1)
+
+	fmt.Println("\ndownloadFile")
+	
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		fmt.Println("ERROR", err)
+		// return nil, fmt.Errorf("storage.NewClient: %v", err)
+	}
+	defer client.Close()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
+	defer cancel()
+	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+	if err != nil {
+		fmt.Errorf("Object(%q).NewReader: %v", object, err)
+		// return nil, fmt.Errorf("Object(%q).NewReader: %v", object, err)
+	}
+	data, err := ioutil.ReadAll(rc)
+	events := make([]Event, 0)
+	if err := json.Unmarshal(data, &events); err != nil {
+		panic(err)
+	}
+	event := events[0]
+	// fmt.Println("\ndownloadFile")
+	fmt.Fprint(w, event.Platform)
 
 
 	// var event Event
