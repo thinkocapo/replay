@@ -108,10 +108,9 @@ func (d DSN) storeEndpoint() string {
 type Event struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
-	// Headers     []byte `json:"headers"`
-	// Headers     map[string]interface{} `json:"headers"`
-	Headers     map[string]string `json:"headers"`
 
+	// Headers     []byte `json:"headers"`
+	Headers     map[string]string `json:"headers"`
 
 	// Body   []byte `json:"body"`
 	Body map[string]interface{} `json:"body"`
@@ -230,13 +229,10 @@ func main() {
 	if err := json.Unmarshal(data, &events); err != nil {
 		panic(err)
 	}
-	fmt.Println("LENGTH events", len(events))
-
-	eventTest := events[0]
-	fmt.Printf("platform %v", eventTest.Platform)
+	fmt.Println("> NUMBER of EVENTS", len(events))
 
 	for idx, event := range events {
-		fmt.Printf("event #%v", idx)
+		fmt.Printf("> EVENT# %v \n", idx)
 
 		var body map[string]interface{}
 		// var bodySession []byte
@@ -256,14 +252,13 @@ func main() {
 		body = release(body)
 		body = user(body)
 		body = timestamper(body, event.Platform)
-		requestBody = bodyEncoder(body)
 		// }
-		fmt.Print("* * * * EVENT HEADERS * * * * *", event.Headers)
-
-		// TODO - tags on which/what header/item from the envelope?
+		
+		// TODO - get this working for any tags within a Envelope
 		undertake(body)
+		
+		requestBody = bodyEncoder(body)
 
-		// TODO
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
 		if !*ignore {
@@ -277,7 +272,7 @@ func main() {
 				log.Fatal(responseDataErr)
 			}
 
-			fmt.Printf("\n> event type: %s, response: %s\n", event.Kind, string(responseData))
+			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
@@ -335,9 +330,7 @@ func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, str
 */
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	// body := unmarshalJSON(event.Body)
 	body := event.Body
-
 
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
@@ -355,14 +348,6 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
-
-	fmt.Printf("> ANDROID %v \n", ANDROID)
-	fmt.Printf("> JAVASCRIPT %v \n", JAVASCRIPT)
-
-
-	fmt.Printf("> PYTHON %v \n", PYTHON)
-	fmt.Printf("> ERROR %v \n", ERROR)
-	fmt.Printf("> TRANSACTION %v \n", TRANSACTION)
 
 	switch {
 	case ANDROID && TRANSACTION:
@@ -385,24 +370,18 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
-// func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
-// func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]interface{}, storeEndpoint string) *http.Request {
 func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]string, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
-	// headerInterface := unmarshalJSON(eventHeaders)
 	headerInterface := eventHeaders
 
 	for _, v := range headerKeys {
-		// Connection:null on some
-		// if headerInterface[v] == nil {
 		if headerInterface[v] == "" {			
 			fmt.Print("PASS")
 		} else {
-			// request.Header.Set(v, headerInterface[v].(string))
 			request.Header.Set(v, headerInterface[v])
 		}
 	}
@@ -465,5 +444,5 @@ func undertake(body map[string]interface{}) {
 		body["tags"] = make(map[string]interface{})
 	}
 	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "is_here"
+	tags["undertaker"] = "h4ckweek"
 }

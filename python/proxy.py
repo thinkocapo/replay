@@ -303,7 +303,7 @@ def save():
 
         body = request.data
 
-    # TODO need this??
+
     body = json.loads(body)
 
     o = {
