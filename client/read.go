@@ -20,23 +20,24 @@ import (
 // Social struct which contains a
 // list of links
 type Event struct {
-    level string `json:"level"`
-	event_id  string `json:"event_id"`
-	timestamp string `json:"timestamp"`
-	server_name string `json:"server_name"`
-	platform string `json:"platform"`
+    Level string `json:"level"`
+	Event_id  string `json:"event_id"`
+	Timestamp string `json:"timestamp"`
+	Server_name string `json:"server_name"`
+	Platform string `json:"platform"`
 
-	exception interface{} `json:"exception"`
-	breadcrumbs interface{} `json:"breadcrumbs"`
-	context interface{} `json:"context"`
-	modules interface{} `json:"modules"`
-	extra interface{} `json:"extra"`
-	sdk interface{} `json:"sdk"`
+	// Exception interface{} `json:"exception"`
+	// Breadcrumbs interface{} `json:"breadcrumbs"`
+	// Context interface{} `json:"context"`
+	// Modules interface{} `json:"modules"`
+	// Extra interface{} `json:"extra"`
+	// Sdk interface{} `json:"sdk"`
 }
 
 func main () {
 	bucket := "undertakerevents"
 	object := "events.json"
+	// object := "events2.json"
 	// object := "tracing-example-multiproject.db" can't unmarshallJSON on this. it's not JSON it's flat-file db sqlite
 	// object := "users.json"
 	// object := "testarray.json"
@@ -74,12 +75,12 @@ func downloadFile(w io.Writer, bucket, object string) ([]byte, error) {
 	// events := make([]interface{}, 0)
 	events := make([]Event, 0)
 
-	json.Unmarshal(data, &events)
+	// json.Unmarshal(data, &events)
 	
 	// "cannot unmarshal string into Go value of type main.Event"
-	// if err := json.Unmarshal(data, &events); err != nil {
-	// 	panic(err)
-	// }
+	if err := json.Unmarshal(data, &events); err != nil {
+		panic(err)
+	}
 	
 	// prints "[{    } {    }]"
 	fmt.Println("events", events)
