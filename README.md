@@ -146,7 +146,7 @@ Google Cloud SDK 303.0.0
 ## Cloud
 https://cloud.google.com/go/docs/setup  
 
-gcloud functions deploy <name> --runtime go111 --trigger-http --allow-unauthenticated
+gcloud functions deploy <name> --runtime go111 --trigger-http
 gcloud functions describe <name>  
 
 https://cloud.google.com/functions/docs/quickstart (gcloud cli)  

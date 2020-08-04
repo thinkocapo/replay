@@ -9,7 +9,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	// "github.com/buger/jsonparser"
-	// "io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -23,10 +22,6 @@ import (
 	// "strconv"
 	"strings"
 	"time"
-
-	"context"
-	"cloud.google.com/go/storage"
-	"encoding/json"
 )
 
 var httpClient = &http.Client{}
@@ -106,19 +101,14 @@ func (d DSN) storeEndpoint() string {
 }
 
 type Event struct {
-	Platform    string `json:"platform"`
-	Kind        string `json:"kind"`
-	// Headers     []byte `json:"headers"`
-	// Headers     map[string]interface{} `json:"headers"`
-	Headers     map[string]string `json:"headers"`
-
-
-	// Body   []byte `json:"body"`
-	Body map[string]interface{} `json:"body"`
+	id          int
+	platform, _type string
+	headers     []byte
+	bodyBytes   []byte
 }
 
 func (e Event) String() string {
-	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
+	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.platform, e._type)
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
@@ -134,14 +124,14 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.Platform
-	// headers := unmarshalJSON(event.Headers)
-	headers := event.Headers
+	platform := event.platform
+	headers := unmarshalJSON(event.headers)
 
-	// if headers["X-Sentry-Auth"] != nil {
-	// 	xSentryAuth := headers["X-Sentry-Auth"].(string)
-	if headers["X-Sentry-Auth"] != "" {
-		xSentryAuth := headers["X-Sentry-Auth"]
+	// TODO if db is tracing-example-multiproject.db, then how to route to 3 different python projects. have to know from 'event' if it was gateway, django or celery somehow.
+	// if event_is_from_gateway then projectDSN["gateway"]
+	// python and android events have X-Sentry-Auth
+	if headers["X-Sentry-Auth"] != nil {
+		xSentryAuth := headers["X-Sentry-Auth"].(string)
 		for _, projectDSN := range projectDSNs {
 			if strings.Contains(xSentryAuth, projectDSN.key) {
 				fmt.Println("> match", projectDSN)
@@ -194,77 +184,61 @@ func init() {
 	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	// TODO
 	fmt.Println("> db flag", *db)
 	if *db == "" {
 		database, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
-
 	} else {
 		database, _ = sql.Open("sqlite3", *db)
-
 	}
 }
 
 func main() {
-	bucket := "undertakerevents"
-	object := os.Getenv("JSON") //"eventsa.json"
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-			fmt.Println("ERROR", err)
-			// return nil, fmt.Errorf("storage.NewClient: %v", err)
-	}
-	defer client.Close()
-	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
-	defer cancel()
-	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
-	if err != nil {
-		fmt.Errorf("Object(%q).NewReader: %v", object, err)
-	}
-	data, err := ioutil.ReadAll(rc)
-	if err != nil {
-		fmt.Errorf("ioutil.ReadAll: %v", err)
+	defer database.Close()
+
+	query := ""
+	if *id == "" {
+		query = "SELECT * FROM events ORDER BY id DESC"
+	} else {
+		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
 	}
 
-	events := make([]Event, 0)
-	if err := json.Unmarshal(data, &events); err != nil {
-		panic(err)
+	rows, err := database.Query(query)
+
+	if err != nil {
+		fmt.Println("Failed to load rows", err)
 	}
-	fmt.Println("LENGTH events", len(events))
-
-	eventTest := events[0]
-	fmt.Printf("platform %v", eventTest.Platform)
-
-	for idx, event := range events {
-		fmt.Printf("event #%v", idx)
+	for rows.Next() {
+		var event Event
+		rows.Scan(&event.id, &event.platform, &event._type, &event.bodyBytes, &event.headers)
+		fmt.Println(event)
 
 		var body map[string]interface{}
-		// var bodySession []byte
+		var bodySession []byte
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
 		var storeEndpoint string
 		var requestBody []byte
-		// if (event.Kind == "session") {
-		// 	bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
-		// 	requestBody = bodySession
-		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
-		// 	requestBody = buf.Bytes()
-		// } else {
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
-		body = eventId(body)
-		body = release(body)
-		body = user(body)
-		body = timestamper(body, event.Platform)
-		requestBody = bodyEncoder(body)
-		// }
-		fmt.Print("* * * * EVENT HEADERS * * * * *", event.Headers)
+		if (event._type == "session") {
+			bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
+			requestBody = bodySession
+			buf := encodeGzip(requestBody) // could try jsEncoder?
+			requestBody = buf.Bytes()
+		} else {
+			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+			body = eventId(body)
+			body = release(body)
+			body = user(body)
+			body = timestamper(body, event.platform)
+			requestBody = bodyEncoder(body)
+		}
+		// fmt.Print("* * * * EVENT HEADERS * * * * *", event.headers)
 
 		// TODO - tags on which/what header/item from the envelope?
-		undertake(body)
+		// undertake(body)
 
 		// TODO
-		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
+		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
@@ -277,36 +251,34 @@ func main() {
 				log.Fatal(responseDataErr)
 			}
 
-			fmt.Printf("\n> event type: %s, response: %s\n", event.Kind, string(responseData))
+			fmt.Printf("\n> event type: %s, response: %s\n", event._type, string(responseData))
 		} else {
-			fmt.Printf("\n> %s event IGNORED", event.Kind)
+			fmt.Printf("\n> %s event IGNORED", event._type)
 		}
 
-		// TODO - break early, or auto-select 1 before the for loop
-		// if !*all {
-		// 	return
-		// }
+		if !*all {
+			rows.Close()
+		}
 
 		time.Sleep(1000 * time.Millisecond)
 	}
-	return
+	rows.Close()
 }
 
-/*
 // func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
 	
 	// WORKS
-	bodyVisible := unmarshalEnvelope(event.Body)
+	bodyVisible := unmarshalEnvelope(event.bodyBytes)
 	fmt.Print(bodyVisible)
 
-	body := event.Body
+	body := event.bodyBytes
 
-	ANDROID := event.Platform == "android"
+	ANDROID := event.platform == "android"
 
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-	SESSION := event.Kind == "session"
+	ERROR := event._type == "error"
+	TRANSACTION := event._type == "transaction"
+	SESSION := event._type == "session"
 
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
 
@@ -322,29 +294,26 @@ func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, str
 	}
 
 	// var body map[string]interface{}
-	// if event.Kind != "session" {
-	// 	body = unmarshalJSON(event.Body)
+	// if event._type != "session" {
+	// 	body = unmarshalJSON(event.bodyBytes)
 	// } else {
-	// 	body = event.Body
-	// 	// body1 := string(event.Body)
+	// 	body = event.bodyBytes
+	// 	// body1 := string(event.bodyBytes)
 	// 	// fmt.Print(body1)
 	// }
 	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
 	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 }
-*/
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	// body := unmarshalJSON(event.Body)
-	body := event.Body
+	body := unmarshalJSON(event.bodyBytes)
 
+	JAVASCRIPT := event.platform == "javascript"
+	PYTHON := event.platform == "python"
+	ANDROID := event.platform == "android"
 
-	JAVASCRIPT := event.Platform == "javascript"
-	PYTHON := event.Platform == "python"
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
+	ERROR := event._type == "error"
+	TRANSACTION := event._type == "transaction"
 
 	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
 	// then, could just save the right headers to the database, and not have to deal with all this here.
@@ -356,26 +325,16 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
-	fmt.Printf("> ANDROID %v \n", ANDROID)
-	fmt.Printf("> JAVASCRIPT %v \n", JAVASCRIPT)
-
-
-	fmt.Printf("> PYTHON %v \n", PYTHON)
-	fmt.Printf("> ERROR %v \n", ERROR)
-	fmt.Printf("> TRANSACTION %v \n", TRANSACTION)
-
 	switch {
 	case ANDROID && TRANSACTION:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case ANDROID && ERROR:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case JAVASCRIPT && TRANSACTION:
-		fmt.Printf("> JSJSJSJSJSJSJSJSJS TX\n")
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		fmt.Printf("> PYPYPYPYPYPYPY TX\n")
 		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
 		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
@@ -385,25 +344,20 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
-// func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
-// func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]interface{}, storeEndpoint string) *http.Request {
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
-	// headerInterface := unmarshalJSON(eventHeaders)
-	headerInterface := eventHeaders
+	headerInterface := unmarshalJSON(eventHeaders)
 
 	for _, v := range headerKeys {
 		// Connection:null on some
-		// if headerInterface[v] == nil {
-		if headerInterface[v] == "" {			
+		if headerInterface[v] == nil {
 			fmt.Print("PASS")
 		} else {
-			// request.Header.Set(v, headerInterface[v].(string))
-			request.Header.Set(v, headerInterface[v])
+			request.Header.Set(v, headerInterface[v].(string))
 		}
 	}
 	return request
@@ -465,5 +419,5 @@ func undertake(body map[string]interface{}) {
 		body["tags"] = make(map[string]interface{})
 	}
 	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "is_here"
+	tags["undertaker"] = "crontab"
 }

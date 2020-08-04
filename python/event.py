@@ -44,7 +44,7 @@ def app():
     # stacktrace()
     
     # Exception literals do not have stack traces
-    sentry_sdk.capture_exception(Exception("mytable"))
+    sentry_sdk.capture_exception(Exception("aaa"))
 
 def dsn_and_proxy_check():
     if DSN=='':

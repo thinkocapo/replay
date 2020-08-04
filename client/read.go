@@ -85,9 +85,8 @@ func downloadFile(w io.Writer, bucket, object string) ([]byte, error) {
 	// prints "[{    } {    }]"
 	fmt.Println("events", events)
 
-	// event := events[0]
-	// prints [blank]
-	// fmt.Println("WORK2", event.level)
+	event := events[0]
+	fmt.Println("WORK2", event.Platform)
 
 	if err != nil {
 		return nil, fmt.Errorf("ioutil.ReadAll: %v", err)

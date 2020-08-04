@@ -303,31 +303,29 @@ def save():
 
         body = request.data
 
+    # TODO need this??
+    body = json.loads(body)
+
+    o = {
+        # 'id': '0'
+        'platform': event_platform,
+        'kind': event_type,
+        # 'headers': json.dumps(request_headers),
+        'headers': request_headers,
+        'body': body
+    }
+
     try:
         with open(JSON) as file:
             current_data = json.load(file)
 
         with open(JSON, 'w') as file:
-            current_data.append(body)
+            current_data.append(o) # TODO test this...
             json.dump(current_data, file)
 
     except Exception as exception:
         print("LOCAL EXCEPTION", exception)
     return "success"
-
-    # DEPRECATE
-    # insert_query = ''' INSERT INTO events(platform,type,body,headers)
-    #           VALUES(?,?,?,?) '''
-    # record = (event_platform, event_type, body, json.dumps(request_headers))
-    # try:
-    #     with sqlite3.connect(database) as db:
-    #         cursor = db.cursor()
-    #         cursor.execute(insert_query, record)
-    #         print('> SQLITE ID', cursor.lastrowid)
-    #         cursor.close()
-    #         return str(cursor.lastrowid)
-    # except Exception as err:
-    #     print("LOCAL EXCEPTION", err)
 
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
