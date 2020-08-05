@@ -36,7 +36,6 @@ Must pass auth key in URL (not request headers) or else 403 CSRF error from Sent
 AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
 """
 def sentryUrl(DSN):
-    print('33333 dsn', DSN)
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
         # assumes single-digit projectId right now
@@ -55,22 +54,23 @@ def sentryUrl(DSN):
         PROJECT_ID = DSN.split('@')[1].split('/')[1] 
         return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
 
-SQLITE = os.getenv('SQLITE')
-database = SQLITE or os.getcwd() + "/sqlite.db"
-print("> database", database)
+# SQLITE = os.getenv('SQLITE')
+# database = SQLITE or os.getcwd() + "/sqlite.db"
+# print("> database", database)
 
 JSON = os.getenv('JSON')
+print("> .json", JSON)
 
-with sqlite3.connect(database) as db:
-    cursor = db.cursor()
-    cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
-                                            id integer PRIMARY KEY,
-                                            platform text,
-                                            type text,
-                                            data BLOB,
-                                            headers BLOB
-                                        ); """)
-    cursor.close()
+# with sqlite3.connect(database) as db:
+#     cursor = db.cursor()
+#     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
+#                                             id integer PRIMARY KEY,
+#                                             platform text,
+#                                             type text,
+#                                             data BLOB,
+#                                             headers BLOB
+#                                         ); """)
+#     cursor.close()
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])

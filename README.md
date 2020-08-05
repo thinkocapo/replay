@@ -144,53 +144,47 @@ Google Cloud SDK 303.0.0
 
 
 ## Cloud
-https://cloud.google.com/go/docs/setup  
+**Upload Dataset to Cloud Storage**
+Contact administrator
 
-gcloud functions deploy <name> --runtime go111 --trigger-http
+**Deploy Cloud Function**
+```
+gcloud functions deploy <name> --runtime go111 --trigger-http --set-env-vars BUCKET=<bucket>
 gcloud functions describe <name>  
+gsutil ls -r gs://<bucket>/
+```
 
+**Calling the Cloud Function**
+```
+curl \
+    -H "dsn: <dsn_python>" \
+    -H "dataset: <name>.json" \
+    https://<country>-<region>-<gcp_project>.cloudfunctions.net/<cloud_function>
+```
+
+https://cloud.google.com/go/docs/setup  
 https://cloud.google.com/functions/docs/quickstart (gcloud cli)  
 https://cloud.google.com/functions/docs/quickstart#whats-next  
 https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
 "go mod tidy"
 
 
-#### Cloud Storage
-1. Have a ServiceAccount and created bucket undertakerevents using ./client/new-bucket.go
-https://cloud.google.com/storage/docs/reference/libraries
-^ may need ServiceAccount permission'd
+I 
+// getsentry-tracing-example
+Generate getsentry/tracing-example to .json
+Generate sentry-demos/tracing to .json <--- container hosted version of this?
 
-scrip for write/read...
+Test getsentry/tracing-example.json (3 DSN's python)
+Test sentry-demos/tracing.json (2 DSN's)
 
-GCP should find SA permission and be fine...
+Maintain eventsa.json
 
-CloudFun should be able to acces it via SA
+II
 
-1. Read CloudStorage bucketfrom cli (https://cloud.google.com/functions/docs/tutorials/storage)?
+-H id for selecting 1  
+vs  
+-H all for selecting all 
 
-2.
-write cloudStorage file from cloud function,
-read cloudStorage file from cloud function,
-
-3. How to do Env vars!!!
-
-------
-
-3. if above fails...
-write file from local script, storage.go  
-
-write file is really for pushing data sets
-read file
-
-
-
-gcloud command for getting file names...
-
-------
-
-NO, is for deploying, and triggering a Background Cloud Function with a Cloud Storage trigger....but only cloud storage example!
-
-
-HOW TO DO VIA APP ENGINE....
-https://cloud.google.com/appengine/docs/standard/go111/using-cloud-storage  
-not quite what i'm looking for
+III  
+move `context.Background()` to `func init()`  
+./go.mod and ./api/go.mod

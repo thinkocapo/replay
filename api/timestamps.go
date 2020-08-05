@@ -21,16 +21,16 @@ Float form is like 1.5914674155654302e+09
 
 // Errors
 func updateTimestamp(body map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println("> Error timestamp before", body["timestamp"])
+	// fmt.Println("> Error timestamp before", body["timestamp"])
 	body["timestamp"] = time.Now().Unix()
-	fmt.Println("> Error timestamp after ", body["timestamp"])
+	// fmt.Println("> Error timestamp after ", body["timestamp"])
 	return body
 }
 
 // Transactions - keep start and end timestamps relative to each other by computing the difference and new timestamps based on that
 func updateTimestamps(body map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
-	fmt.Printf("> updateTimestamps PARENT       timestamp before %v (%T)", body["timestamp"], body["timestamp"])
+	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT       timestamp before %v (%T)", body["timestamp"], body["timestamp"])
 
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	if platform == "python" {
@@ -69,8 +69,8 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 
 	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and this is what happens in Javascript
 	// logging with 'decimal type for readability and convertability
-	fmt.Printf("\n> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
-	fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
+	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
 
 	// Span(s)
 	for _, span := range body["spans"].([]interface{}) {

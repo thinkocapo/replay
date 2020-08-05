@@ -137,12 +137,12 @@ func init() {
 	// projectDSNs["python_celery"] = parseDSN("")
 }
 
-func Api(w http.ResponseWriter, r *http.Request) {
+func Replay(w http.ResponseWriter, r *http.Request) {
 	bucket := os.Getenv("BUCKET")
 
 	dsn := r.Header.Get("dsn") // py default for just 1 python error
-	dsn1 := r.Header.Get("dsn") // js
-	dsn2 := r.Header.Get("dsn") // py
+	dsn1 := r.Header.Get("dsn1") // js
+	dsn2 := r.Header.Get("dsn2") // py
 	fmt.Println("dsn", dsn)
 	fmt.Println("dsn1", dsn1)
 	fmt.Println("dsn2", dsn2)
@@ -164,13 +164,12 @@ func Api(w http.ResponseWriter, r *http.Request) {
 	// Dataset
 	var object string
 	DATASET := r.Header.Get("data")
-	fmt.Println("DATASET", DATASET)
 	if DATASET == "" {
 		object = "eventsa.json"
 	} else {
-		fmt.Print("SELECTED A DATASET.....")
 		object = DATASET
 	}
+	fmt.Println("DATASET object", object)
 
 	// TODO move context.Background() to init function...?
 	// if *id == ""
@@ -235,6 +234,7 @@ func Api(w http.ResponseWriter, r *http.Request) {
 			}
 
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
+			fmt.Fprint(w, "> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
@@ -353,5 +353,5 @@ func undertake(body map[string]interface{}) {
 		body["tags"] = make(map[string]interface{})
 	}
 	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "crontab"
+	tags["undertaker"] = "first"
 }
