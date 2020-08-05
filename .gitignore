@@ -35,3 +35,11 @@ node/node_modules
 bin/*
 
 deprecated/*
+
+
+key.json
+
+api/read
+*read
+*key.json
+*.json

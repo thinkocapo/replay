@@ -36,7 +36,6 @@ Must pass auth key in URL (not request headers) or else 403 CSRF error from Sent
 AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
 """
 def sentryUrl(DSN):
-    print('33333 dsn', DSN)
     if ("@localhost:" in DSN):
         KEY = DSN.split('@')[0][7:]
         # assumes single-digit projectId right now
@@ -55,20 +54,23 @@ def sentryUrl(DSN):
         PROJECT_ID = DSN.split('@')[1].split('/')[1] 
         return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
 
-SQLITE = os.getenv('SQLITE')
-database = SQLITE or os.getcwd() + "/sqlite.db"
-print("> database", database)
+# SQLITE = os.getenv('SQLITE')
+# database = SQLITE or os.getcwd() + "/sqlite.db"
+# print("> database", database)
 
-with sqlite3.connect(database) as db:
-    cursor = db.cursor()
-    cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
-                                            id integer PRIMARY KEY,
-                                            platform text,
-                                            type text,
-                                            data BLOB,
-                                            headers BLOB
-                                        ); """)
-    cursor.close()
+JSON = os.getenv('JSON')
+print("> .json", JSON)
+
+# with sqlite3.connect(database) as db:
+#     cursor = db.cursor()
+#     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
+#                                             id integer PRIMARY KEY,
+#                                             platform text,
+#                                             type text,
+#                                             data BLOB,
+#                                             headers BLOB
+#                                         ); """)
+#     cursor.close()
 
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
@@ -301,18 +303,29 @@ def save():
 
         body = request.data
 
-    insert_query = ''' INSERT INTO events(platform,type,body,headers)
-              VALUES(?,?,?,?) '''
-    record = (event_platform, event_type, body, json.dumps(request_headers))
+
+    body = json.loads(body)
+
+    o = {
+        # 'id': '0'
+        'platform': event_platform,
+        'kind': event_type,
+        # 'headers': json.dumps(request_headers),
+        'headers': request_headers,
+        'body': body
+    }
+
     try:
-        with sqlite3.connect(database) as db:
-            cursor = db.cursor()
-            cursor.execute(insert_query, record)
-            print('> SQLITE ID', cursor.lastrowid)
-            cursor.close()
-            return str(cursor.lastrowid)
-    except Exception as err:
-        print("LOCAL EXCEPTION", err)
+        with open(JSON) as file:
+            current_data = json.load(file)
+
+        with open(JSON, 'w') as file:
+            current_data.append(o) # TODO test this...
+            json.dump(current_data, file)
+
+    except Exception as exception:
+        print("LOCAL EXCEPTION", exception)
+    return "success"
 
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
