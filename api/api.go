@@ -14,6 +14,7 @@ import (
 	"time"
 	"cloud.google.com/go/storage"
 	"math/rand"
+	"os"
 )
 
 var httpClient = &http.Client{}
@@ -130,55 +131,71 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 }
 
 func init() {
-	// TODO - if none provided, then default to a Cloud Environment Variable w/ response "sent to an org, you did not provide dsn"
-	projectDSNs = make(map[string]*DSN)
-	projectDSNs["javascript"] = parseDSN("")
-	projectDSNs["python"] = parseDSN("")
+	fmt.Print("Init...")
 	// projectDSNs["python_gateway"] = parseDSN("")
 	// projectDSNs["python_django"] = parseDSN("")
 	// projectDSNs["python_celery"] = parseDSN("")
 }
 
-
 func Api(w http.ResponseWriter, r *http.Request) {
-	bucket := "undertakerevents"
-	
-	// TODO1 Parse dataset name from http.Request
-	fmt.Println("> dataset")
+	bucket := os.Getenv("BUCKET")
+
+	dsn := r.Header.Get("dsn") // py default for just 1 python error
+	dsn1 := r.Header.Get("dsn") // js
+	dsn2 := r.Header.Get("dsn") // py
+	fmt.Println("dsn", dsn)
+	fmt.Println("dsn1", dsn1)
+	fmt.Println("dsn2", dsn2)
+
+	if (dsn == "" && dsn1 == "" && dsn2 == "") {
+		fmt.Fprint(w, "no DSN key provided")
+		return
+	}
+	fmt.Println("I SHOULD NOT LOG IF NO DSN WAS PROVIDED")
+
+	projectDSNs = make(map[string]*DSN)
+	projectDSNs["javascript"] = parseDSN(dsn1)
+	if dsn != "" {
+		projectDSNs["python"] = parseDSN(dsn)
+	} else {
+		projectDSNs["python"] = parseDSN(dsn2)
+	}
+
+	// Dataset
 	var object string
-	db := ""
-	if db == "" {
+	DB := r.Header.Get("DB")
+	fmt.Println("DB", DB)
+	if DB == "" {
 		object = "eventsa.json"
 	} else {
-		object = db
+		object = DB
 	}
 
 	// TODO move context.Background() to init function...?
-
-	// TODO2 parse DSN's get these from http.Request object, set using func init() code 
-	// js = flag.String("js", "", "javascript DSN")
-	// py = flag.String("py", "", "python DSN")
-
-	// TODO if *id == ""
+	// if *id == ""
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		fmt.Println("ERROR", err)
+		fmt.Fprint(w, "storage.NewClient: %v", err)
+		return
 	}
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
 	defer cancel()
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
-		fmt.Errorf("Object(%q).NewReader: %v", object, err)
+		fmt.Fprint(w, "NewReader: %v", err)
+		return
 	}
 	data, err := ioutil.ReadAll(rc)
 	if err != nil {
-		fmt.Errorf("ioutil.ReadAll: %v", err)
+		fmt.Fprint(w, "ioutil.ReadAll: %v", err)
+		return
 	}
 	events := make([]Event, 0)
 	if err := json.Unmarshal(data, &events); err != nil {
-		panic(err)
+		fmt.Fprint(w, "couldn't unmarshal data: %v", err)
+		return
 	}
 
 	// WORKS
@@ -209,22 +226,24 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		if ignore == "" {
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
-				fmt.Println(requestErr)
+				fmt.Fprint(w, "httpClient.Do(request) failed: %v", requestErr)
+				return
 			}
 
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
-				log.Fatal(responseDataErr)
+				fmt.Fprint(w, "error in responseData: %v", responseDataErr)
+				return
 			}
 
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
-		all := ""
-		if all != "" {
-			fmt.Fprint(w, "FINISHED - go check Sentry")
-		}
+		// all := ""
+		// if all != "" {
+		// 	fmt.Fprint(w, "FINISHED - go check Sentry")
+		// }
 		time.Sleep(1000 * time.Millisecond)
 	}
 	fmt.Fprint(w, "FINISHED all - go check Sentry")
@@ -232,14 +251,18 @@ func Api(w http.ResponseWriter, r *http.Request) {
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 	body := event.Body
+
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
 	ANDROID := event.Platform == "android"
+	
 	ERROR := event.Kind == "error"
 	TRANSACTION := event.Kind == "transaction"
+	
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
+	
 	storeEndpoint := matchDSN(projectDSNs, event)
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
