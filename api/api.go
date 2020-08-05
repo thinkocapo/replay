@@ -163,12 +163,13 @@ func Api(w http.ResponseWriter, r *http.Request) {
 
 	// Dataset
 	var object string
-	DB := r.Header.Get("DB")
-	fmt.Println("DB", DB)
-	if DB == "" {
+	DATASET := r.Header.Get("data")
+	fmt.Println("DATASET", DATASET)
+	if DATASET == "" {
 		object = "eventsa.json"
 	} else {
-		object = DB
+		fmt.Print("SELECTED A DATASET.....")
+		object = DATASET
 	}
 
 	// TODO move context.Background() to init function...?
@@ -198,12 +199,9 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// WORKS
-	// event := events[0]
-	// fmt.Fprint(w, event.Platform)
-	fmt.Println("> NUMBER of EVENTS", len(events))
+	fmt.Println("> EVENTS length", len(events))
 	for idx, event := range events {
-		fmt.Printf("> EVENT# %v \n", idx)
+		fmt.Printf("> EVENT # %v \n", idx)
 
 		var body map[string]interface{}
 		var timestamper Timestamper 
@@ -218,10 +216,11 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		body = user(body)
 		body = timestamper(body, event.Platform)
 		
-		undertake(body) // TODO - get this working for any tags within a Envelope
+		undertake(body)
 		requestBody = bodyEncoder(body)
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
+		// 'ignore' is for skipping the final call to Sentry
 		ignore := ""	
 		if ignore == "" {
 			response, requestErr := httpClient.Do(request)
@@ -229,7 +228,6 @@ func Api(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, "httpClient.Do(request) failed: %v", requestErr)
 				return
 			}
-
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				fmt.Fprint(w, "error in responseData: %v", responseDataErr)
@@ -240,6 +238,7 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
+		// Default behavior used to be send 1 event and must pass --all to send all from the db file
 		// all := ""
 		// if all != "" {
 		// 	fmt.Fprint(w, "FINISHED - go check Sentry")
