@@ -234,18 +234,14 @@ func Replay(w http.ResponseWriter, r *http.Request) {
 			}
 
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
-			fmt.Fprint(w, "> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
+			fmt.Fprint(w, "\n> EVENT made: ", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
-		// Default behavior used to be send 1 event and must pass --all to send all from the db file
-		// all := ""
-		// if all != "" {
-		// 	fmt.Fprint(w, "FINISHED - go check Sentry")
-		// }
-		time.Sleep(1000 * time.Millisecond)
+
+		time.Sleep(500 * time.Millisecond)
 	}
-	fmt.Fprint(w, "FINISHED all - go check Sentry")
+	fmt.Fprint(w, "\n>FINISHED all - go check Sentry")
 }
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
@@ -354,4 +350,20 @@ func undertake(body map[string]interface{}) {
 	}
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "first"
+
+	if _, ok := body["transaction"]; ok {
+		if (body["transaction"].(string) == "http://localhost:5000/" || strings.Contains(body["transaction"].(string), "wcap")) {
+			body["transaction"] = "http://toolstoredemo.com/"
+			request := body["request"].(map[string]interface{})
+			request["url"] = "http://toolstoredemo.com/"
+			tags["url"] = "http://toolstoredemo.com/"
+			spans := body["spans"].([]interface{})
+			for _, v1 := range spans {
+				v := v1.(map[string]interface{})
+				if strings.Contains(v["description"].(string), "wcap") {
+					v["description"] = "GET http://toolstoredemo.com/tools"
+				}
+			}
+		}
+	}
 }
