@@ -5,7 +5,15 @@ The Undertaker is an event traffic replay service. Re(p)lay
 <img src="./img/undertaker-4.jpeg" width="450" height="300">  
 
 ## Why?  
-Stop maintaing +10 different platform SDK's in GCP sending events all the time. Rather, run a single program `event-to-sentry.go` on a cronjob to send all those events for you. It's free. Great for automating test data.
+Stop maintaing +10 different platform SDK's in GCP sending events all the time. Rather, run a single program `event-to-sentry.go` on a cronjob to send all those events for you. It's free. Great for automating test data. Run this command to try out the cloud hosted script:
+```
+curl \
+    -H "dsn1: <YOUR_JAVASCRIPT_DSN>" \
+    -H "dsn2: <YOUR_PYTHON_DSN>" \
+    -H "data: sentry-demos-tracing.json" \
+    -H "tag: ishere" \
+    https://<country>-<region>-<gcp_project>.cloudfunctions.net/<cloud_function>
+```
 
 <img src="./img/event-maker-slide-2.001.png" width="450" height="300">  
 
@@ -15,7 +23,7 @@ SDK's create events and `python/proxy.py` intercepts "undertakes" the events on 
 **STEP 2**  
 `event-to-sentry.go` loads the events from sqlite and relpays them to Sentry (no sdk's used in this step)
 
-## Setup
+## Setup (Local)
 
 1. Enter your DSN's in `.env`  
 ```
@@ -49,7 +57,7 @@ go build -o bin/event-to-sentry-tracing-example *.go
 
 Note - Transactions are not supported if using DSN's from `getsentry/onpremise` as of 07/08/20
 
-## Run
+## Run Locally
 ```
 ./bin/event-to-sentry-<name>
 ./bin/event-to-sentry
@@ -64,6 +72,16 @@ or use `--js` `--py` to pass DSN's when running the executable
 ```
 
 See your events in Sentry
+
+## Run in Cloud Function
+```
+curl \
+    -H "dsn1: <YOUR_JAVASCRIPT_DSN>" \
+    -H "dsn2: <YOUR_PYTHON_DSN>" \
+    -H "data: sentry-demos-tracing.json" \
+    -H "tag: ishere" \
+    https://$UNDERTAKER_CLOUD_FUNCTION_URL
+```
 
 ## Proxy (optional)
 Use the proxy if you want to create your own data set 
@@ -105,6 +123,8 @@ Macbook's cronjob manager for sending events in the background while you work
 https://crontab.guru/
 
 ## Cloud
+<img src="./img/dsn-to-cloud-func-to-sentry.png" width="450" height="300">  
+
 **Upload Dataset to Cloud Storage**
 Contact administrator
 
@@ -139,21 +159,6 @@ https://cloud.google.com/functions/docs/quickstart#whats-next
 https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
 "go mod tidy"
 
-## Todo
-I 
-+add more data to sentry-demos-tracing.json ~100 events
-test getsentry/tracing-example.json (3 DSN's python). logic based on name.json for which DSN keys. refactor..
-
-II
-update db test...would be a read????
-upload your own dataset?
-bulk creation (cronjob) from JSON again
-
-III  
-Envelopes (choose Mobile Health or JS/Python which means upgrade to modern SDK)  
--H id for selecting 1 vs -H all for selecting all  
-move `context.Background()` to `func init()`  
-./go.mod and ./api/go.mod  
 
 ## Notes
 
@@ -187,3 +192,20 @@ try saving request.data without decompressing first
 if the request has "application/x-sentry-envelope" then store endpoint knows to treat it as a Envelope
 
 Google Cloud SDK 303.0.0
+
+## Todo
+getsentry/tracing-example.json (3 DSN's python) again. logic based on name.json for which DSN keys. refactor.  
+
+update the db test
+
+upload your own dataset
+
+bulk creation (cronjob) from JSON again
+
+Envelopes (choose Mobile Health or JS/Python which means upgrade to modern SDK)  
+
+-H id for selecting 1 vs -H all for selecting all  
+
+move `context.Background()` to `func init()`  
+
+./go.mod and ./api/go.mod  
