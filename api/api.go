@@ -198,9 +198,9 @@ func Replay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("> EVENTS length", len(events))
-	for idx, event := range events {
-		fmt.Printf("> EVENT # %v \n", idx)
+
+
+	for _, event := range events {
 
 		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
 		body = eventId(body)
@@ -208,10 +208,12 @@ func Replay(w http.ResponseWriter, r *http.Request) {
 		body = user(body)
 		body = timestamper(body, event.Platform)
 		
-		undertake(body, r)
+		undertake(body)
 
 		requestBody := bodyEncoder(body)
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
+
+
 
 		// 'ignore' is for skipping the final call to Sentry
 		ignore := ""	
