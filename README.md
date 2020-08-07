@@ -104,6 +104,57 @@ Macbook's cronjob manager for sending events in the background while you work
 
 https://crontab.guru/
 
+## Cloud
+**Upload Dataset to Cloud Storage**
+Contact administrator
+
+**Deploy Cloud Function**
+Make sure it compiles locally first `go build -o ignore *.go`
+
+Optionally run it as a local client (see client.go)
+
+```
+gcloud functions deploy <name> --runtime go111 --trigger-http --set-env-vars BUCKET=<bucket>
+gcloud functions describe <name>  
+gsutil ls -r gs://<bucket>/
+```
+
+**Calling the Cloud Function**
+```
+curl \
+    -H "dsn: <dsn_python>" \
+    -H "data: <name.json>" \
+    https://<country>-<region>-<gcp_project>.cloudfunctions.net/<cloud_function>
+
+curl \
+    -H "dsn1: <dsn_javasc>" \
+    -H "dsn2: <dsn_python>" \
+    -H "data: <name.json>" \
+    https://<country>-<region>-<gcp_project>.cloudfunctions.net/<cloud_function>
+```
+
+https://cloud.google.com/go/docs/setup  
+https://cloud.google.com/functions/docs/quickstart (gcloud cli)  
+https://cloud.google.com/functions/docs/quickstart#whats-next  
+https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
+"go mod tidy"
+
+## Todo
+I 
++add more data to sentry-demos-tracing.json ~100 events
+test getsentry/tracing-example.json (3 DSN's python). logic based on name.json for which DSN keys. refactor..
+
+II
+update db test...would be a read????
+upload your own dataset?
+bulk creation (cronjob) from JSON again
+
+III  
+Envelopes (choose Mobile Health or JS/Python which means upgrade to modern SDK)  
+-H id for selecting 1 vs -H all for selecting all  
+move `context.Background()` to `func init()`  
+./go.mod and ./api/go.mod  
+
 ## Notes
 
 #### database
@@ -130,61 +181,9 @@ Tested on ubuntu 18.04 LTS, go 1.12.9 linux/amd64, sentry-sdk 0.14.2, flask Pyth
 
 `python-dotenv` vs `dotenv` if os.getenv is failing
 
-## Todo
-- Mobile android errors/crashes/sessions
-- update tracing-example's endpoint names. www.toolstoredmeo.com instead of gcp url
-- cloud host
-
 `export PYTHONWARNINGS="ignore:Unverified HTTPS request"` before make proxy  
 try saving request.data without decompressing first
 
 if the request has "application/x-sentry-envelope" then store endpoint knows to treat it as a Envelope
 
 Google Cloud SDK 303.0.0
-
-
-## Cloud
-**Upload Dataset to Cloud Storage**
-Contact administrator
-
-**Deploy Cloud Function**
-```
-gcloud functions deploy <name> --runtime go111 --trigger-http --set-env-vars BUCKET=<bucket>
-gcloud functions describe <name>  
-gsutil ls -r gs://<bucket>/
-```
-
-**Calling the Cloud Function**
-```
-curl \
-    -H "dsn: <dsn_python>" \
-    -H "dataset: <name>.json" \
-    https://<country>-<region>-<gcp_project>.cloudfunctions.net/<cloud_function>
-```
-
-https://cloud.google.com/go/docs/setup  
-https://cloud.google.com/functions/docs/quickstart (gcloud cli)  
-https://cloud.google.com/functions/docs/quickstart#whats-next  
-https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
-"go mod tidy"
-
-
-I 
-// getsentry-tracing-example
-Generate getsentry/tracing-example to .json
-Generate sentry-demos/tracing to .json <--- container hosted version of this?
-
-Test getsentry/tracing-example.json (3 DSN's python)
-Test sentry-demos/tracing.json (2 DSN's)
-
-Maintain eventsa.json
-
-II
-
--H id for selecting 1  
-vs  
--H all for selecting all 
-
-III  
-move `context.Background()` to `func init()`  
-./go.mod and ./api/go.mod

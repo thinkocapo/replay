@@ -202,21 +202,15 @@ func Replay(w http.ResponseWriter, r *http.Request) {
 	for idx, event := range events {
 		fmt.Printf("> EVENT # %v \n", idx)
 
-		var body map[string]interface{}
-		var timestamper Timestamper 
-		var bodyEncoder BodyEncoder
-		var headerKeys []string
-		var storeEndpoint string
-		var requestBody []byte
-
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+		body, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEvent(event)
 		body = eventId(body)
 		body = release(body)
 		body = user(body)
 		body = timestamper(body, event.Platform)
 		
-		undertake(body)
-		requestBody = bodyEncoder(body)
+		undertake(body, r)
+
+		requestBody := bodyEncoder(body)
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
 		// 'ignore' is for skipping the final call to Sentry
@@ -234,7 +228,7 @@ func Replay(w http.ResponseWriter, r *http.Request) {
 			}
 
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
-			fmt.Fprint(w, "\n> EVENT made: ", event.Kind, string(responseData))
+			fmt.Fprint(w, "\n> EVENT: ", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
@@ -344,12 +338,17 @@ func user(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-func undertake(body map[string]interface{}) {
+func undertake(body map[string]interface{}, r *http.Request) {
 	if body["tags"] == nil {
 		body["tags"] = make(map[string]interface{})
 	}
 	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "first"
+
+	if r.Header.Get("tag") != "" {
+		tags["undertaker"] = r.Header.Get("tag")	
+	} else {
+		tags["undertaker"] = "hackweek"
+	}
 
 	if _, ok := body["transaction"]; ok {
 		if (body["transaction"].(string) == "http://localhost:5000/" || strings.Contains(body["transaction"].(string), "wcap")) {
