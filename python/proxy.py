@@ -29,49 +29,10 @@ print("""
 
 SENTRY=''
 
+JSON = os.getenv('JSON') # or os.getcwd() + "/sqlite.db"
+print("> json database is:", JSON)
 
-""" This is only for using the proxy to forward events directly to Sentry and NOT save them in your database
-If you're not using this, you can ignore it
-Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
-AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
-"""
-def sentryUrl(DSN):
-    if ("@localhost:" in DSN):
-        KEY = DSN.split('@')[0][7:]
-        # assumes single-digit projectId right now
-        PROJECT_ID= DSN[-1:]
-        HOST = 'localhost:9000'
-        return "http://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
-    if ("ingest.sentry.io" in DSN):
-        KEY = DSN.split('@')[0][8:] # 8 because of 's' in 'https'
-        HOST = DSN.split('@')[1].split('/')[0]
-        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
-        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
-    else:
-        print('\n else')
-        KEY = DSN.split('@')[0][8:]
-        HOST = DSN.split('@')[1].split('/')[0]
-        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
-        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
-
-# SQLITE = os.getenv('SQLITE')
-# database = SQLITE or os.getcwd() + "/sqlite.db"
-# print("> database", database)
-
-JSON = os.getenv('JSON')
-print("> db .json is:", JSON)
-
-# with sqlite3.connect(database) as db:
-#     cursor = db.cursor()
-#     cursor.execute(""" CREATE TABLE IF NOT EXISTS events (
-#                                             id integer PRIMARY KEY,
-#                                             platform text,
-#                                             type text,
-#                                             data BLOB,
-#                                             headers BLOB
-#                                         ); """)
-#     cursor.close()
-
+# OG
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
 def forward():
@@ -87,7 +48,6 @@ def forward():
                 request_headers[key] = request.headers.get(key)
                 # SENTRY = sentryUrl(os.getenv('DSN_PYTHON'))
                 SENTRY = sentryUrl(os.getenv('DSN_PYTHONTEST'))
-                print('X SENTRY X', SENTRY)
         if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
             print('> Javascript error')
             for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
@@ -112,7 +72,49 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-# FORWARD
+# NEW
+# MODIFIED_DSN_FORWARD FORWARD TRANSACTION
+@app.route('/api/2/envelope/', methods=['POST'])
+def forward_envelope():
+    print('> /api/2/envelope/ FORWARD')
+    
+    def make(headers):
+        request_headers = {}
+        user_agent = request.headers.get('User-Agent').lower()
+        if 'python' in user_agent:
+            print('> Python envelope')
+            for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent']:
+                request_headers[key] = request.headers.get(key)
+                SENTRY = sentryUrlEnvelope(os.getenv('DSN_PYTHON_SAAS'))
+        if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+            print('> Javascript envelope')
+            for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+                request_headers[key] = request.headers.get(key)
+                SENTRY = sentryUrlEnvelope(os.getenv('DSN_JAVASCRIPT_SAAS'))
+        return request_headers, SENTRY
+
+    request_headers, SENTRY = make(request.headers)
+    print('> SENTRY url for store endpoint', SENTRY)
+
+    try:
+        print('> type(request.data)', type(request.data))
+        print('> type(request_headers)', type(request_headers))
+
+        response = http.request(
+            "POST", str(SENTRY), body=request.data, headers=request_headers 
+        )
+
+        print('> nothing saved to json file')
+        return 'success1'
+    except Exception as err:
+        print('LOCAL EXCEPTION', err)
+
+# NEW
+# SAVE TRANSACTION
+# @app.route('/api/3/envelope/', methods=['POST'])
+
+
+# FORWARD TRANSACTION?
 @app.route('/api/6/store/', methods=['POST'])
 def forward_store():
     print('> /api/6/store/ FORWARD')
@@ -144,39 +146,8 @@ def forward_store():
 
     return 'good'
 
-# FORWARD
-@app.route('/api/6/envelope/', methods=['POST'])
-def forward_envelope():
-    print('> /api/6/envelope/ FORWARD')
-
-    def make(headers):
-        print('0000000')
-        SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
-        request_headers = {}
-        for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
-            print('11111', key)            
-            request_headers[key] = request.headers.get(key)
-        return request_headers, SENTRY
-
-    request_headers, SENTRY = make(request.headers)
-    print('> SENTRY url for store endpoint', SENTRY)
-    try:
-        print('> type(request.data)', type(request.data))
-        print('> type(request_headers)', type(request_headers))
-
-        response = http.request(
-            "POST", str(SENTRY), body=request.data, headers=request_headers 
-        )
-
-        print('> nothing saved to sqlite database')
-        return 'success'
-    except Exception as err:
-        print('LOCAL EXCEPTION', err)
-
-    return 'good'
-
-# SAVE
-@app.route('/api/5/envelope/', methods=['POST'])
+# SAVE ANDROID (DELETE?)
+@app.route('/api/8/envelope/', methods=['POST'])
 def save_mobile_envelope():
 
     print('\n> /api/5/envelope ')
@@ -223,8 +194,39 @@ def save_mobile_envelope():
 
     return 'SUCCESS'
 
+# FORWARD ANDROID
+# @app.route('/api/9/envelope/', methods=['POST'])
+# def forward_envelope():
+#     print('> /api/6/envelope/ FORWARD')
+
+#     def make(headers):
+#         print('0000000')
+#         SENTRY = sentryUrl(os.getenv('DSN_ANDROID'))
+#         request_headers = {}
+#         for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For', 'Content-Type', 'Accept-Encoding']:
+#             print('11111', key)            
+#             request_headers[key] = request.headers.get(key)
+#         return request_headers, SENTRY
+
+#     request_headers, SENTRY = make(request.headers)
+#     print('> SENTRY url for store endpoint', SENTRY)
+#     try:
+#         print('> type(request.data)', type(request.data))
+#         print('> type(request_headers)', type(request_headers))
+
+#         response = http.request(
+#             "POST", str(SENTRY), body=request.data, headers=request_headers 
+#         )
+
+#         print('> nothing saved to sqlite database')
+#         return 'success'
+#     except Exception as err:
+#         print('LOCAL EXCEPTION', err)
+
+#     return 'good'
+
 # MODIFIED_DSN_SAVE MOBILE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
-@app.route('/api/5/store/', methods=['POST'])
+@app.route('/api/8/store/', methods=['POST'])
 def save_mobile():
     print('> /api/5/store')
 
@@ -327,6 +329,7 @@ def save():
         print("LOCAL EXCEPTION", exception)
     return "success"
 
+# OG
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
 @app.route('/api/4/store/', methods=['POST'])
 def save_and_forward():
@@ -363,15 +366,54 @@ def save_and_forward():
     except Exception as err:
         print('LOCAL EXCEPTION FORWARD', err)
 
+""" This is only for using the proxy to forward events directly to Sentry and NOT save them in your database
+If you're not using this, you can ignore it
+Must pass auth key in URL (not request headers) or else 403 CSRF error from Sentry
+AM Transactions can't be sent to any self-hosted Sentry instance as of 10.0.0 05/30/2020 
+"""
+def sentryUrl(DSN):
+    if ("@localhost:" in DSN):
+        KEY = DSN.split('@')[0][7:]
+        # assumes single-digit projectId right now
+        PROJECT_ID= DSN[-1:]
+        HOST = 'localhost:9000'
+        return "http://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    if ("ingest.sentry.io" in DSN):
+        KEY = DSN.split('@')[0][8:] # 8 because of 's' in 'https'
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    else:
+        print('\n else')
+        KEY = DSN.split('@')[0][8:]
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/store/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+
+def sentryUrlEnvelope(DSN):
+    if ("@localhost:" in DSN):
+        KEY = DSN.split('@')[0][7:]
+        # assumes single-digit projectId right now
+        PROJECT_ID= DSN[-1:]
+        HOST = 'localhost:9000'
+        return "http://%s/api/%s/envelope/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    if ("ingest.sentry.io" in DSN):
+        KEY = DSN.split('@')[0][8:] # 8 because of 's' in 'https'
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/envelope/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+    else:
+        print('\n else')
+        KEY = DSN.split('@')[0][8:]
+        HOST = DSN.split('@')[1].split('/')[0]
+        PROJECT_ID = DSN.split('@')[1].split('/')[1] 
+        return "https://%s/api/%s/envelope/?sentry_key=%s&sentry_version=7" % (HOST, PROJECT_ID, KEY)
+
+
+
 # print(json.dumps(request_headers,indent=2))
 
 # regular:
 # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
 # sessions:
 # print(json.dumps(decompress_gzip(request.data),indent=2))
-
-# import sentry_sdk
-# sentry_sdk.init(
-#     dsn="https://f5227a4c11874545948bd39dd95ed7b4@o87286.ingest.sentry.io/5314428",
-#     release='0.0.1'    
-# )
