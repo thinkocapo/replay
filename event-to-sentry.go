@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	// "database/sql"
 	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,8 +15,6 @@ import (
 	"github.com/joho/godotenv"
 	"strings"
 	"time"
-	// "context"
-	// "cloud.google.com/go/storage"
 	"encoding/json"
 )
 
@@ -27,7 +24,6 @@ var (
 	all         *bool
 	id          *string
 	ignore      *bool
-	// database	*sql.DB
 	database    string
 	db			*string
 	js			*string
@@ -48,17 +44,9 @@ type DSN struct {
 func parseDSN(rawurl string) *DSN {
 	fmt.Println("> rawlurl", rawurl)
 
-	// OG
+	// TODO support for http vs. https 7: vs 8:
 	key := strings.Split(rawurl, "@")[0][7:]
 
-	// keyFirst := strings.Split(rawurl, "@")[0]
-	// fmt.Println("keyFirst", keyFirst) // TODO print [0] and then the [7:]'ed part of it
-	// fmt.Println("length", len(keyFirst)) // TODO print [0] and then the [7:]'ed part of it
-
-	// key := keyFirst[7:]
-	// fmt.Println("key", key) // TODO print [0] and then the [7:]'ed part of it
-	// fmt.Println("length", len(key)) // TODO print [0] and then the [7:]'ed part of it
-	
 	uri, err := url.Parse(rawurl)
 	if err != nil {
 		panic(err)
@@ -197,25 +185,6 @@ func init() {
 }
 
 func main() {
-	// TODO - reserve cloud Storage for cloud function in api/api.go only
-	// bucket := "undertakerevents"
-	// object := os.Getenv("JSON") //"eventsa.json"
-	// ctx := context.Background()
-	// client, err := storage.NewClient(ctx)
-	// if err != nil {
-	// 		fmt.Println("ERROR", err)
-	// }
-	// defer client.Close()
-	// ctx, cancel := context.WithTimeout(ctx, time.Second*50)
-	// defer cancel()
-	// rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
-	// if err != nil {
-	// 	fmt.Errorf("Object(%q).NewReader: %v", object, err)
-	// }
-	// data, err := ioutil.ReadAll(rc)
-	// if err != nil {
-	// 	fmt.Errorf("ioutil.ReadAll: %v", err)
-	// }
 	
 	jsonFile, err := os.Open(database)
 
