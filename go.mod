@@ -5,6 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.62.0 // indirect
 	cloud.google.com/go/bigquery v1.10.0 // indirect
+	cloud.google.com/go/storage v1.10.0
 	github.com/buger/goreplay v1.0.0
 	github.com/buger/jsonparser v1.0.0
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect

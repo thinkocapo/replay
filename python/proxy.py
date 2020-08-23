@@ -59,7 +59,7 @@ def sentryUrl(DSN):
 # print("> database", database)
 
 JSON = os.getenv('JSON')
-print("> .json", JSON)
+print("> db .json is:", JSON)
 
 # with sqlite3.connect(database) as db:
 #     cursor = db.cursor()
