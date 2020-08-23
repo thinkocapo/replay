@@ -19,7 +19,7 @@ Could do 'python event.py -s for "save" or -f for "forward" or -sf for "save_and
 """
 
 # send event to Sentry or the Flask proxy which interfaces with Sqlite
-DSN = os.getenv('WILL_DSN_PYTHONTEST')
+DSN = os.getenv('DSN_PYTHON_SAAS')
 KEY = DSN.split('@')[0]
 PROXY = 'localhost:3001'
 

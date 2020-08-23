@@ -2,26 +2,20 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"flag"
 	"fmt"
-
 	_ "github.com/mattn/go-sqlite3"
-
-	// "github.com/buger/jsonparser"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
-
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-
-	// "strconv"
 	"strings"
 	"time"
+	"encoding/json"
 )
 
 var httpClient = &http.Client{}
@@ -30,7 +24,7 @@ var (
 	all         *bool
 	id          *string
 	ignore      *bool
-	database	*sql.DB
+	database    string
 	db			*string
 	js			*string
 	py			*string
@@ -48,8 +42,10 @@ type DSN struct {
 }
 
 func parseDSN(rawurl string) *DSN {
-	// key := strings.Split(rawurl, "@")[0][7:]
-	key := strings.Split(rawurl, "@")[0][8:]
+	fmt.Println("> rawlurl", rawurl)
+
+	// TODO support for http vs. https 7: vs 8:
+	key := strings.Split(rawurl, "@")[0][7:]
 
 	uri, err := url.Parse(rawurl)
 	if err != nil {
@@ -71,13 +67,13 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) != 32 {
-		log.Fatal("missing key length 32")
+	if len(key) < 31 || len(key) > 32 {
+		log.Fatal("bad key length")
 	}
 	if projectId == "" {
 		log.Fatal("missing project Id")
 	}
-	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
+	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,
@@ -101,14 +97,14 @@ func (d DSN) storeEndpoint() string {
 }
 
 type Event struct {
-	id          int
-	platform, _type string
-	headers     []byte
-	bodyBytes   []byte
+	Platform    string `json:"platform"`
+	Kind        string `json:"kind"`
+	Headers     map[string]string `json:"headers"`
+	Body map[string]interface{} `json:"body"`
 }
 
 func (e Event) String() string {
-	return fmt.Sprintf("\n Event { SqliteId: %d, Platform: %s, Type: %s }\n", e.id, e.platform, e._type)
+	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
 func jsEncoder(body map[string]interface{}) []byte {
@@ -124,14 +120,11 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.platform
-	headers := unmarshalJSON(event.headers)
+	platform := event.Platform
+	headers := event.Headers
 
-	// TODO if db is tracing-example-multiproject.db, then how to route to 3 different python projects. have to know from 'event' if it was gateway, django or celery somehow.
-	// if event_is_from_gateway then projectDSN["gateway"]
-	// python and android events have X-Sentry-Auth
-	if headers["X-Sentry-Auth"] != nil {
-		xSentryAuth := headers["X-Sentry-Auth"].(string)
+	if headers["X-Sentry-Auth"] != "" {
+		xSentryAuth := headers["X-Sentry-Auth"]
 		for _, projectDSN := range projectDSNs {
 			if strings.Contains(xSentryAuth, projectDSN.key) {
 				fmt.Println("> match", projectDSN)
@@ -140,7 +133,6 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 		}
 	}
 	
-	// event was made by a DSN that was not yours, so we can't match it, use default javascript/python DSN in .env
 	var storeEndpoint string
 	if platform == "javascript" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
@@ -162,7 +154,7 @@ func init() {
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database")
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-	db = flag.String("db", "", "path-to-database.db")
+	db = flag.String("db", "", "database.json")
 	js = flag.String("js", "", "javascript DSN")
 	py = flag.String("py", "", "python DSN")
 	flag.Parse()
@@ -177,68 +169,68 @@ func init() {
 	if (*py != "") {
 		projectDSNs["python"] = parseDSN(*py)
 	}
-	projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
 
-	// TODO if event from db was one of these, these will get used, regardless of a --js -py being passed above
-	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
+	// TODO "panic: runtime error: slice bounds out of range [7:0]" if these are not set
+	// projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
+	// projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	fmt.Println("> db flag", *db)
+	fmt.Println("> --db json flag", *db)
 	if *db == "" {
-		database, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
+		database = os.Getenv("JSON")
 	} else {
-		database, _ = sql.Open("sqlite3", *db)
+		database = *db
 	}
 }
 
 func main() {
-	defer database.Close()
-
-	query := ""
-	if *id == "" {
-		query = "SELECT * FROM events ORDER BY id DESC"
-	} else {
-		query = strings.ReplaceAll("SELECT * FROM events WHERE id=?", "?", *id)
-	}
-
-	rows, err := database.Query(query)
+	
+	jsonFile, err := os.Open(database)
 
 	if err != nil {
-		fmt.Println("Failed to load rows", err)
+		log.Fatal(err)
 	}
-	for rows.Next() {
-		var event Event
-		rows.Scan(&event.id, &event.platform, &event._type, &event.bodyBytes, &event.headers)
-		fmt.Println(event)
+
+	fmt.Println("Successfully Opened")
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	defer jsonFile.Close()
+
+	events := make([]Event, 0)
+
+	if err := json.Unmarshal(byteValue, &events); err != nil {
+		panic(err)
+	}
+	fmt.Println("> NUMBER of EVENTS", len(events))
+
+	for idx, event := range events {
+		fmt.Printf("> EVENT# %v \n", idx)
 
 		var body map[string]interface{}
-		var bodySession []byte
+		// var bodySession []byte
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
 		var storeEndpoint string
 		var requestBody []byte
-		if (event._type == "session") {
-			bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
-			requestBody = bodySession
-			buf := encodeGzip(requestBody) // could try jsEncoder?
-			requestBody = buf.Bytes()
-		} else {
-			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
-			body = eventId(body)
-			body = release(body)
-			body = user(body)
-			body = timestamper(body, event.platform)
-			requestBody = bodyEncoder(body)
-		}
-		// fmt.Print("* * * * EVENT HEADERS * * * * *", event.headers)
+		// if (event.Kind == "session") {
+		// 	bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
+		// 	requestBody = bodySession
+		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
+		// 	requestBody = buf.Bytes()
+		// } else {
+		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+		body = eventId(body)
+		body = release(body)
+		body = user(body)
+		body = timestamper(body, event.Platform)
+		// }
+		
+		undertake(body)
+		
+		requestBody = bodyEncoder(body)
 
-		// TODO - tags on which/what header/item from the envelope?
-		// undertake(body)
-
-		// TODO
-		request := buildRequest(requestBody, headerKeys, event.headers, storeEndpoint)
+		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
@@ -251,34 +243,36 @@ func main() {
 				log.Fatal(responseDataErr)
 			}
 
-			fmt.Printf("\n> event type: %s, response: %s\n", event._type, string(responseData))
+			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
-			fmt.Printf("\n> %s event IGNORED", event._type)
+			fmt.Printf("\n> %s event IGNORED", event.Kind)
 		}
 
-		if !*all {
-			rows.Close()
-		}
+		// TODO - break early, or auto-select 1 before the for loop
+		// if !*all {
+		// 	return
+		// }
 
 		time.Sleep(1000 * time.Millisecond)
 	}
-	rows.Close()
+	return
 }
 
+/*
 // func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
 	
 	// WORKS
-	bodyVisible := unmarshalEnvelope(event.bodyBytes)
+	bodyVisible := unmarshalEnvelope(event.Body)
 	fmt.Print(bodyVisible)
 
-	body := event.bodyBytes
+	body := event.Body
 
-	ANDROID := event.platform == "android"
+	ANDROID := event.Platform == "android"
 
-	ERROR := event._type == "error"
-	TRANSACTION := event._type == "transaction"
-	SESSION := event._type == "session"
+	ERROR := event.Kind == "error"
+	TRANSACTION := event.Kind == "transaction"
+	SESSION := event.Kind == "session"
 
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
 
@@ -294,29 +288,28 @@ func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, str
 	}
 
 	// var body map[string]interface{}
-	// if event._type != "session" {
-	// 	body = unmarshalJSON(event.bodyBytes)
+	// if event.Kind != "session" {
+	// 	body = unmarshalJSON(event.Body)
 	// } else {
-	// 	body = event.bodyBytes
-	// 	// body1 := string(event.bodyBytes)
+	// 	body = event.Body
+	// 	// body1 := string(event.Body)
 	// 	// fmt.Print(body1)
 	// }
 	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
 	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 }
+*/
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := unmarshalJSON(event.bodyBytes)
+	body := event.Body
 
-	JAVASCRIPT := event.platform == "javascript"
-	PYTHON := event.platform == "python"
-	ANDROID := event.platform == "android"
+	JAVASCRIPT := event.Platform == "javascript"
+	PYTHON := event.Platform == "python"
+	ANDROID := event.Platform == "android"
 
-	ERROR := event._type == "error"
-	TRANSACTION := event._type == "transaction"
+	ERROR := event.Kind == "error"
+	TRANSACTION := event.Kind == "transaction"
 
-	// need more discovery on acceptable header combinations by platform/event.type as there seemed to be slight differences in initial testing
-	// then, could just save the right headers to the database, and not have to deal with all this here.
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
@@ -339,25 +332,23 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	case PYTHON && ERROR:
 		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
-
 	// TODO need return an error and nil's
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders []byte, storeEndpoint string) *http.Request {
+func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]string, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
-	headerInterface := unmarshalJSON(eventHeaders)
+	headerInterface := eventHeaders
 
 	for _, v := range headerKeys {
-		// Connection:null on some
-		if headerInterface[v] == nil {
+		if headerInterface[v] == "" {			
 			fmt.Print("PASS")
 		} else {
-			request.Header.Set(v, headerInterface[v].(string))
+			request.Header.Set(v, headerInterface[v])
 		}
 	}
 	return request
@@ -396,8 +387,6 @@ func release(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-// if it's a back-end event, this randomly generated user will not match the user from the corresponding front end (trace) event
-// so it's better to never miss setting the user from the SDK
 func user(body map[string]interface{}) map[string]interface{} {
 	if body["user"] == nil {
 		body["user"] = make(map[string]interface{})
@@ -419,5 +408,5 @@ func undertake(body map[string]interface{}) {
 		body["tags"] = make(map[string]interface{})
 	}
 	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "crontab"
+	tags["undertaker"] = "h4ckweek"
 }
