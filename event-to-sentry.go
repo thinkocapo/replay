@@ -49,17 +49,16 @@ func parseDSN(rawurl string) *DSN {
 	fmt.Println("> rawlurl", rawurl)
 
 	// OG
-	// key := strings.Split(rawurl, "@")[0][7:]
+	key := strings.Split(rawurl, "@")[0][7:]
 
-	keyFirst := strings.Split(rawurl, "@")[0]
-	fmt.Println("keyFirst", keyFirst) // TODO print [0] and then the [7:]'ed part of it
-	fmt.Println("length", len(keyFirst)) // TODO print [0] and then the [7:]'ed part of it
+	// keyFirst := strings.Split(rawurl, "@")[0]
+	// fmt.Println("keyFirst", keyFirst) // TODO print [0] and then the [7:]'ed part of it
+	// fmt.Println("length", len(keyFirst)) // TODO print [0] and then the [7:]'ed part of it
 
-	key := keyFirst[7:]
-	fmt.Println("key", key) // TODO print [0] and then the [7:]'ed part of it
-	fmt.Println("length", len(key)) // TODO print [0] and then the [7:]'ed part of it
+	// key := keyFirst[7:]
+	// fmt.Println("key", key) // TODO print [0] and then the [7:]'ed part of it
+	// fmt.Println("length", len(key)) // TODO print [0] and then the [7:]'ed part of it
 	
-
 	uri, err := url.Parse(rawurl)
 	if err != nil {
 		panic(err)
@@ -80,13 +79,13 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) > 32 || len(key) < 31 {
+	if len(key) < 31 || len(key) > 32 {
 		log.Fatal("bad key length")
 	}
 	if projectId == "" {
 		log.Fatal("missing project Id")
 	}
-	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
+	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,
@@ -189,8 +188,7 @@ func init() {
 	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	// TODO
-	fmt.Println("> db flag", *db)
+	fmt.Println("> --db json flag", *db)
 	if *db == "" {
 		database = os.Getenv("JSON")
 	} else {
@@ -259,7 +257,6 @@ func main() {
 		body = timestamper(body, event.Platform)
 		// }
 		
-		// TODO - get this working for any tags within a Envelope
 		undertake(body)
 		
 		requestBody = bodyEncoder(body)
