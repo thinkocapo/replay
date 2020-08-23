@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
+	// "database/sql"
 	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,8 +16,8 @@ import (
 	"github.com/joho/godotenv"
 	"strings"
 	"time"
-	"context"
-	"cloud.google.com/go/storage"
+	// "context"
+	// "cloud.google.com/go/storage"
 	"encoding/json"
 )
 
@@ -27,7 +27,8 @@ var (
 	all         *bool
 	id          *string
 	ignore      *bool
-	database	*sql.DB
+	// database	*sql.DB
+	database    string
 	db			*string
 	js			*string
 	py			*string
@@ -45,8 +46,19 @@ type DSN struct {
 }
 
 func parseDSN(rawurl string) *DSN {
+	fmt.Println("> rawlurl", rawurl)
+
+	// OG
 	// key := strings.Split(rawurl, "@")[0][7:]
-	key := strings.Split(rawurl, "@")[0][8:]
+
+	keyFirst := strings.Split(rawurl, "@")[0]
+	fmt.Println("keyFirst", keyFirst) // TODO print [0] and then the [7:]'ed part of it
+	fmt.Println("length", len(keyFirst)) // TODO print [0] and then the [7:]'ed part of it
+
+	key := keyFirst[7:]
+	fmt.Println("key", key) // TODO print [0] and then the [7:]'ed part of it
+	fmt.Println("length", len(key)) // TODO print [0] and then the [7:]'ed part of it
+	
 
 	uri, err := url.Parse(rawurl)
 	if err != nil {
@@ -68,8 +80,8 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) != 32 {
-		log.Fatal("missing key length 32")
+	if len(key) > 32 || len(key) < 31 {
+		log.Fatal("bad key length")
 	}
 	if projectId == "" {
 		log.Fatal("missing project Id")
@@ -155,7 +167,7 @@ func init() {
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database")
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-	db = flag.String("db", "", "path-to-database.db")
+	db = flag.String("db", "", "database.json")
 	js = flag.String("js", "", "javascript DSN")
 	py = flag.String("py", "", "python DSN")
 	flag.Parse()
@@ -170,45 +182,56 @@ func init() {
 	if (*py != "") {
 		projectDSNs["python"] = parseDSN(*py)
 	}
-	projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
 
-	projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
+	// TODO "panic: runtime error: slice bounds out of range [7:0]" if these are not set
+	// projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
+	// projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
+	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
+	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
 	// TODO
 	fmt.Println("> db flag", *db)
 	if *db == "" {
-		database, _ = sql.Open("sqlite3", os.Getenv("SQLITE"))
-
+		database = os.Getenv("JSON")
 	} else {
-		database, _ = sql.Open("sqlite3", *db)
-
+		database = *db
 	}
 }
 
 func main() {
-	bucket := "undertakerevents"
-	object := os.Getenv("JSON") //"eventsa.json"
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
+	// TODO - reserve cloud Storage for cloud function in api/api.go only
+	// bucket := "undertakerevents"
+	// object := os.Getenv("JSON") //"eventsa.json"
+	// ctx := context.Background()
+	// client, err := storage.NewClient(ctx)
+	// if err != nil {
+	// 		fmt.Println("ERROR", err)
+	// }
+	// defer client.Close()
+	// ctx, cancel := context.WithTimeout(ctx, time.Second*50)
+	// defer cancel()
+	// rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+	// if err != nil {
+	// 	fmt.Errorf("Object(%q).NewReader: %v", object, err)
+	// }
+	// data, err := ioutil.ReadAll(rc)
+	// if err != nil {
+	// 	fmt.Errorf("ioutil.ReadAll: %v", err)
+	// }
+	
+	jsonFile, err := os.Open(database)
+
 	if err != nil {
-			fmt.Println("ERROR", err)
-	}
-	defer client.Close()
-	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
-	defer cancel()
-	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
-	if err != nil {
-		fmt.Errorf("Object(%q).NewReader: %v", object, err)
-	}
-	data, err := ioutil.ReadAll(rc)
-	if err != nil {
-		fmt.Errorf("ioutil.ReadAll: %v", err)
+		log.Fatal(err)
 	}
 
+	fmt.Println("Successfully Opened")
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	defer jsonFile.Close()
+
 	events := make([]Event, 0)
-	if err := json.Unmarshal(data, &events); err != nil {
+
+	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
 	}
 	fmt.Println("> NUMBER of EVENTS", len(events))

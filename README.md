@@ -193,19 +193,19 @@ if the request has "application/x-sentry-envelope" then store endpoint knows to 
 
 Google Cloud SDK 303.0.0
 
+initialize your file.json to an empty array [] because it gets appended to
+
 ## Todo
+proxy save  
+event-to-sentry  
+
 getsentry/tracing-example.json (3 DSN's python) again. logic based on name.json for which DSN keys. refactor.  
-
-update the db test
-
-upload your own dataset
 
 bulk creation (cronjob) from JSON again
 
 Envelopes (choose Mobile Health or JS/Python which means upgrade to modern SDK)  
 
+
 -H id for selecting 1 vs -H all for selecting all  
-
 move `context.Background()` to `func init()`  
-
 ./go.mod and ./api/go.mod  
