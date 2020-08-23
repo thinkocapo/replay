@@ -270,7 +270,7 @@ def save_mobile():
 
 ###############################################################################
 # OG
-# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to Sqlite DB. No forward of event to your Sentry instance.
+# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to json file. No forward of event to your Sentry instance.
 @app.route('/api/3/store/', methods=['POST'])
 def save():
     print('> SAVING')
