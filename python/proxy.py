@@ -32,6 +32,8 @@ SENTRY=''
 JSON = os.getenv('JSON') # or os.getcwd() + "/sqlite.db"
 print("> json database is:", JSON)
 
+JSON_TRANSACTIONS = "transactions.json"
+
 # OG
 # MODIFIED_DSN_FORWARD - Intercepts the payload sent by sentry_sdk in event.py, and then sends it to a Sentry instance
 @app.route('/api/2/store/', methods=['POST'])
@@ -72,8 +74,7 @@ def forward():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-# NEW
-# MODIFIED_DSN_FORWARD FORWARD TRANSACTION
+# MODIFIED_DSN_FORWARD 
 @app.route('/api/2/envelope/', methods=['POST'])
 def forward_envelope():
     print('> /api/2/envelope/ FORWARD')
@@ -109,9 +110,113 @@ def forward_envelope():
     except Exception as err:
         print('LOCAL EXCEPTION', err)
 
-# NEW
-# SAVE TRANSACTION
-# @app.route('/api/3/envelope/', methods=['POST'])
+# OG
+# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to json file. No forward of event to your Sentry instance.
+@app.route('/api/3/store/', methods=['POST'])
+def save():
+    print('> SAVING')
+
+    event_platform = ''
+    event_type = ''
+    request_headers = {}
+    user_agent = request.headers.get('User-Agent').lower()
+    body = ''
+
+    if 'python' in user_agent:
+        event_platform = 'python'
+        # TODO i think can assume it's always Error here, now that transactions go to api/3/envelope
+        # event_type = get_event_type(request.data, "python")
+        event_type = "error"
+        print('> PYTHON', event_type)
+        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
+            request_headers[key] = request.headers.get(key)
+        body = decompress_gzip(request.data)
+    if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+        event_platform = 'javascript'
+        # TODO same as above
+        # event_type = get_event_type(request.data, "javascript")
+        event_type = "error"
+        print('> JAVASCRIPT ', event_type)
+        for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+            request_headers[key] = request.headers.get(key)
+        body = request.data
+    body = json.loads(body)
+
+    o = {
+        'platform': event_platform,
+        'kind': event_type,
+        # 'headers': json.dumps(request_headers),
+        'headers': request_headers,
+        'body': body
+    }
+
+    try:
+        with open(JSON) as file:
+            current_data = json.load(file)
+
+        with open(JSON, 'w') as file:
+            current_data.append(o) # TODO test this...
+            json.dump(current_data, file)
+
+    except Exception as exception:
+        print("LOCAL EXCEPTION", exception)
+    return "success"
+
+# MODIFIED_DSN_SAVE
+@app.route('/api/3/envelope/', methods=['POST'])
+def save_envelope():
+    print('> SAVING')
+
+    event_platform = ''
+    event_type = "transaction"
+    request_headers = {}
+    user_agent = request.headers.get('User-Agent').lower()
+    body = ''
+
+    if 'python' in user_agent:
+        event_platform = 'python'
+        # event_type = get_event_type(request.data, "python")
+        print('> PYTHON', event_type)
+        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
+            request_headers[key] = request.headers.get(key)
+        body = decompress_gzip(request.data)
+        body = body.split('\n') # TODO is this needed? gets rid of \n's
+    if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
+        event_platform = 'javascript'
+        # event_type = get_event_type(request.data, "javascript")
+        print('> JAVASCRIPT ', event_type)
+        for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
+            request_headers[key] = request.headers.get(key)
+        body = request.data.decode("utf-8")
+        body = body.split('\n') # TODO is this needed? gets rid of \n's
+
+    # body = json.loads(body)
+
+    # print(body)
+    print("\n> TYPE OF BODY: ", type(body)) # list or string, depending on if you use body.split('\n')
+
+    o = {
+        'platform': event_platform,
+        'kind': event_type,
+        'headers': json.dumps(request_headers),
+        # 'headers': request_headers, # TODO, can use. preferred?
+        'body': body # TODO could replace \'s? json.loads dumps didn't do anything
+        # ^ body appears as 'list', json array, string?
+    }
+
+    try:
+        with open(JSON_TRANSACTIONS) as file:
+            current_data = json.load(file)
+
+        with open(JSON_TRANSACTIONS, 'w') as file:
+            current_data.append(o)
+            json.dump(current_data, file)
+
+    except Exception as exception:
+        print("LOCAL EXCEPTION", exception)
+    return "success"
+
+
 
 
 # FORWARD TRANSACTION?
@@ -244,14 +349,14 @@ def save_mobile():
     print('> event_type', event_type)
     
 
-    # TODO are these different if it's a session?
+    # ATODO are these different if it's a session?
     for key in ['X-Sentry-Auth', 'Content-Length','User-Agent','Connection','Content-Encoding','X-Forwarded-Proto','Host','Accept','X-Forwarded-For']:
         request_headers[key] = request.headers.get(key)
     # print(json.dumps(request_headers,indent=2))
     # print(json.dumps(json.loads(decompress_gzip(request.data)),indent=2))
     # body = decompress_gzip(request.data) # 'error: not a gzipped file' in decompress_gzip
 
-    # TODO verify always right
+    # ATODO verify always right
     body = request.data
 
     insert_query = ''' INSERT INTO events(platform,type,body,headers)
@@ -271,63 +376,7 @@ def save_mobile():
     return 'SUCCESS'
 
 ###############################################################################
-# OG
-# MODIFIED_DSN_SAVE - Intercepts event from sentry sdk and saves them to json file. No forward of event to your Sentry instance.
-@app.route('/api/3/store/', methods=['POST'])
-def save():
-    print('> SAVING')
 
-    event_platform = ''
-    event_type = ''
-    request_headers = {}
-    user_agent = request.headers.get('User-Agent').lower()
-    body = ''
-
-    if 'python' in user_agent:
-
-        event_platform = 'python'
-        event_type = get_event_type(request.data, "python")
-        print('> PYTHON', event_type)
-
-        for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
-            request_headers[key] = request.headers.get(key)
-
-        body = decompress_gzip(request.data)
-
-    if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
-
-        event_platform = 'javascript'
-        event_type = get_event_type(request.data, "javascript")
-        print('> JAVASCRIPT ', event_type)
-
-        for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
-            request_headers[key] = request.headers.get(key)
-
-        body = request.data
-
-
-    body = json.loads(body)
-
-    o = {
-        # 'id': '0'
-        'platform': event_platform,
-        'kind': event_type,
-        # 'headers': json.dumps(request_headers),
-        'headers': request_headers,
-        'body': body
-    }
-
-    try:
-        with open(JSON) as file:
-            current_data = json.load(file)
-
-        with open(JSON, 'w') as file:
-            current_data.append(o) # TODO test this...
-            json.dump(current_data, file)
-
-    except Exception as exception:
-        print("LOCAL EXCEPTION", exception)
-    return "success"
 
 # OG
 # MODIFIED_DSN_SAVE_AND_FORWARD - this has been out of date since proxy.py started supporting Transactions in /api/2/store and /api/3/store endpoints
