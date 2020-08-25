@@ -60,12 +60,15 @@ try:
 
         if _body == '-b':
             print('_body', _body)
+            # print('body', type(body)) # string
+            # body = body.replace("\\", "")
+            # print('body', body)
             try:
                 output['body'] = json.loads(body)
             except:
                 output['body'] = body
         
-        print(json.dumps(output, indent=2))
+        # print(json.dumps(output, indent=2))
     
 except Exception as e:
     print('EXCEPTION in test/db.py:', e)

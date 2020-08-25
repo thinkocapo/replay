@@ -103,6 +103,13 @@ type Event struct {
 	Body map[string]interface{} `json:"body"`
 }
 
+type EventEnvelope struct {
+	Platform    string `json:"platform"`
+	Kind        string `json:"kind"`
+	Headers     map[string]string `json:"headers"`
+	Body string `json:"body"` // or an Array of objects
+}
+
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
@@ -186,6 +193,7 @@ func init() {
 
 func main() {
 	
+	// TODO - is still JSON but with 'bytes' in the Body
 	jsonFile, err := os.Open(database)
 
 	if err != nil {
@@ -219,7 +227,7 @@ func main() {
 		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
 		// 	requestBody = buf.Bytes()
 		// } else {
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // decodeEnvelope
 		body = eventId(body)
 		body = release(body)
 		body = user(body)

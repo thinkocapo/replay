@@ -124,8 +124,6 @@ def save():
 
     if 'python' in user_agent:
         event_platform = 'python'
-        # TODO i think can assume it's always Error here, now that transactions go to api/3/envelope
-        # event_type = get_event_type(request.data, "python")
         event_type = "error"
         print('> PYTHON', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
@@ -133,20 +131,19 @@ def save():
         body = decompress_gzip(request.data)
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
         event_platform = 'javascript'
-        # TODO same as above
-        # event_type = get_event_type(request.data, "javascript")
         event_type = "error"
         print('> JAVASCRIPT ', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
         body = request.data
+
+    # TODO store the bytes again...
     body = json.loads(body)
 
     o = {
         'platform': event_platform,
         'kind': event_type,
-        # 'headers': json.dumps(request_headers),
-        'headers': request_headers,
+        'headers': request_headers, # json.dumps(request_headers),
         'body': body
     }
 
@@ -155,7 +152,7 @@ def save():
             current_data = json.load(file)
 
         with open(JSON, 'w') as file:
-            current_data.append(o) # TODO test this...
+            current_data.append(o)
             json.dump(current_data, file)
 
     except Exception as exception:
@@ -175,40 +172,47 @@ def save_envelope():
 
     if 'python' in user_agent:
         event_platform = 'python'
-        # event_type = get_event_type(request.data, "python")
         print('> PYTHON', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
         body = decompress_gzip(request.data)
-        body = body.split('\n') # TODO is this needed? gets rid of \n's
+        # body = body.split('\n')
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
         event_platform = 'javascript'
-        # event_type = get_event_type(request.data, "javascript")
         print('> JAVASCRIPT ', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
-        body = request.data.decode("utf-8")
-        body = body.split('\n') # TODO is this needed? gets rid of \n's
+        #body = request.data.decode("utf-8")
+        # print('BODY BEFORE', body) # still no slashes
+        # body = body.replace("\\", "") # not needed, as slashes are addd when getting saved
+        #body = body.split('\n') # not needed since storing bytes (of the envelope string). .split turns it into a List
 
-    # body = json.loads(body)
+    print("\n> TYPE OF BODY: ", type(body))
+    
+    # for item in body:
+        # print(type(item))
+        # item = json.loads(item)
+        # print(type(item))
 
-    # print(body)
-    print("\n> TYPE OF BODY: ", type(body)) # list or string, depending on if you use body.split('\n')
-
+    # print(json.dumps(body))
+    
+    # TODO store as slice of bytes?
     o = {
         'platform': event_platform,
         'kind': event_type,
-        'headers': json.dumps(request_headers),
-        # 'headers': request_headers, # TODO, can use. preferred?
-        'body': body # TODO could replace \'s? json.loads dumps didn't do anything
-        # ^ body appears as 'list', json array, string?
+        'headers': request_headers,
+        'body': body
+        # 'body': json.loads(body)
+        # 'body': json.dumps(body) # adds too many slashes
     }
 
     try:
         with open(JSON_TRANSACTIONS) as file:
             current_data = json.load(file)
 
-        with open(JSON_TRANSACTIONS, 'w') as file:
+        with open(JSON_TRANSACTIONS, 'r+') as file:
+            # current_data = json.load(file)
+
             current_data.append(o)
             json.dump(current_data, file)
 
