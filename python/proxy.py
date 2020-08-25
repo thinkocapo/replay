@@ -140,15 +140,20 @@ def save():
     # TODO store the bytes again...
     # body = json.loads(body)
 
-    print("TYPE", type(request.data))
-    print("REQUEST", type(request.data.decode('utf8')))
+    print("TYPE request.data", type(request.data))
+    # print("TYPE2", type(json.dumps(request.data.decode("utf-8"))))
     # print(bytes(body))
 
     o = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers, # json.dumps(request_headers),
-        'body': str(request.data)
+        
+        # TO TRY
+        'body': json.dumps(request.data.decode("utf-8"))
+        
+        # 'body': str(request.data)
+
         # 'body': request.data
         # 'body': request.data.decode('utf8') # writes as "body": "{\"exception\":{\"values\":[{\"
         # 'body': json.dumps(request.data)
@@ -193,28 +198,33 @@ def save_envelope():
         print('> JAVASCRIPT ', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
-        #body = request.data.decode("utf-8")
+        # body = request.data
+        body = request.data.decode("utf-8")
         # print('BODY BEFORE', body) # still no slashes
         # body = body.replace("\\", "") # not needed, as slashes are addd when getting saved
         #body = body.split('\n') # not needed since storing bytes (of the envelope string). .split turns it into a List
 
-    print("\n> TYPE OF BODY: ", type(body))
-    
+    # print("\n> TYPE request.data: ", type(request.data))
+    # print("> TYPE2", type(json.dumps(request.data.decode("utf-8"))))
     # for item in body:
         # print(type(item))
         # item = json.loads(item)
         # print(type(item))
 
-    # print(json.dumps(body))
-    
+    print(type(json.dumps(body)))
+
+    # print(request.data)
     o = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
-        'body': str(body)
+        # 'body': json.dumps(body.decode("utf-8"))
+
+        # 'body': str(body)
+        
         # 'body': body
         # 'body': json.loads(body)
-        # 'body': json.dumps(body) # adds too many slashes
+        'body': json.dumps(body) # adds too many slashes
     }
 
     try:

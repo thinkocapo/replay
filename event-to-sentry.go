@@ -100,7 +100,8 @@ type Event struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
-	Body map[string]interface{} `json:"body"`
+	// Body map[string]interface{} `json:"body"`
+	Body        string `json:"body"`
 }
 
 type EventEnvelope struct {
@@ -207,12 +208,16 @@ func main() {
 	events := make([]Event, 0)
 	fmt.Println(len(events))
 
-	eventsB := make ([]EventEnvelope, 0)
+	// eventsB := make ([]EventEnvelope, 0)
 
-	if err := json.Unmarshal(byteValue, &eventsB); err != nil {
+	if err := json.Unmarshal(byteValue, &events); err != nil {
+	// if err := json.Unmarshal(byteValue, &eventsB); err != nil {
 		panic(err)
 	}
-	fmt.Println("> NUMBER of EVENTS", len(eventsB))
+	// fmt.Println("> NUMBER of EVENTS", len(eventsB))
+
+	// TEST tbd...
+	// for idx, event := range eventsB {}
 
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
@@ -224,21 +229,53 @@ func main() {
 		var headerKeys []string
 		var storeEndpoint string
 		var requestBody []byte
+		// var bodyEnvelope string // TODO
 		// if (event.Kind == "session") {
 		// 	bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
 		// 	requestBody = bodySession
 		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
 		// 	requestBody = buf.Bytes()
 		// } else {
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // decodeEnvelope
-		body = eventId(body)
-		body = release(body)
-		body = user(body)
-		body = timestamper(body, event.Platform)
-		// }
+
+		if (event.Kind == "error") {
+			fmt.Println("EEEEEEEEEEEEEEEEEEEE")
+
+			ans0, _ := json.Marshal(event.Body)
+			errorEvent := make(map[string]interface{})
+			if err := json.Unmarshal(ans0, &errorEvent); err != nil {
+				fmt.Print("There was an error")
+				return
+			}
+			fmt.Println(errorEvent)
+
+			// strg, _ := json.Marshal(event.Body)
+			// fmt.Printf("\n> strgE %T %v\n", strg, strg)
+
+			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+	
+			// dont map[interface]
+			body = eventId(body)
+			body = release(body)
+			body = user(body)
+			body = timestamper(body, event.Platform)
+			// }
+			
+			undertake(body)
+		} else if (event.Kind == "transaction") {
+			fmt.Println("TTTTTTTTTTTTTTTTTTT")
+
+			// TODO
+			ans, _ := json.Marshal(event.Body)
+			thing := unmarshalEnvelope(ans)
+			fmt.Printf("type of unmarshalEnvelope'd %T", thing)
+
+			strgT, _ := json.Marshal(event.Body)
+			fmt.Printf("\n> strgT %T \n", strgT)
+
+			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // Envelope(event)
+		}
 		
-		undertake(body)
-		
+		// dont map[interface]
 		requestBody = bodyEncoder(body)
 
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
@@ -312,7 +349,10 @@ func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, str
 */
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := event.Body
+
+	// TEMP
+	// body := event.Body
+	body := make(map[string]interface{})
 
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"

@@ -35,9 +35,14 @@ func unmarshalEnvelope(bytes []byte) []string {
 	envelope = string(bytes)
 	envelopeContents := strings.Split(envelope, "\n")
 
-	fmt.Print(envelopeContents[0], "\n")
-	fmt.Print(envelopeContents[1], "\n")
-	fmt.Print(envelopeContents[2], "\n")
+	fmt.Print("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . . ")
+	// fmt.Print(envelopeContents[0], "\n")
+
+	// TODO make into object map[string]interface{}
+
+
+	// fmt.Print(envelopeContents[1], "\n")
+	// fmt.Print(envelopeContents[2], "\n")
 
 	// if err := json.Unmarshal(bytes, &text); err != nil {
 	// 	panic(err)
