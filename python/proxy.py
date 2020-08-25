@@ -138,19 +138,30 @@ def save():
         body = request.data
 
     # TODO store the bytes again...
-    body = json.loads(body)
+    # body = json.loads(body)
+
+    print("TYPE", type(request.data))
+    print("REQUEST", type(request.data.decode('utf8')))
+    # print(bytes(body))
 
     o = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers, # json.dumps(request_headers),
-        'body': body
+        'body': str(request.data)
+        # 'body': request.data
+        # 'body': request.data.decode('utf8') # writes as "body": "{\"exception\":{\"values\":[{\"
+        # 'body': json.dumps(request.data)
+        # 'body': request.data.decode('ascii') # writes as "body": "{\"exception\":{\"values\":[{\"
+        # 'body': bytes(str(body), "utf8")
+        # 'body': bytes(json.dumps(body), "utf8"),
+        # 'body': bytes(body)
+        # 'body': json.loads(body)
     }
 
     try:
         with open(JSON) as file:
             current_data = json.load(file)
-
         with open(JSON, 'w') as file:
             current_data.append(o)
             json.dump(current_data, file)
