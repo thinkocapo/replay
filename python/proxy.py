@@ -207,23 +207,22 @@ def save_envelope():
 
     # print(json.dumps(body))
     
-    # TODO store as slice of bytes?
     o = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
-        'body': body
+        'body': str(body)
+        # 'body': body
         # 'body': json.loads(body)
         # 'body': json.dumps(body) # adds too many slashes
     }
 
     try:
-        with open(JSON_TRANSACTIONS) as file:
+        with open(JSON) as file:
             current_data = json.load(file)
 
-        with open(JSON_TRANSACTIONS, 'r+') as file:
+        with open(JSON, 'w') as file:
             # current_data = json.load(file)
-
             current_data.append(o)
             json.dump(current_data, file)
 

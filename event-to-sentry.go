@@ -107,7 +107,7 @@ type EventEnvelope struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
-	Body string `json:"body"` // or an Array of objects
+	Body        string `json:"body"` // or an Array of objects
 }
 
 func (e Event) String() string {
@@ -205,11 +205,14 @@ func main() {
 	defer jsonFile.Close()
 
 	events := make([]Event, 0)
+	fmt.Println(len(events))
 
-	if err := json.Unmarshal(byteValue, &events); err != nil {
+	eventsB := make ([]EventEnvelope, 0)
+
+	if err := json.Unmarshal(byteValue, &eventsB); err != nil {
 		panic(err)
 	}
-	fmt.Println("> NUMBER of EVENTS", len(events))
+	fmt.Println("> NUMBER of EVENTS", len(eventsB))
 
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
