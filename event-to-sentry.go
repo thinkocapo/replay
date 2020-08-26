@@ -238,20 +238,24 @@ func main() {
 
 		if (event.Kind == "error") {
 			fmt.Println("EEEEEEEEEEEEEEEEEEEE")
-
 			
-			// var errorEvent map[string]interface{}
-			
-			var errorString string			
+			var errorEvent map[string]interface{}
+			// var errorString string
+			// fmt.Println("\n > ERROR", errorString) // no slashes
 
-			if err := json.Unmarshal([]byte(event.Body), &errorString); err != nil {
+			stripped := strings.ReplaceAll(event.Body, "\\", "")
+			stripped = stripped[1:]
+			stripped = stripped[:len(stripped)-1]
+			
+			fmt.Println("\n STRIPPED", stripped)
+			
+			if err := json.Unmarshal([]byte(stripped), &errorEvent); err != nil {
 				fmt.Print(err)
 				return
 			}
 
-			fmt.Println("ERROR", errorString) // no slashes
 
-			// fmt.Println("ERROR", errorEvent)
+			fmt.Println("\n > ERROR", errorEvent)
 
 			// strg, _ := json.Marshal(event.Body)
 			// fmt.Printf("\n> strgE %T %v\n", strg, strg)
@@ -277,8 +281,9 @@ func main() {
 			// fmt.Printf("\n> TRANSACTION %T \n", transaction)
 
 			// TO TRY
-			transaction := unmarshalEnvelope([]byte(event.Body))
-			fmt.Println("TRANSACTION %T", transaction) // slashes? then split'\n' and make into Array of Objects
+			// transaction := unmarshalEnvelope([]byte(event.Body))
+			transaction := unmarshalEnvelope(event.Body)
+			fmt.Printf("TRANSACTION %T", transaction) // slashes? then split'\n' and make into Array of Objects
 
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // Envelope(event)
 		}

@@ -30,26 +30,27 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-func unmarshalEnvelope(bytes []byte) []string {
-	var envelope string
-	envelope = string(bytes)
+// func unmarshalEnvelope(bytes []byte) []string {
+func unmarshalEnvelope(envelope string) []string {
+
+	// fmt.Println("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . .", len(envelopeContents))
+	// var envelope string
+	// envelope = string(bytes)
 	envelopeContents := strings.Split(envelope, "\\n")
-	fmt.Println("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . .", len(envelopeContents))
 
 	var content map[string]interface{}
-	// var content map[string]string
 
-	fmt.Println(envelopeContents[0]) // [1:] if extra "" at the beginning
+	fmt.Println(envelopeContents[0]) 
 	
-	ans := strings.ReplaceAll(envelopeContents[0], "\\", "")
-	// ans = ans + "\""
-	ans = ans[1:]
-	fmt.Println("answer", ans)
+	stripped := strings.ReplaceAll(envelopeContents[0], "\\", "")
 
-	// if err := json.Unmarshal([]byte(envelopeContents[0][1:]), &content); err != nil {
-	if err := json.Unmarshal([]byte(ans), &content); err != nil {
+	// remove the prepending quotation mark on "{\"event_id\": so it becomes {\"event_id\"
+	stripped = stripped[1:]
+
+	if err := json.Unmarshal([]byte(stripped), &content); err != nil {
 		panic(err)
 	}
+	// SUCCESS
 	fmt.Println("CONTENT", content)
 	
 	return envelopeContents
