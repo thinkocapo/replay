@@ -151,6 +151,7 @@ def save():
         
         # TO TRY
         'body': json.dumps(request.data.decode("utf-8"))
+        # 'body': json.dumps(request.data.decode("unicode-escape"))
         
         # 'body': str(request.data)
 

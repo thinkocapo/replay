@@ -101,6 +101,7 @@ type Event struct {
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
 	// Body map[string]interface{} `json:"body"`
+	// Body        []byte `json:"body"`
 	Body        string `json:"body"`
 }
 
@@ -194,19 +195,17 @@ func init() {
 
 func main() {
 	
-	// TODO - is still JSON but with 'bytes' in the Body
 	jsonFile, err := os.Open(database)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Successfully Opened")
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	defer jsonFile.Close()
 
 	events := make([]Event, 0)
-	fmt.Println(len(events))
+	// fmt.Println(len(events))
 
 	// eventsB := make ([]EventEnvelope, 0)
 
@@ -240,17 +239,23 @@ func main() {
 		if (event.Kind == "error") {
 			fmt.Println("EEEEEEEEEEEEEEEEEEEE")
 
-			ans0, _ := json.Marshal(event.Body)
-			errorEvent := make(map[string]interface{})
-			if err := json.Unmarshal(ans0, &errorEvent); err != nil {
-				fmt.Print("There was an error")
+			
+			// var errorEvent map[string]interface{}
+			
+			var errorString string			
+
+			if err := json.Unmarshal([]byte(event.Body), &errorString); err != nil {
+				fmt.Print(err)
 				return
 			}
-			fmt.Println(errorEvent)
+
+			fmt.Println("ERROR", errorString) // no slashes
+
+			// fmt.Println("ERROR", errorEvent)
 
 			// strg, _ := json.Marshal(event.Body)
 			// fmt.Printf("\n> strgE %T %v\n", strg, strg)
-
+			
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
 	
 			// dont map[interface]
@@ -265,12 +270,15 @@ func main() {
 			fmt.Println("TTTTTTTTTTTTTTTTTTT")
 
 			// TODO
-			ans, _ := json.Marshal(event.Body)
-			thing := unmarshalEnvelope(ans)
-			fmt.Printf("type of unmarshalEnvelope'd %T", thing)
+			// ans, _ := json.Marshal(event.Body)
+			// thing := unmarshalEnvelope(ans)
+			// fmt.Printf("type of unmarshalEnvelope'd %T", thing)
 
-			strgT, _ := json.Marshal(event.Body)
-			fmt.Printf("\n> strgT %T \n", strgT)
+			// fmt.Printf("\n> TRANSACTION %T \n", transaction)
+
+			// TO TRY
+			transaction := unmarshalEnvelope([]byte(event.Body))
+			fmt.Println("TRANSACTION %T", transaction) // slashes? then split'\n' and make into Array of Objects
 
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // Envelope(event)
 		}

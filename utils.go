@@ -33,20 +33,25 @@ func encodeGzip(b []byte) bytes.Buffer {
 func unmarshalEnvelope(bytes []byte) []string {
 	var envelope string
 	envelope = string(bytes)
-	envelopeContents := strings.Split(envelope, "\n")
+	envelopeContents := strings.Split(envelope, "\\n")
+	fmt.Println("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . .", len(envelopeContents))
 
-	fmt.Print("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . . ")
-	// fmt.Print(envelopeContents[0], "\n")
+	var content map[string]interface{}
+	// var content map[string]string
 
-	// TODO make into object map[string]interface{}
+	fmt.Println(envelopeContents[0]) // [1:] if extra "" at the beginning
+	
+	ans := strings.ReplaceAll(envelopeContents[0], "\\", "")
+	// ans = ans + "\""
+	ans = ans[1:]
+	fmt.Println("answer", ans)
 
-
-	// fmt.Print(envelopeContents[1], "\n")
-	// fmt.Print(envelopeContents[2], "\n")
-
-	// if err := json.Unmarshal(bytes, &text); err != nil {
-	// 	panic(err)
-	// }
+	// if err := json.Unmarshal([]byte(envelopeContents[0][1:]), &content); err != nil {
+	if err := json.Unmarshal([]byte(ans), &content); err != nil {
+		panic(err)
+	}
+	fmt.Println("CONTENT", content)
+	
 	return envelopeContents
 }
 
