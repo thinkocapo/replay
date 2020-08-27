@@ -144,33 +144,28 @@ def save():
     # print("TYPE2", type(json.dumps(request.data.decode("utf-8"))))
     # print(bytes(body))
 
-    o = {
+    print(request.data.decode("utf-8"))
+    print(type(request.data.decode("utf-8")))
+
+    event = {
         'platform': event_platform,
         'kind': event_type,
-        'headers': request_headers, # json.dumps(request_headers),
-        
-        # TO TRY
-        'body': json.dumps(request.data.decode("utf-8"))
-        # 'body': json.dumps(request.data.decode("unicode-escape"))
-        
-        # 'body': str(request.data)
-
-        # 'body': request.data
-        # 'body': request.data.decode('utf8') # writes as "body": "{\"exception\":{\"values\":[{\"
-        # 'body': json.dumps(request.data)
-        # 'body': request.data.decode('ascii') # writes as "body": "{\"exception\":{\"values\":[{\"
-        # 'body': bytes(str(body), "utf8")
-        # 'body': bytes(json.dumps(body), "utf8"),
-        # 'body': bytes(body)
-        # 'body': json.loads(body)
+        'headers': request_headers,
+        # 'body': json.dumps(request.data.decode("utf-8"))
+        'body': request.data.decode("utf-8")
     }
 
     try:
         with open(JSON) as file:
             current_data = json.load(file)
         with open(JSON, 'w') as file:
-            current_data.append(o)
+            current_data.append(event)
             json.dump(current_data, file)
+        print('00000')
+        # with open(JSON, 'r+') as file:
+        #     current_data = json.load(file)
+        #     current_data.append(event)
+        #     json.dump(current_data, file)
 
     except Exception as exception:
         print("LOCAL EXCEPTION", exception)

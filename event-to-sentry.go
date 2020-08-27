@@ -237,7 +237,7 @@ func main() {
 		// } else {
 
 		if (event.Kind == "error") {
-			fmt.Println("EEEEEEEEEEEEEEEEEEEE")
+			fmt.Println("EEEEEEEEEEEEEEEEEEEE", event.Body)
 			
 			var errorEvent map[string]interface{}
 			// var errorString string
@@ -247,7 +247,7 @@ func main() {
 			stripped = stripped[1:]
 			stripped = stripped[:len(stripped)-1]
 			
-			fmt.Println("\n STRIPPED", stripped)
+			// fmt.Println("\n STRIPPED", stripped) // TODO
 			
 			if err := json.Unmarshal([]byte(stripped), &errorEvent); err != nil {
 				fmt.Print(err)
