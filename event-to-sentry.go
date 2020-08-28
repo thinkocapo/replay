@@ -67,9 +67,9 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) < 31 || len(key) > 32 {
-		log.Fatal("bad key length")
-	}
+	// if len(key) < 31 || len(key) > 32 {
+	// 	log.Fatal("bad key length")
+	// }
 	if projectId == "" {
 		log.Fatal("missing project Id")
 	}
@@ -95,12 +95,25 @@ func (d DSN) storeEndpoint() string {
 	}
 	return fullurl
 }
+func (d DSN) envelopeEndpoint() string {
+	var fullurl string
+	if d.host == "ingest.sentry.io" {
+		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if d.host == "localhost:9000" {
+		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if fullurl == "" {
+		log.Fatal("problem with fullurl")
+	}
+	return fullurl
+}
 
 type Event struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
-	Body map[string]interface{} `json:"body"`
+	Body        string `json:"body"`
 }
 
 func (e Event) String() string {
@@ -120,28 +133,40 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.Platform
-	headers := event.Headers
-
-	if headers["X-Sentry-Auth"] != "" {
-		xSentryAuth := headers["X-Sentry-Auth"]
-		for _, projectDSN := range projectDSNs {
-			if strings.Contains(xSentryAuth, projectDSN.key) {
-				fmt.Println("> match", projectDSN)
-				return projectDSN.storeEndpoint()
-			}
-		}
-	}
 	
+	// for getsentry/tracing-example (a situation where you have 3 Python Projects)
+	// headers := event.Headers
+	// if headers["X-Sentry-Auth"] != "" {
+	// 	xSentryAuth := headers["X-Sentry-Auth"]
+	// 	for _, projectDSN := range projectDSNs {
+	// 		if strings.Contains(xSentryAuth, projectDSN.key) {
+	// 			fmt.Println("> match", projectDSN)
+	// 			return projectDSN.storeEndpoint()
+	// 		}
+	// 	}
+	// }
+
+	platform := event.Platform
+
 	var storeEndpoint string
-	if platform == "javascript" {
+	if platform == "javascript" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
-	} else if platform == "python" {
+	} else if platform == "python" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["python"].storeEndpoint()
-	} else if platform == "android" {
+	} else if platform == "android" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["android"].storeEndpoint()
+	} else if platform == "javascript" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["javascript"].envelopeEndpoint()
+	} else if platform == "python" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["python"].envelopeEndpoint()
+	} else if platform == "android" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["android"].envelopeEndpoint()
 	} else {
 		log.Fatal("platform type not supported")
+	}
+
+	if storeEndpoint == "" {
+		log.Fatal("missing store endpoint")
 	}
 	return storeEndpoint
 }
@@ -152,7 +177,7 @@ func init() {
 	}
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
-	id = flag.String("id", "", "id of event in sqlite database")
+	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	db = flag.String("db", "", "database.json")
 	js = flag.String("js", "", "javascript DSN")
@@ -176,7 +201,7 @@ func init() {
 	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	fmt.Println("> --db json flag", *db)
+	// fmt.Println("> --db json flag", *db)
 	if *db == "" {
 		database = os.Getenv("JSON")
 	} else {
@@ -185,57 +210,57 @@ func init() {
 }
 
 func main() {
-	
 	jsonFile, err := os.Open(database)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Successfully Opened")
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	defer jsonFile.Close()
-
 	events := make([]Event, 0)
-
 	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
 	}
-	fmt.Println("> NUMBER of EVENTS", len(events))
 
+	// TODO rename body as errorBody or eventPayload?
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
 		var body map[string]interface{}
-		// var bodySession []byte
+		var envelope string
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
+		fmt.Println(headerKeys)
 		var storeEndpoint string
 		var requestBody []byte
-		// if (event.Kind == "session") {
-		// 	bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
-		// 	requestBody = bodySession
-		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
-		// 	requestBody = buf.Bytes()
-		// } else {
-		body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
-		body = eventId(body)
-		body = release(body)
-		body = user(body)
-		body = timestamper(body, event.Platform)
-		// }
-		
-		undertake(body)
-		
-		requestBody = bodyEncoder(body)
 
-		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
+		if (event.Kind == "error") {			
+			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+			body = eventId(body)
+			body = release(body)
+			body = user(body)
+			body = timestamper(body, event.Platform)
+			undertake(body)
+			requestBody = bodyEncoder(body)
+		} else if (event.Kind == "transaction") {
+			
+			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
+
+			fmt.Printf(" %T %T %T %T\n", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+
+			// TODO transform the envelope Array, update traceId, release, user, timestamps
+			// TODO bodyEncoder() it again
+			
+			requestBody = []byte(envelope)
+		}
+
+		request := buildRequest(requestBody, event.Headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
-				fmt.Println(requestErr)
+				log.Fatal(requestErr)
 			}
 
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
@@ -258,50 +283,10 @@ func main() {
 	return
 }
 
-/*
-// func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
-	
-	// WORKS
-	bodyVisible := unmarshalEnvelope(event.Body)
-	fmt.Print(bodyVisible)
-
-	body := event.Body
-
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-	SESSION := event.Kind == "session"
-
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-
-	storeEndpoint := matchDSN(projectDSNs, event)
-
-	switch {
-	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && SESSION:
-		return body, updateTimestamp, jsEncoder, androidHeaders, storeEndpoint
-	}
-
-	// var body map[string]interface{}
-	// if event.Kind != "session" {
-	// 	body = unmarshalJSON(event.Body)
-	// } else {
-	// 	body = event.Body
-	// 	// body1 := string(event.Body)
-	// 	// fmt.Print(body1)
-	// }
-	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
-	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-}
-*/
-
+// TODO remove 'TRANSACTION' from here
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-	body := event.Body
+
+	body := unmarshalJSON([]byte(event.Body))
 
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
@@ -313,9 +298,7 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-
 	storeEndpoint := matchDSN(projectDSNs, event)
-
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {
@@ -323,33 +306,29 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case ANDROID && ERROR:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+
 	case JAVASCRIPT && TRANSACTION:
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
+
 	case PYTHON && TRANSACTION:
 		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
 		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
-	// TODO need return an error and nil's
+
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
-	headerInterface := eventHeaders
-
-	for _, v := range headerKeys {
-		if headerInterface[v] == "" {			
-			fmt.Print("PASS")
-		} else {
-			request.Header.Set(v, headerInterface[v])
-		}
+	for key, value := range eventHeaders {
+		request.Header.Set(key, value)
 	}
 	return request
 }
@@ -399,7 +378,6 @@ func user(body map[string]interface{}) map[string]interface{} {
 		}
 		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 	}
-	// fmt.Println("> user", body["user"])
 	return body
 }
 

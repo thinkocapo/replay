@@ -30,19 +30,41 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-func unmarshalEnvelope(bytes []byte) []string {
-	var envelope string
-	envelope = string(bytes)
-	envelopeContents := strings.Split(envelope, "\n")
+func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, string) {
 
-	fmt.Print(envelopeContents[0], "\n")
-	fmt.Print(envelopeContents[1], "\n")
-	fmt.Print(envelopeContents[2], "\n")
+	TRANSACTION := event.Kind == "transaction"
+	JAVASCRIPT := event.Platform == "javascript"
+	PYTHON := event.Platform == "python"
+	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+	storeEndpoint := matchDSN(projectDSNs, event)
 
-	// if err := json.Unmarshal(bytes, &text); err != nil {
-	// 	panic(err)
-	// }
-	return envelopeContents
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+
+	envelope := event.Body
+
+	items := strings.Split(envelope, "\n")
+	fmt.Println("\n > # of items in envelope", len(items))
+	for idx, _ := range items {
+		fmt.Println("\n > item is...", idx)
+		// TODO need do this for every item in items
+		// var item map[string]interface{}
+		// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
+			// panic(err)
+		// }
+	}
+
+	// TODO return envelope array-of-map[string]interfaces{} back to a string
+	// TODO return bodyEncoder for []byte(envelope) maybe called 'envelopeEncoder'. Go strings are already utf-8 encoded
+	
+	switch {
+	case JAVASCRIPT && TRANSACTION:
+		return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+	case PYTHON && TRANSACTION:
+		return envelope, updateTimestamps, jsEncoder, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
+	}
+
+	return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {

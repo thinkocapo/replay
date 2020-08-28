@@ -28,19 +28,36 @@ def compress_gzip(dict_body):
 
 # Using the 'transaction' property because event.type is not set uniformly across js/python and both errors+transactions
 # TODO check if it's gzipped, so then could remove 'platform' parameter
-def get_event_type(bytes_data, platform):
+def get_event_type(payload, platform):
     body_dict = ''
     if platform == 'python':
-        body_dict = json.loads(decompress_gzip(bytes_data))
+        print('\n****** PYTHON ')
+        body_dict = decompress_gzip(payload)
+        # body_dict = json.loads(decompress_gzip(payload))
     if platform == 'javascript':
-        body_dict = json.loads(bytes_data)
-    if platform == 'android':
-        try:
-            body_dict = json.loads(decompress_gzip(bytes_data))
-        except:
-            # print('it is a session', decompress_gzip(bytes_data))
-            result = 'session'
-            return result
+        print('\n****** JAVASCRIPT ')
+        envelope = payload
+        print('type(envelope) ist still bytes, so decode it', type(envelope))
+
+        envelope = envelope.decode("utf-8") 
+        print('type(envelope) should now be string', type(envelope))
+
+        contents = envelope.split('\n')
+        print('\n # OF CONTENTS IN ENVELOPE', len(contents))
+
+        # for content in contents:
+        #     print(content)
+
+    # ANDROID SESSIONS
+    # body_dict = payload
+    # body_dict = json.loads(payload)
+    # if platform == 'android':
+    #     try:
+    #         body_dict = json.loads(decompress_gzip(payload))
+    #     except:
+    #         # print('it is a session', decompress_gzip(payload))
+    #         result = 'session'
+    #         return result
     
     result = ''
     if 'exception' in body_dict:
