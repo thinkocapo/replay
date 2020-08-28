@@ -154,7 +154,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	// }
 
 	// fmt.Printf("EVENT %v | %v ", platform, event.Kind)
-	
+
 	var storeEndpoint string
 	if platform == "javascript" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
@@ -204,7 +204,7 @@ func init() {
 	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
 	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
 
-	fmt.Println("> --db json flag", *db)
+	// fmt.Println("> --db json flag", *db)
 	if *db == "" {
 		database = os.Getenv("JSON")
 	} else {
@@ -231,20 +231,12 @@ func main() {
 		// BODY IS ONLY FOR ERROR
 		var body map[string]interface{}
 		
-		// var bodySession []byte
-
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
+		fmt.Print(headerKeys)
 		var storeEndpoint string
 		var requestBody []byte
-		// var bodyEnvelope string // TODO
-		// if (event.Kind == "session") {
-		// 	bodySession, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeSession(event)
-		// 	requestBody = bodySession
-		// 	buf := encodeGzip(requestBody) // could try jsEncoder?
-		// 	requestBody = buf.Bytes()
-		// } else {
 
 		if (event.Kind == "error") {			
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
@@ -260,22 +252,13 @@ func main() {
 			fmt.Print("\n - - - - - - - \n")
 			fmt.Printf(" %T %T %T %T", timestamper, bodyEncoder, headerKeys, storeEndpoint)
 			fmt.Print("\n - - - - - - - \n")
-			// DOES NOT APPLY ANYMORE
-			// body = eventId(body)
-			// body = release(body)
-			// body = user(body)
-			// body = timestamper(body, event.Platform)
-			// undertake(body)
-			// requestBody = bodyEncoder(envelope)
 
-			// TODO 9:46p i think must encode utf-8 here...
+			// I believe Go strings are already utf-8 encoded, otherwise I would do that here or in BuildRequest2
 			requestBody = []byte(envelope)
-
-			// See jsEncoder, pyEncoder, I don't think either of these are needed here
-			// requestBody = bodyEncoder(envelope)
 		}
 		
-		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
+		request := buildRequest2(requestBody, event.Headers, storeEndpoint)
+		// request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
@@ -348,7 +331,6 @@ func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[stri
 	}
 
 	headerInterface := eventHeaders
-
 	for _, v := range headerKeys {
 		if headerInterface[v] == "" {			
 			fmt.Print("PASS")
@@ -356,6 +338,20 @@ func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[stri
 			request.Header.Set(v, headerInterface[v])
 		}
 	}
+	return request
+}
+
+func buildRequest2(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+
+	for key, value := range eventHeaders {
+		fmt.Println("HEADER", key)
+		request.Header.Set(key, value)
+	}
+
 	return request
 }
 

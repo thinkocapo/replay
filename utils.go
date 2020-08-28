@@ -39,22 +39,23 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	storeEndpoint := matchDSN(projectDSNs, event)
-	
-	fmt.Printf("> storeEndpoint1 %v \n", storeEndpoint)
 
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+
+	// Get items from the Envelope
 	envelope := event.Body
 	items := strings.Split(envelope, "\n")
-	var item map[string]interface{}
-
 	fmt.Println("\n > # of items in envelope", len(items))
+
 	for idx, _ := range items {
 		fmt.Println("\n > item is...", idx)
 	}
 	
-	// TODO need do this for every item in items
-	if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
-		panic(err)
-	}
+	// TODO need do this for every item in items, put it in ^ range loop 
+	// var item map[string]interface{}
+	// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
+		// panic(err)
+	// }
 
 	switch {
 	case JAVASCRIPT && TRANSACTION:
