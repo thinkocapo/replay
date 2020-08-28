@@ -100,8 +100,6 @@ type Event struct {
 	Platform    string `json:"platform"`
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
-	// Body map[string]interface{} `json:"body"`
-	// Body        []byte `json:"body"`
 	Body        string `json:"body"`
 }
 
@@ -194,35 +192,26 @@ func init() {
 }
 
 func main() {
-	
 	jsonFile, err := os.Open(database)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	defer jsonFile.Close()
-
 	events := make([]Event, 0)
-	// fmt.Println(len(events))
-
-	// eventsB := make ([]EventEnvelope, 0)
-
 	if err := json.Unmarshal(byteValue, &events); err != nil {
-	// if err := json.Unmarshal(byteValue, &eventsB); err != nil {
 		panic(err)
 	}
-	// fmt.Println("> NUMBER of EVENTS", len(eventsB))
-
-	// TEST tbd...
-	// for idx, event := range eventsB {}
 
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
+		// BODY IS ONLY FOR ERROR
 		var body map[string]interface{}
+		
 		// var bodySession []byte
+
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
@@ -236,41 +225,32 @@ func main() {
 		// 	requestBody = buf.Bytes()
 		// } else {
 
-		if (event.Kind == "error") {
-			var errorEvent map[string]interface{}
-			if err := json.Unmarshal([]byte(event.Body), &errorEvent); err != nil {
-				fmt.Print(err)
-				return
-			}
-			
+		if (event.Kind == "error") {			
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
 			body = eventId(body)
 			body = release(body)
 			body = user(body)
 			body = timestamper(body, event.Platform)
 			undertake(body)
-
+			requestBody = bodyEncoder(body)
 		} else if (event.Kind == "transaction") {
 			fmt.Println("TTTTTTTTTTTTTTTTTTT")
+			
+			transaction, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEnvelope(event)
+			fmt.Printf(" %T %T %T %T", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+			// DOES NOT APPLY ANYMORE
+			// body = eventId(body)
+			// body = release(body)
+			// body = user(body)
+			// body = timestamper(body, event.Platform)
+			// undertake(body)
 
-			// TODO
-			// ans, _ := json.Marshal(event.Body)
-			// thing := openEnvelope(ans)
-			// fmt.Printf("type of openEnvelope'd %T", thing)
+			// requestBody = bodyEncoder(envelope)
 
-			// fmt.Printf("\n> TRANSACTION %T \n", transaction)
-
-			// TO TRY
-			// transaction := openEnvelope([]byte(event.Body))
-			transaction := decodeEnvelope(event.Body)
-			fmt.Printf("TRANSACTION %T", transaction) // slashes? then split'\n' and make into Array of Objects
-
-			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // Envelope(event)
+			// TODO 9:46p i think must encode utf-8 here...
+			requestBody = []byte(transaction)
 		}
 		
-		// dont map[interface]
-		requestBody = bodyEncoder(body)
-
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
 		if !*ignore {
@@ -299,11 +279,9 @@ func main() {
 	return
 }
 
-
+// TODO remove 'TRANSACTION' from here
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 
-	// TEMP
-	// body := make(map[string]interface{})
 	body := unmarshalJSON([]byte(event.Body))
 
 	JAVASCRIPT := event.Platform == "javascript"
@@ -316,9 +294,7 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-
 	storeEndpoint := matchDSN(projectDSNs, event)
-
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {

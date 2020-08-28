@@ -31,35 +31,42 @@ func encodeGzip(b []byte) bytes.Buffer {
 }
 
 // func unmarshalEnvelope(bytes []byte) []string {
-func decodeEnvelope(envelope string) []string {
+func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, string) {
 
+	TRANSACTION := event.Kind == "transaction"
+	JAVASCRIPT := event.Platform == "javascript"
+	PYTHON := event.Platform == "python"
+	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+	storeEndpoint := matchDSN(projectDSNs, event)
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+
+	envelope := event.Body
 	items := strings.Split(envelope, "\n")
-
 	var item map[string]interface{}
 
 	fmt.Println("\n > # of items in envelope", len(items))
-
-	for idx, item := range items {
+	for idx, _ := range items {
 		fmt.Println("\n > item is...", idx)
-		fmt.Println(item)
+		// fmt.Println(item)
 	}
 	
-	// shouldn't need, since fixing encoding problem
-	// stripped := strings.ReplaceAll(items[0], "\\", "")
-	// remove the prepending quotation mark on "{\"event_id\": so it becomes {\"event_id\"
-	// stripped = stripped[1:]
-	fmt.Println("\n0000000 . . ")
 	// TODO need do this for every item in items
 	if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
-		fmt.Println("111111. . . ")
 		panic(err)
 	}
-	fmt.Println("2222. . . .")
 
-	fmt.Println("\n > ITEM example", item)
+	// fmt.Println("\n > ITEM example", item)
 
-	// TODO return array of map[string]interface{}
-	return items
+	switch {
+	case JAVASCRIPT && TRANSACTION:
+		return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+	case PYTHON && TRANSACTION:
+		return envelope, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
+	}
+
+	// TODO return array of map[string]interface{}? where to update envelope items? timestamps, ID's
+	return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {
