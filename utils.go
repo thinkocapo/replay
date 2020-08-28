@@ -39,7 +39,8 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
 	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+	
+	fmt.Printf("> storeEndpoint1 %v \n", storeEndpoint)
 
 	envelope := event.Body
 	items := strings.Split(envelope, "\n")

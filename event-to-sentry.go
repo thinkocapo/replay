@@ -95,6 +95,19 @@ func (d DSN) storeEndpoint() string {
 	}
 	return fullurl
 }
+func (d DSN) envelopeEndpoint() string {
+	var fullurl string
+	if d.host == "ingest.sentry.io" {
+		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if d.host == "localhost:9000" {
+		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
+	}
+	if fullurl == "" {
+		log.Fatal("problem with fullurl")
+	}
+	return fullurl
+}
 
 type Event struct {
 	Platform    string `json:"platform"`
@@ -128,25 +141,33 @@ type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	platform := event.Platform
-	headers := event.Headers
 
-	if headers["X-Sentry-Auth"] != "" {
-		xSentryAuth := headers["X-Sentry-Auth"]
-		for _, projectDSN := range projectDSNs {
-			if strings.Contains(xSentryAuth, projectDSN.key) {
-				fmt.Println("> match", projectDSN)
-				return projectDSN.storeEndpoint()
-			}
-		}
-	}
+	// headers := event.Headers
+	// if headers["X-Sentry-Auth"] != "" {
+	// 	xSentryAuth := headers["X-Sentry-Auth"]
+	// 	for _, projectDSN := range projectDSNs {
+	// 		if strings.Contains(xSentryAuth, projectDSN.key) {
+	// 			fmt.Println("> match", projectDSN)
+	// 			return projectDSN.storeEndpoint()
+	// 		}
+	// 	}
+	// }
+
+	// fmt.Printf("EVENT %v | %v ", platform, event.Kind)
 	
 	var storeEndpoint string
-	if platform == "javascript" {
+	if platform == "javascript" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["javascript"].storeEndpoint()
-	} else if platform == "python" {
+	} else if platform == "python" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["python"].storeEndpoint()
-	} else if platform == "android" {
+	} else if platform == "android" && event.Kind == "error" {
 		storeEndpoint = projectDSNs["android"].storeEndpoint()
+	} else if platform == "javascript" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["javascript"].envelopeEndpoint()
+	} else if platform == "python" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["python"].envelopeEndpoint()
+	} else if platform == "android" && event.Kind == "transaction" {
+		storeEndpoint = projectDSNs["android"].envelopeEndpoint()
 	} else {
 		log.Fatal("platform type not supported")
 	}
