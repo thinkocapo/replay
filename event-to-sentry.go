@@ -97,7 +97,6 @@ func (d DSN) storeEndpoint() string {
 }
 func (d DSN) envelopeEndpoint() string {
 	var fullurl string
-	fmt.Println("\n2222222", d.host)
 	if d.host == "ingest.sentry.io" {
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
 	}
@@ -107,7 +106,6 @@ func (d DSN) envelopeEndpoint() string {
 	if fullurl == "" {
 		log.Fatal("problem with fullurl")
 	}
-	fmt.Println("33333", fullurl)
 	return fullurl
 }
 
@@ -116,13 +114,6 @@ type Event struct {
 	Kind        string `json:"kind"`
 	Headers     map[string]string `json:"headers"`
 	Body        string `json:"body"`
-}
-
-type EventEnvelope struct {
-	Platform    string `json:"platform"`
-	Kind        string `json:"kind"`
-	Headers     map[string]string `json:"headers"`
-	Body        string `json:"body"` // or an Array of objects
 }
 
 func (e Event) String() string {
