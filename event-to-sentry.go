@@ -231,10 +231,10 @@ func main() {
 		panic(err)
 	}
 
+	// TODO rename body as errorBody or eventPayload?
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
-		// BODY IS ONLY FOR ERROR
 		var body map[string]interface{}
 		var envelope string
 		var timestamper Timestamper 
@@ -257,14 +257,14 @@ func main() {
 			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
 
 			fmt.Printf(" %T %T %T %T\n", timestamper, bodyEncoder, headerKeys, storeEndpoint)
-			// TODO transform the data, update traceId, release, user, timestamps
 
-			// TODO make this its own 'bodyEncoder' type. Go strings are already utf-8 encoded
+			// TODO transform the envelope Array, update traceId, release, user, timestamps
+			// TODO bodyEncoder() it again
+			
 			requestBody = []byte(envelope)
 		}
 
-		request := buildRequest2(requestBody, event.Headers, storeEndpoint)
-		// request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
+		request := buildRequest(requestBody, event.Headers, storeEndpoint)
 
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
@@ -330,31 +330,13 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
-func buildRequest(requestBody []byte, headerKeys []string, eventHeaders map[string]string, storeEndpoint string) *http.Request {
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
-	if errNewRequest != nil {
-		log.Fatalln(errNewRequest)
-	}
-
-	headerInterface := eventHeaders
-	for _, v := range headerKeys {
-		if headerInterface[v] == "" {			
-			fmt.Print("PASS")
-		} else {
-			request.Header.Set(v, headerInterface[v])
-		}
-	}
-	return request
-}
-
-func buildRequest2(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
 	for key, value := range eventHeaders {
-		fmt.Println("HEADER", key)
 		request.Header.Set(key, value)
 	}
 	return request
@@ -405,7 +387,6 @@ func user(body map[string]interface{}) map[string]interface{} {
 		}
 		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 	}
-	// fmt.Println("> user", body["user"])
 	return body
 }
 
@@ -416,46 +397,3 @@ func undertake(body map[string]interface{}) {
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "h4ckweek"
 }
-
-
-/*
-// func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
-	
-	// WORKS
-	bodyVisible := openEnvelope(event.Body)
-	fmt.Print(bodyVisible)
-
-	body := event.Body
-
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-	SESSION := event.Kind == "session"
-
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-
-	storeEndpoint := matchDSN(projectDSNs, event)
-
-	switch {
-	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && SESSION:
-		return body, updateTimestamp, jsEncoder, androidHeaders, storeEndpoint
-	}
-
-	// var body map[string]interface{}
-	// if event.Kind != "session" {
-	// 	body = unmarshalJSON(event.Body)
-	// } else {
-	// 	body = event.Body
-	// 	// body1 := string(event.Body)
-	// 	// fmt.Print(body1)
-	// }
-	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
-	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-}
-*/

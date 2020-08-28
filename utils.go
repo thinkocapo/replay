@@ -41,21 +41,22 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
-	// Get items from the Envelope
 	envelope := event.Body
+
 	items := strings.Split(envelope, "\n")
 	fmt.Println("\n > # of items in envelope", len(items))
-
 	for idx, _ := range items {
 		fmt.Println("\n > item is...", idx)
+		// TODO need do this for every item in items
+		// var item map[string]interface{}
+		// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
+			// panic(err)
+		// }
 	}
-	
-	// TODO need do this for every item in items, put it in ^ range loop 
-	// var item map[string]interface{}
-	// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
-		// panic(err)
-	// }
 
+	// TODO return envelope array-of-map[string]interfaces{} back to a string
+	// TODO return bodyEncoder for []byte(envelope) maybe called 'envelopeEncoder'. Go strings are already utf-8 encoded
+	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
 		return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
@@ -63,7 +64,6 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 		return envelope, updateTimestamps, jsEncoder, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
 	}
 
-	// TODO return array of map[string]interface{}? where to update envelope items? timestamps, ID's
 	return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
