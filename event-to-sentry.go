@@ -159,7 +159,7 @@ func init() {
 	}
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
-	id = flag.String("id", "", "id of event in sqlite database")
+	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	db = flag.String("db", "", "database.json")
 	js = flag.String("js", "", "javascript DSN")
@@ -234,21 +234,24 @@ func main() {
 			undertake(body)
 			requestBody = bodyEncoder(body)
 		} else if (event.Kind == "transaction") {
-			fmt.Println("TTTTTTTTTTTTTTTTTTT")
 			
-			transaction, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEnvelope(event)
+			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEnvelope(event)
+			fmt.Print("\n - - - - - - - \n")
 			fmt.Printf(" %T %T %T %T", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+			fmt.Print("\n - - - - - - - \n")
 			// DOES NOT APPLY ANYMORE
 			// body = eventId(body)
 			// body = release(body)
 			// body = user(body)
 			// body = timestamper(body, event.Platform)
 			// undertake(body)
-
 			// requestBody = bodyEncoder(envelope)
 
 			// TODO 9:46p i think must encode utf-8 here...
-			requestBody = []byte(transaction)
+			requestBody = []byte(envelope)
+
+			// See jsEncoder, pyEncoder, I don't think either of these are needed here
+			// requestBody = bodyEncoder(envelope)
 		}
 		
 		request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
@@ -256,7 +259,7 @@ func main() {
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
-				fmt.Println(requestErr)
+				log.Fatal(requestErr)
 			}
 
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)

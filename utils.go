@@ -48,7 +48,6 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 	fmt.Println("\n > # of items in envelope", len(items))
 	for idx, _ := range items {
 		fmt.Println("\n > item is...", idx)
-		// fmt.Println(item)
 	}
 	
 	// TODO need do this for every item in items
@@ -56,13 +55,11 @@ func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, st
 		panic(err)
 	}
 
-	// fmt.Println("\n > ITEM example", item)
-
 	switch {
 	case JAVASCRIPT && TRANSACTION:
 		return envelope, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
+		return envelope, updateTimestamps, jsEncoder, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
 	}
 
 	// TODO return array of map[string]interface{}? where to update envelope items? timestamps, ID's
