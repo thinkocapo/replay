@@ -137,9 +137,6 @@ def save():
             request_headers[key] = request.headers.get(key)
         body = request.data
 
-    # print("TYPE request.data", type(request.data)) # 'bytes'
-    # print(type(request.data.decode("utf-8"))) # 'str'
-
     event = {
         'platform': event_platform,
         'kind': event_type,
@@ -175,39 +172,20 @@ def save_envelope():
         for key in ['Accept-Encoding','Content-Length','Content-Encoding','Content-Type','User-Agent', 'X-Sentry-Auth']:
             request_headers[key] = request.headers.get(key)
         body = decompress_gzip(request.data)
-        # body = body.split('\n')
     if 'mozilla' in user_agent or 'chrome' in user_agent or 'safari' in user_agent:
         event_platform = 'javascript'
         print('> JAVASCRIPT ', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
-        # body = request.data
         body = request.data.decode("utf-8")
-        # print('BODY BEFORE', body) # still no slashes
-        # body = body.replace("\\", "") # not needed, as slashes are addd when getting saved
-        #body = body.split('\n') # not needed since storing bytes (of the envelope string). .split turns it into a List
-
-    # print("\n> TYPE request.data: ", type(request.data))
-    # print("> TYPE2", type(json.dumps(request.data.decode("utf-8"))))
-    # for item in body:
-        # print(type(item))
-        # item = json.loads(item)
-        # print(type(item))
 
     print(type(json.dumps(body)))
 
-    # print(request.data)
     o = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
-        # 'body': json.dumps(body.decode("utf-8"))
-
-        # 'body': str(body)
-        
         'body': body # already utf-8 decoded
-        # 'body': json.loads(body)
-        # 'body': json.dumps(body) # adds too many slashes
     }
 
     try:
@@ -220,8 +198,6 @@ def save_envelope():
     except Exception as exception:
         print("LOCAL EXCEPTION", exception)
     return "success"
-
-
 
 
 # FORWARD TRANSACTION?
