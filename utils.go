@@ -30,7 +30,6 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-// func unmarshalEnvelope(bytes []byte) []string {
 func decodeEnvelope(event Event) (string, Timestamper, BodyEncoder, []string, string) {
 
 	TRANSACTION := event.Kind == "transaction"

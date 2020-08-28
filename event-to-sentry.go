@@ -97,6 +97,7 @@ func (d DSN) storeEndpoint() string {
 }
 func (d DSN) envelopeEndpoint() string {
 	var fullurl string
+	fmt.Println("\n2222222", d.host)
 	if d.host == "ingest.sentry.io" {
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
 	}
@@ -106,6 +107,7 @@ func (d DSN) envelopeEndpoint() string {
 	if fullurl == "" {
 		log.Fatal("problem with fullurl")
 	}
+	fmt.Println("33333", fullurl)
 	return fullurl
 }
 
@@ -140,8 +142,8 @@ type BodyEncoder func(map[string]interface{}) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	platform := event.Platform
-
+	
+	// for getsentry/tracing-example (a situation where you have 3 Python Projects)
 	// headers := event.Headers
 	// if headers["X-Sentry-Auth"] != "" {
 	// 	xSentryAuth := headers["X-Sentry-Auth"]
@@ -153,7 +155,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	// 	}
 	// }
 
-	// fmt.Printf("EVENT %v | %v ", platform, event.Kind)
+	platform := event.Platform
 
 	var storeEndpoint string
 	if platform == "javascript" && event.Kind == "error" {
@@ -170,6 +172,10 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 		storeEndpoint = projectDSNs["android"].envelopeEndpoint()
 	} else {
 		log.Fatal("platform type not supported")
+	}
+
+	if storeEndpoint == "" {
+		log.Fatal("missing store endpoint")
 	}
 	return storeEndpoint
 }
@@ -230,11 +236,11 @@ func main() {
 
 		// BODY IS ONLY FOR ERROR
 		var body map[string]interface{}
-		
+		var envelope string
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var headerKeys []string
-		fmt.Print(headerKeys)
+		fmt.Println(headerKeys)
 		var storeEndpoint string
 		var requestBody []byte
 
@@ -248,15 +254,15 @@ func main() {
 			requestBody = bodyEncoder(body)
 		} else if (event.Kind == "transaction") {
 			
-			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint := decodeEnvelope(event)
-			fmt.Print("\n - - - - - - - \n")
-			fmt.Printf(" %T %T %T %T", timestamper, bodyEncoder, headerKeys, storeEndpoint)
-			fmt.Print("\n - - - - - - - \n")
+			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
 
-			// I believe Go strings are already utf-8 encoded, otherwise I would do that here or in BuildRequest2
+			fmt.Printf(" %T %T %T %T\n", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+			// TODO transform the data, update traceId, release, user, timestamps
+
+			// TODO make this its own 'bodyEncoder' type. Go strings are already utf-8 encoded
 			requestBody = []byte(envelope)
 		}
-		
+
 		request := buildRequest2(requestBody, event.Headers, storeEndpoint)
 		// request := buildRequest(requestBody, headerKeys, event.Headers, storeEndpoint)
 
@@ -320,7 +326,7 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	case PYTHON && ERROR:
 		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
 	}
-	// TODO need return an error and nil's
+
 	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
@@ -351,7 +357,6 @@ func buildRequest2(requestBody []byte, eventHeaders map[string]string, storeEndp
 		fmt.Println("HEADER", key)
 		request.Header.Set(key, value)
 	}
-
 	return request
 }
 
