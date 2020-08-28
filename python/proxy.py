@@ -137,21 +137,13 @@ def save():
             request_headers[key] = request.headers.get(key)
         body = request.data
 
-    # TODO store the bytes again...
-    # body = json.loads(body)
-
-    print("TYPE request.data", type(request.data))
-    # print("TYPE2", type(json.dumps(request.data.decode("utf-8"))))
-    # print(bytes(body))
-
-    print(request.data.decode("utf-8"))
-    print(type(request.data.decode("utf-8")))
+    # print("TYPE request.data", type(request.data)) # 'bytes'
+    # print(type(request.data.decode("utf-8"))) # 'str'
 
     event = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
-        # 'body': json.dumps(request.data.decode("utf-8"))
         'body': request.data.decode("utf-8")
     }
 
@@ -161,11 +153,6 @@ def save():
         with open(JSON, 'w') as file:
             current_data.append(event)
             json.dump(current_data, file)
-        print('00000')
-        # with open(JSON, 'r+') as file:
-        #     current_data = json.load(file)
-        #     current_data.append(event)
-        #     json.dump(current_data, file)
 
     except Exception as exception:
         print("LOCAL EXCEPTION", exception)
@@ -218,17 +205,15 @@ def save_envelope():
 
         # 'body': str(body)
         
-        # 'body': body
+        'body': body # already utf-8 decoded
         # 'body': json.loads(body)
-        'body': json.dumps(body) # adds too many slashes
+        # 'body': json.dumps(body) # adds too many slashes
     }
 
     try:
         with open(JSON) as file:
             current_data = json.load(file)
-
         with open(JSON, 'w') as file:
-            # current_data = json.load(file)
             current_data.append(o)
             json.dump(current_data, file)
 

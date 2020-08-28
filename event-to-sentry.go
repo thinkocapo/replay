@@ -67,9 +67,9 @@ func parseDSN(rawurl string) *DSN {
 	if host == "" {
 		log.Fatal("missing host")
 	}
-	if len(key) < 31 || len(key) > 32 {
-		log.Fatal("bad key length")
-	}
+	// if len(key) < 31 || len(key) > 32 {
+	// 	log.Fatal("bad key length")
+	// }
 	if projectId == "" {
 		log.Fatal("missing project Id")
 	}
@@ -237,52 +237,32 @@ func main() {
 		// } else {
 
 		if (event.Kind == "error") {
-			fmt.Println("EEEEEEEEEEEEEEEEEEEE", event.Body)
-			
 			var errorEvent map[string]interface{}
-			// var errorString string
-			// fmt.Println("\n > ERROR", errorString) // no slashes
-
-			stripped := strings.ReplaceAll(event.Body, "\\", "")
-			stripped = stripped[1:]
-			stripped = stripped[:len(stripped)-1]
-			
-			// fmt.Println("\n STRIPPED", stripped) // TODO
-			
-			if err := json.Unmarshal([]byte(stripped), &errorEvent); err != nil {
+			if err := json.Unmarshal([]byte(event.Body), &errorEvent); err != nil {
 				fmt.Print(err)
 				return
 			}
-
-
-			fmt.Println("\n > ERROR", errorEvent)
-
-			// strg, _ := json.Marshal(event.Body)
-			// fmt.Printf("\n> strgE %T %v\n", strg, strg)
 			
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
-	
-			// dont map[interface]
 			body = eventId(body)
 			body = release(body)
 			body = user(body)
 			body = timestamper(body, event.Platform)
-			// }
-			
 			undertake(body)
+
 		} else if (event.Kind == "transaction") {
 			fmt.Println("TTTTTTTTTTTTTTTTTTT")
 
 			// TODO
 			// ans, _ := json.Marshal(event.Body)
-			// thing := unmarshalEnvelope(ans)
-			// fmt.Printf("type of unmarshalEnvelope'd %T", thing)
+			// thing := openEnvelope(ans)
+			// fmt.Printf("type of openEnvelope'd %T", thing)
 
 			// fmt.Printf("\n> TRANSACTION %T \n", transaction)
 
 			// TO TRY
-			// transaction := unmarshalEnvelope([]byte(event.Body))
-			transaction := unmarshalEnvelope(event.Body)
+			// transaction := openEnvelope([]byte(event.Body))
+			transaction := decodeEnvelope(event.Body)
 			fmt.Printf("TRANSACTION %T", transaction) // slashes? then split'\n' and make into Array of Objects
 
 			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event) // Envelope(event)
@@ -319,53 +299,12 @@ func main() {
 	return
 }
 
-/*
-// func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
-	
-	// WORKS
-	bodyVisible := unmarshalEnvelope(event.Body)
-	fmt.Print(bodyVisible)
-
-	body := event.Body
-
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-	SESSION := event.Kind == "session"
-
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-
-	storeEndpoint := matchDSN(projectDSNs, event)
-
-	switch {
-	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && SESSION:
-		return body, updateTimestamp, jsEncoder, androidHeaders, storeEndpoint
-	}
-
-	// var body map[string]interface{}
-	// if event.Kind != "session" {
-	// 	body = unmarshalJSON(event.Body)
-	// } else {
-	// 	body = event.Body
-	// 	// body1 := string(event.Body)
-	// 	// fmt.Print(body1)
-	// }
-	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
-	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-}
-*/
 
 func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
 
 	// TEMP
-	// body := event.Body
-	body := make(map[string]interface{})
+	// body := make(map[string]interface{})
+	body := unmarshalJSON([]byte(event.Body))
 
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
@@ -387,10 +326,12 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
 	case ANDROID && ERROR:
 		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+
 	case JAVASCRIPT && TRANSACTION:
 		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 	case JAVASCRIPT && ERROR:
 		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
+
 	case PYTHON && TRANSACTION:
 		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
 	case PYTHON && ERROR:
@@ -474,3 +415,46 @@ func undertake(body map[string]interface{}) {
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "h4ckweek"
 }
+
+
+/*
+// func decodeSession(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
+func decodeSession(event Event) ([]byte, Timestamper, BodyEncoder, []string, string) {
+	
+	// WORKS
+	bodyVisible := openEnvelope(event.Body)
+	fmt.Print(bodyVisible)
+
+	body := event.Body
+
+	ANDROID := event.Platform == "android"
+
+	ERROR := event.Kind == "error"
+	TRANSACTION := event.Kind == "transaction"
+	SESSION := event.Kind == "session"
+
+	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
+
+	storeEndpoint := matchDSN(projectDSNs, event)
+
+	switch {
+	case ANDROID && TRANSACTION:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	case ANDROID && ERROR:
+		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+	case ANDROID && SESSION:
+		return body, updateTimestamp, jsEncoder, androidHeaders, storeEndpoint
+	}
+
+	// var body map[string]interface{}
+	// if event.Kind != "session" {
+	// 	body = unmarshalJSON(event.Body)
+	// } else {
+	// 	body = event.Body
+	// 	// body1 := string(event.Body)
+	// 	// fmt.Print(body1)
+	// }
+	fmt.Print("\n . . . . DID NOT MEET A CASE . . . . .\n")
+	return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+}
+*/

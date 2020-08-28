@@ -31,29 +31,35 @@ func encodeGzip(b []byte) bytes.Buffer {
 }
 
 // func unmarshalEnvelope(bytes []byte) []string {
-func unmarshalEnvelope(envelope string) []string {
+func decodeEnvelope(envelope string) []string {
 
-	// fmt.Println("\n . . . . . . . . UNMARSHAL ENVELOPE . . . . . . . . . . .", len(envelopeContents))
-	// var envelope string
-	// envelope = string(bytes)
-	envelopeContents := strings.Split(envelope, "\\n")
+	items := strings.Split(envelope, "\n")
 
-	var content map[string]interface{}
+	var item map[string]interface{}
 
-	fmt.Println(envelopeContents[0]) 
+	fmt.Println("\n > # of items in envelope", len(items))
+
+	for idx, item := range items {
+		fmt.Println("\n > item is...", idx)
+		fmt.Println(item)
+	}
 	
-	stripped := strings.ReplaceAll(envelopeContents[0], "\\", "")
-
+	// shouldn't need, since fixing encoding problem
+	// stripped := strings.ReplaceAll(items[0], "\\", "")
 	// remove the prepending quotation mark on "{\"event_id\": so it becomes {\"event_id\"
-	stripped = stripped[1:]
-
-	if err := json.Unmarshal([]byte(stripped), &content); err != nil {
+	// stripped = stripped[1:]
+	fmt.Println("\n0000000 . . ")
+	// TODO need do this for every item in items
+	if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
+		fmt.Println("111111. . . ")
 		panic(err)
 	}
-	// SUCCESS
-	fmt.Println("CONTENT", content)
-	
-	return envelopeContents
+	fmt.Println("2222. . . .")
+
+	fmt.Println("\n > ITEM example", item)
+
+	// TODO return array of map[string]interface{}
+	return items
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {
