@@ -118,40 +118,9 @@ func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
-// func envelopeEncoder(envelope string) []byte {
-// 	return []byte(envelope)
-// }
-// func envelopeEncoderPy(envelope string) []byte {
-// 	buf := encodeGzip([]byte(envelope))
-// 	return buf.Bytes()
-// }
-// func jsEncoder(body map[string]interface{}) []byte {
-// 	return marshalJSON(body)
-// }
-// func pyEncoder(body map[string]interface{}) []byte {
-// 	bodyBytes := marshalJSON(body)
-// 	buf := encodeGzip(bodyBytes)
-// 	return buf.Bytes()
-// }
-
-// type BodyEncoder func(map[string]interface{}) []byte
-// type EnvelopeEncoder func(string) []byte
-// type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	
-	// for getsentry/tracing-example (a situation where you have 3 Python Projects)
-	// headers := event.Headers
-	// if headers["X-Sentry-Auth"] != "" {
-	// 	xSentryAuth := headers["X-Sentry-Auth"]
-	// 	for _, projectDSN := range projectDSNs {
-	// 		if strings.Contains(xSentryAuth, projectDSN.key) {
-	// 			fmt.Println("> match", projectDSN)
-	// 			return projectDSN.storeEndpoint()
-	// 		}
-	// 	}
-	// }
-
 	platform := event.Platform
 
 	var storeEndpoint string
@@ -237,7 +206,6 @@ func main() {
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
-		// var headerKeys []string
 		var storeEndpoint string
 		var requestBody []byte
 
@@ -248,7 +216,6 @@ func main() {
 			body = release(body)
 			body = user(body)
 			body = timestamper(body, event.Platform)
-			
 			undertake(body)
 			requestBody = bodyEncoder(body)
 
@@ -270,12 +237,10 @@ func main() {
 			if requestErr != nil {
 				log.Fatal(requestErr)
 			}
-
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				log.Fatal(responseDataErr)
 			}
-
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)

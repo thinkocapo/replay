@@ -1,11 +1,7 @@
 package main
 
 import (
-	// "bytes"
-	// "compress/gzip"
-	// "encoding/json"
 	"fmt"
-	// "io/ioutil"
 	"strings"
 )
 
@@ -16,7 +12,6 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	PYTHON := event.Platform == "python"
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	envelope := event.Body
