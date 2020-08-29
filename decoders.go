@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, []string, string) {
+func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+	// jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	// pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
@@ -38,16 +38,16 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, []string
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoder, jsHeaders, storeEndpoint
+		return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoderPy, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
+		return envelope, updateTimestamps, envelopeEncoderPy, storeEndpoint // because envelope so jsEncoder....?
 	}
 
-	return envelope, updateTimestamps, envelopeEncoder, jsHeaders, storeEndpoint
+	return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
 }
 
 // TODO remove 'TRANSACTION' from here
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
+func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder, string) {
 
 	body := unmarshalJSON([]byte(event.Body))
 
@@ -58,28 +58,28 @@ func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	ERROR := event.Kind == "error"
 	TRANSACTION := event.Kind == "transaction"
 
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
+	//jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
+	//pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+	//androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
 	storeEndpoint := matchDSN(projectDSNs, event)
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	switch {
 	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+		return body, updateTimestamp, pyEncoder, storeEndpoint
 	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
+		return body, updateTimestamp, pyEncoder, storeEndpoint
 
 	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+		return body, updateTimestamps, jsEncoder, storeEndpoint
 	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
+		return body, updateTimestamp, jsEncoder, storeEndpoint
 
 	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
+		return body, updateTimestamps, pyEncoder, storeEndpoint
 	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
+		return body, updateTimestamp, pyEncoder, storeEndpoint
 	}
 
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
+	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
