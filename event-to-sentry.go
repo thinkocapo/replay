@@ -123,6 +123,10 @@ func (e Event) String() string {
 func envelopeEncoder(envelope string) []byte {
 	return []byte(envelope)
 }
+func envelopeEncoderPy(envelope string) []byte {
+	buf := encodeGzip([]byte(envelope))
+	return buf.Bytes()
+}
 func jsEncoder(body map[string]interface{}) []byte {
 	return marshalJSON(body)
 }
@@ -256,8 +260,9 @@ func main() {
 
 			// TODO transform the envelope Array, update traceId, release, user, timestamps
 			// undertaker()			
-			requestBody = []byte(envelope)
-			// requestBody = envelopeEncoder(envelope)
+			// requestBody = []byte(envelope)
+
+			requestBody = envelopeEncoder(envelope)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
@@ -295,7 +300,13 @@ func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpo
 	}
 
 	for key, value := range eventHeaders {
-		request.Header.Set(key, value)
+		// request.Header.Set(key, value)
+		fmt.Println("HEADER", key, value)
+		if (key == "X-Sentry-Auth") {
+			fmt.Println("ignore")
+		} else {
+			request.Header.Set(key, value)
+		}
 	}
 	return request
 }

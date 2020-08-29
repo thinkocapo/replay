@@ -40,7 +40,7 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, []string
 	case JAVASCRIPT && TRANSACTION:
 		return envelope, updateTimestamps, envelopeEncoder, jsHeaders, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoder, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
+		return envelope, updateTimestamps, envelopeEncoderPy, pyHeaders, storeEndpoint // because envelope so jsEncoder....?
 	}
 
 	return envelope, updateTimestamps, envelopeEncoder, jsHeaders, storeEndpoint
