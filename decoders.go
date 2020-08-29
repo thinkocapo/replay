@@ -14,8 +14,7 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
-	// jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	// pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
+
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
@@ -40,7 +39,7 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	case JAVASCRIPT && TRANSACTION:
 		return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoderPy, storeEndpoint // because envelope so jsEncoder....?
+		return envelope, updateTimestamps, envelopeEncoderPy, storeEndpoint
 	}
 
 	return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
@@ -58,9 +57,6 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	ERROR := event.Kind == "error"
 	TRANSACTION := event.Kind == "transaction"
 
-	//jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	//pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-	//androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
 	storeEndpoint := matchDSN(projectDSNs, event)
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
@@ -83,3 +79,24 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
+
+// Encoders
+func envelopeEncoder(envelope string) []byte {
+	return []byte(envelope)
+}
+func envelopeEncoderPy(envelope string) []byte {
+	buf := encodeGzip([]byte(envelope))
+	return buf.Bytes()
+}
+func jsEncoder(body map[string]interface{}) []byte {
+	return marshalJSON(body)
+}
+func pyEncoder(body map[string]interface{}) []byte {
+	bodyBytes := marshalJSON(body)
+	buf := encodeGzip(bodyBytes)
+	return buf.Bytes()
+}
+
+type BodyEncoder func(map[string]interface{}) []byte
+type EnvelopeEncoder func(string) []byte
+type Timestamper func(map[string]interface{}, string) map[string]interface{}

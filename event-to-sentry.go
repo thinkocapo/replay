@@ -118,25 +118,25 @@ func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
-func envelopeEncoder(envelope string) []byte {
-	return []byte(envelope)
-}
-func envelopeEncoderPy(envelope string) []byte {
-	buf := encodeGzip([]byte(envelope))
-	return buf.Bytes()
-}
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(body)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	buf := encodeGzip(bodyBytes)
-	return buf.Bytes()
-}
+// func envelopeEncoder(envelope string) []byte {
+// 	return []byte(envelope)
+// }
+// func envelopeEncoderPy(envelope string) []byte {
+// 	buf := encodeGzip([]byte(envelope))
+// 	return buf.Bytes()
+// }
+// func jsEncoder(body map[string]interface{}) []byte {
+// 	return marshalJSON(body)
+// }
+// func pyEncoder(body map[string]interface{}) []byte {
+// 	bodyBytes := marshalJSON(body)
+// 	buf := encodeGzip(bodyBytes)
+// 	return buf.Bytes()
+// }
 
-type BodyEncoder func(map[string]interface{}) []byte
-type EnvelopeEncoder func(string) []byte
-type Timestamper func(map[string]interface{}, string) map[string]interface{}
+// type BodyEncoder func(map[string]interface{}) []byte
+// type EnvelopeEncoder func(string) []byte
+// type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	
