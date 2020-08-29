@@ -120,6 +120,9 @@ func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
+func envelopeEncoder(envelope string) []byte {
+	return []byte(envelope)
+}
 func jsEncoder(body map[string]interface{}) []byte {
 	return marshalJSON(body)
 }
@@ -130,6 +133,7 @@ func pyEncoder(body map[string]interface{}) []byte {
 }
 
 type BodyEncoder func(map[string]interface{}) []byte
+type EnvelopeEncoder func(string) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
@@ -230,6 +234,7 @@ func main() {
 		var envelope string
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
+		var envelopeEncoder EnvelopeEncoder
 		var headerKeys []string
 		fmt.Println(headerKeys)
 		var storeEndpoint string
@@ -245,14 +250,14 @@ func main() {
 			requestBody = bodyEncoder(body)
 		} else if (event.Kind == "transaction") {
 			
-			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
+			envelope, timestamper, envelopeEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
 
-			fmt.Printf(" %T %T %T %T\n", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+			fmt.Printf(" %T %T %T %T\n", timestamper, envelopeEncoder, headerKeys, storeEndpoint)
 
 			// TODO transform the envelope Array, update traceId, release, user, timestamps
-			// TODO bodyEncoder() it again
-			
+			// undertaker()			
 			requestBody = []byte(envelope)
+			// requestBody = envelopeEncoder(envelope)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
@@ -281,44 +286,6 @@ func main() {
 		time.Sleep(1000 * time.Millisecond)
 	}
 	return
-}
-
-// TODO remove 'TRANSACTION' from here
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-
-	body := unmarshalJSON([]byte(event.Body))
-
-	JAVASCRIPT := event.Platform == "javascript"
-	PYTHON := event.Platform == "python"
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
-
-	switch {
-	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-
-	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
-	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
-
-	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
-	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
-	}
-
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
 }
 
 func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
