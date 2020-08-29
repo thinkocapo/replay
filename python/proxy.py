@@ -135,13 +135,14 @@ def save():
         print('> JAVASCRIPT ', event_type)
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
-        body = request.data
+        body = request.data.decode("utf-8")
 
     event = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
-        'body': request.data.decode("utf-8")
+        'body': body
+        # 'body': request.data.decode("utf-8") #TODO should be body.decode("utf-8")?
     }
 
     try:

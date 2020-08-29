@@ -7,11 +7,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"strings"
 	"time"
@@ -120,32 +118,9 @@ func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(body)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	buf := encodeGzip(bodyBytes)
-	return buf.Bytes()
-}
-
-type BodyEncoder func(map[string]interface{}) []byte
-type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	
-	// for getsentry/tracing-example (a situation where you have 3 Python Projects)
-	// headers := event.Headers
-	// if headers["X-Sentry-Auth"] != "" {
-	// 	xSentryAuth := headers["X-Sentry-Auth"]
-	// 	for _, projectDSN := range projectDSNs {
-	// 		if strings.Contains(xSentryAuth, projectDSN.key) {
-	// 			fmt.Println("> match", projectDSN)
-	// 			return projectDSN.storeEndpoint()
-	// 		}
-	// 	}
-	// }
-
 	platform := event.Platform
 
 	var storeEndpoint string
@@ -230,29 +205,29 @@ func main() {
 		var envelope string
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
-		var headerKeys []string
-		fmt.Println(headerKeys)
+		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
 
 		if (event.Kind == "error") {			
-			body, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEvent(event)
+			
+			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
 			body = eventId(body)
 			body = release(body)
 			body = user(body)
 			body = timestamper(body, event.Platform)
 			undertake(body)
 			requestBody = bodyEncoder(body)
+
 		} else if (event.Kind == "transaction") {
 			
-			envelope, timestamper, bodyEncoder, headerKeys, storeEndpoint = decodeEnvelope(event)
-
-			fmt.Printf(" %T %T %T %T\n", timestamper, bodyEncoder, headerKeys, storeEndpoint)
+			envelope, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
+			// fmt.Printf(" %T %T %T %T\n", timestamper, envelopeEncoder, storeEndpoint)
 
 			// TODO transform the envelope Array, update traceId, release, user, timestamps
-			// TODO bodyEncoder() it again
 			
-			requestBody = []byte(envelope)
+			// undertaker()			
+			requestBody = envelopeEncoder(envelope)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
@@ -262,12 +237,10 @@ func main() {
 			if requestErr != nil {
 				log.Fatal(requestErr)
 			}
-
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				log.Fatal(responseDataErr)
 			}
-
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("\n> %s event IGNORED", event.Kind)
@@ -283,108 +256,27 @@ func main() {
 	return
 }
 
-// TODO remove 'TRANSACTION' from here
-func decodeEvent(event Event) (map[string]interface{}, Timestamper, BodyEncoder, []string, string) {
-
-	body := unmarshalJSON([]byte(event.Body))
-
-	JAVASCRIPT := event.Platform == "javascript"
-	PYTHON := event.Platform == "python"
-	ANDROID := event.Platform == "android"
-
-	ERROR := event.Kind == "error"
-	TRANSACTION := event.Kind == "transaction"
-
-	jsHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Type", "User-Agent"}
-	pyHeaders := []string{"Accept-Encoding", "Content-Length", "Content-Encoding", "Content-Type", "User-Agent"}
-	androidHeaders := []string{"Content-Length","User-Agent","Connection","Content-Encoding","X-Forwarded-Proto","Host","Accept","X-Forwarded-For"} // X-Sentry-Auth omitted
-	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
-
-	switch {
-	case ANDROID && TRANSACTION:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-	case ANDROID && ERROR:
-		return body, updateTimestamp, pyEncoder, androidHeaders, storeEndpoint
-
-	case JAVASCRIPT && TRANSACTION:
-		return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
-	case JAVASCRIPT && ERROR:
-		return body, updateTimestamp, jsEncoder, jsHeaders, storeEndpoint
-
-	case PYTHON && TRANSACTION:
-		return body, updateTimestamps, pyEncoder, pyHeaders, storeEndpoint
-	case PYTHON && ERROR:
-		return body, updateTimestamp, pyEncoder, pyHeaders, storeEndpoint
+func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+	if requestBody == nil {
+		log.Fatalln("buildRequest missing requestBody")
+	}
+	if eventHeaders == nil {
+		log.Fatalln("buildRequest missing eventHeaders")
+	}
+	if storeEndpoint == "" {
+		log.Fatalln("buildRequest missing storeEndpoint")
 	}
 
-	return body, updateTimestamps, jsEncoder, jsHeaders, storeEndpoint
-}
-
-func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
 	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
 	for key, value := range eventHeaders {
-		request.Header.Set(key, value)
+		if (key != "X-Sentry-Auth") {
+			request.Header.Set(key, value)
+		}
 	}
 	return request
 }
 
-// same eventId cannot be accepted twice by Sentry
-func eventId(body map[string]interface{}) map[string]interface{} {
-	if _, ok := body["event_id"]; !ok {
-		log.Print("no event_id on object from DB")
-	}
-	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-	body["event_id"] = uuid4
-	fmt.Println("> event_id updated", body["event_id"])
-	return body
-}
-
-// CalVer-lite
-func release(body map[string]interface{}) map[string]interface{} {
-	date := time.Now()
-	month := date.Month()
-	day := date.Day()
-	var week int
-	switch {
-	case day <= 7:
-		week = 1
-	case day >= 8 && day <= 14:
-		week = 2
-	case day >= 15 && day <= 21:
-		week = 3
-	case day >= 22:
-		week = 4
-	}
-	release := fmt.Sprint(int(month), ".", week)
-	body["release"] = release
-	fmt.Println("> release", body["release"])
-	return body
-}
-
-func user(body map[string]interface{}) map[string]interface{} {
-	if body["user"] == nil {
-		body["user"] = make(map[string]interface{})
-		user := body["user"].(map[string]interface{})
-		rand.Seed(time.Now().UnixNano())
-		alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
-		var alphanumeric string
-		for i := 0; i < 3; i++ {
-			alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
-		}
-		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
-	}
-	return body
-}
-
-func undertake(body map[string]interface{}) {
-	if body["tags"] == nil {
-		body["tags"] = make(map[string]interface{})
-	}
-	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "h4ckweek"
-}
