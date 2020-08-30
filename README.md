@@ -196,10 +196,7 @@ Google Cloud SDK 303.0.0
 initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
-08/30 Python Tx erroring in event-to-sentry in its envelope
-- isolate a python transaction, keep triming it. object wasn't ending after the 'email'?
-- python transactions have a final '\n' that's causing panic: unexpected end of JSON input. javascripts don't have this
-- in proxy, check and eliminate the '\n'? remove it from _item in Go!
+08/30 Python items in array of items...?
 UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
 UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
 

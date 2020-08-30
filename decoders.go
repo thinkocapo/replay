@@ -32,10 +32,27 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 		if err := json.Unmarshal([]byte(item), &itemInterface); err != nil {
 			panic(err)
 		}
-		fmt.Println("\n ITEM ===================================", itemInterface)
+		fmt.Println("\n ITEM", item)
 	}
 
-	// TODO return envelope array-of-map[string]interfaces{} back to a string
+	// I
+	// GOAL
+	// print/long ALL transaction types in both.json again
+
+	// GOAL update all Timestamps and SEND
+
+	// II
+	// GOAL
+	// eventId - is in first envelope item as well as largest envelope item, for both JS + PY transactions
+	// 1. per item but inside 1 envelope, generate new event_id and put on both envelope items here....EASY
+
+	// traceId - is in largest envelope item, for both JS + PY transactions
+	// 1. keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and give each item in itemPointersArray the same new generated Id
+
+	// notes...
+	// 1. ^ update each itemInterface in place...?
+	// 2. 'OR' return envelope array-of-map[string]interfaces{} back to a string. then update
+	// 3. ^ update each itemInterface in place...and put to some kind of 'output' envelope
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
