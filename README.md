@@ -196,15 +196,17 @@ Google Cloud SDK 303.0.0
 initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
-proxy save  
-event-to-sentry  
+08/30 Python Tx erroring in event-to-sentry in its envelope
+- isolate a python transaction, keep triming it. object wasn't ending after the 'email'?
+- python transactions have a final '\n' that's causing panic: unexpected end of JSON input. javascripts don't have this
+- in proxy, check and eliminate the '\n'? remove it from _item in Go!
+UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
+UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
 
-getsentry/tracing-example.json (3 DSN's python) again. logic based on name.json for which DSN keys. refactor.  
 
-bulk creation (cronjob) from JSON again
+bulk creation (cronjob) from JSON again  
 
-Envelopes (choose Mobile Health or JS/Python which means upgrade to modern SDK)  
-
+Envelopes + Sessions for Mobile  
 
 -H id for selecting 1 vs -H all for selecting all  
 move `context.Background()` to `func init()`  

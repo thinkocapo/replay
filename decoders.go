@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"encoding/json"
 	"strings"
 )
 
@@ -12,23 +13,29 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	PYTHON := event.Platform == "python"
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	envelope := event.Body
-
+	
+	// Gotcha - Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
 	items := strings.Split(envelope, "\n")
+	length := len(items)
+	if (items[length-1] == "") {
+		items = items[:length-1]
+	}
 	fmt.Println("\n > # of items in envelope", len(items))
-	for idx, _ := range items {
-		fmt.Println("> item", idx)
-		// TODO need do this for every item in items
-		// var item map[string]interface{}
-		// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
-			// panic(err)
-		// }
+
+	for idx, item := range items {
+		fmt.Printf("\n> item %v %T \n", idx, item) // string
+		// fmt.Println("> item ", item)
+
+		var itemInterface map[string]interface{}
+		if err := json.Unmarshal([]byte(item), &itemInterface); err != nil {
+			panic(err)
+		}
+		fmt.Println("\n ITEM ===================================", itemInterface)
 	}
 
 	// TODO return envelope array-of-map[string]interfaces{} back to a string
-	// TODO return bodyEncoder for []byte(envelope) maybe called 'envelopeEncoder'. Go strings are already utf-8 encoded
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
@@ -55,6 +62,7 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	storeEndpoint := matchDSN(projectDSNs, event)
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
+	// var b BodyEncoder
 	switch {
 	case ANDROID && TRANSACTION:
 		return body, updateTimestamp, pyEncoder, storeEndpoint
@@ -95,3 +103,21 @@ func pyEncoder(body map[string]interface{}) []byte {
 type BodyEncoder func(map[string]interface{}) []byte
 type EnvelopeEncoder func(string) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
+
+// EXPERIMENT
+// type decoder interface {
+// 	jsError() []byte
+// 	pyError() []byte
+// 	envelope() []byte
+// }
+// func (BodyEncoder) jsError (body map[string]interface{}) []byte {
+// 	return marshalJSON(body)
+// }
+// func (BodyEncoder) pyError (body map[string]interface{}) []byte {
+// 	bodyBytes := marshalJSON(body)
+// 	buf := encodeGzip(bodyBytes)
+// 	return buf.Bytes()
+// }
+// func (BodyEncoder) envelope (envelope string) []byte {
+// 	return []byte(envelope)
+// }

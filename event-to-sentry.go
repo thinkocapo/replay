@@ -146,6 +146,13 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
+type Envelope struct {
+	items []Item
+}
+type Item struct {
+	id string
+}
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -159,7 +166,7 @@ func init() {
 	py = flag.String("py", "", "python DSN")
 	flag.Parse()
 
-	// Use SAAS DSN's for Tx's as getsentry/sentry 10.0.0 doesn't support Tx's yet
+	// sentry +10.0.0 supports performance monitoring, transactions
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	if (*js != "") {
@@ -170,13 +177,6 @@ func init() {
 		projectDSNs["python"] = parseDSN(*py)
 	}
 
-	// TODO "panic: runtime error: slice bounds out of range [7:0]" if these are not set
-	// projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
-	// projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
-
-	// fmt.Println("> --db json flag", *db)
 	if *db == "" {
 		database = os.Getenv("JSON")
 	} else {
@@ -189,6 +189,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Print("0000")
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	defer jsonFile.Close()
@@ -196,6 +197,7 @@ func main() {
 	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
 	}
+	fmt.Println("1111", len(events))
 
 	// TODO rename body as errorBody or eventPayload?
 	for idx, event := range events {
@@ -208,7 +210,6 @@ func main() {
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
-
 		if (event.Kind == "error") {			
 			
 			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
@@ -222,9 +223,10 @@ func main() {
 		} else if (event.Kind == "transaction") {
 			
 			envelope, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-			// fmt.Printf(" %T %T %T %T\n", timestamper, envelopeEncoder, storeEndpoint)
 
-			// TODO transform the envelope Array, update traceId, release, user, timestamps
+			// TODO 
+			// transform the envelope into Array of itmes,
+			// update the traceId, release, user, timestamps
 			
 			// undertaker()			
 			requestBody = envelopeEncoder(envelope)
@@ -257,6 +259,7 @@ func main() {
 }
 
 func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 	if requestBody == nil {
 		log.Fatalln("buildRequest missing requestBody")
 	}
