@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) {
+func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
@@ -15,33 +15,33 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	envelope := event.Body
+	fmt.Println("\n > envelope INPUT from event.Body", envelope)
 	
-	// Gotcha - Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
-	items := strings.Split(envelope, "\n")
-	length := len(items)
-	if (items[length-1] == "") {
-		items = items[:length-1]
+	// Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
+	envelopeItems := strings.Split(envelope, "\n")
+	length := len(envelopeItems)
+	if (envelopeItems[length-1] == "") {
+		envelopeItems = envelopeItems[:length-1]
 	}
-	fmt.Println("\n > # of items in envelope", len(items))
+	fmt.Println("\n > # of envelopeItems in envelope", len(envelopeItems))
 
-	for idx, item := range items {
-		fmt.Printf("\n> item %v %T \n", idx, item) // string
-		// fmt.Println("> item ", item)
+	items := []Item{}
 
-		var itemInterface map[string]interface{}
-		if err := json.Unmarshal([]byte(item), &itemInterface); err != nil {
+	for idx, item := range envelopeItems {
+		fmt.Printf("\n> item.string %v %T \n", idx, item) // string
+
+		item1 := Item{}
+		if err := json.Unmarshal([]byte(item), &item1); err != nil {
 			panic(err)
 		}
-		fmt.Println("\n ITEM", item)
+
+		items = append(items, item1)
 	}
+	fmt.Println("\n # of item interfaces", len(items))
 
-	// I
-	// GOAL
-	// print/long ALL transaction types in both.json again
 
-	// GOAL update all Timestamps and SEND
+	// update all Timestamps and SEND
 
-	// II
 	// GOAL
 	// eventId - is in first envelope item as well as largest envelope item, for both JS + PY transactions
 	// 1. per item but inside 1 envelope, generate new event_id and put on both envelope items here....EASY
@@ -56,12 +56,12 @@ func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) 
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
+		return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoderPy, storeEndpoint
+		return items, updateTimestamps, envelopeEncoderPy, storeEndpoint
 	}
 
-	return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
+	return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
 }
 
 // TODO remove 'TRANSACTION' from here
@@ -100,25 +100,7 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
 
-// Encoders
-func envelopeEncoder(envelope string) []byte {
-	return []byte(envelope)
-}
-func envelopeEncoderPy(envelope string) []byte {
-	buf := encodeGzip([]byte(envelope))
-	return buf.Bytes()
-}
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(body)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	buf := encodeGzip(bodyBytes)
-	return buf.Bytes()
-}
 
-type BodyEncoder func(map[string]interface{}) []byte
-type EnvelopeEncoder func(string) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
 
 // EXPERIMENT

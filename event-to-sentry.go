@@ -149,8 +149,28 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 type Envelope struct {
 	items []Item
 }
+
 type Item struct {
-	id string
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at string `json:"sent_at,omitempty"`
+
+	Length int `json:"length,omitempty"`
+	Type string `json:"type,omitempty"`
+	Content_type string `json:"content_type,omitempty"`
+
+	Start_timestamp string `json:"start_timestamp,omitempty"`
+	Transaction string `json:"transaction,omitempty"`
+	Server_name string `json:"server_name,omitempty"`
+	Tags map[string]interface{} `json:"tags,omitempty"`
+	Contexts map[string]interface{} `json:"contexts,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
+	Extra map[string]interface{} `json:"extra,omitempty"`
+	Request map[string]interface{} `json:"request,omitempty"`
+	Environment string `json:"environment,omitempty"`
+	Platform string `json:"platform,omitempty"`
+	// Todo spans []
+	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	User map[string]interface{} `json:"user,omitempty"`
 }
 
 func init() {
@@ -189,7 +209,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Print("0000")
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	defer jsonFile.Close()
@@ -197,19 +216,19 @@ func main() {
 	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
 	}
-	fmt.Println("1111", len(events))
 
 	// TODO rename body as errorBody or eventPayload?
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
 		var body map[string]interface{}
-		var envelope string
+		// var envelope string
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
+		var items []Item
 		if (event.Kind == "error") {			
 			
 			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
@@ -222,14 +241,16 @@ func main() {
 
 		} else if (event.Kind == "transaction") {
 			
-			envelope, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
+			items, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 
-			// TODO 
-			// transform the envelope into Array of itmes,
-			// update the traceId, release, user, timestamps
+			// transformations...
+			// envelope = timestamper(envelope)
+			// envelope = eventIds(envelope)
+			// update the traceIdS
+			// update release, user
 			
 			// undertaker()			
-			requestBody = envelopeEncoder(envelope)
+			requestBody = envelopeEncoder(items)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)

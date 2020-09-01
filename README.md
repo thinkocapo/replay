@@ -197,6 +197,7 @@ initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
 08/30 Python items in array of items...?
+
 UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
 UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
 
