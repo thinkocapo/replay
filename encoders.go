@@ -18,7 +18,7 @@ func envelopeEncoderJs(items []Item) []byte {
 		newLine := []byte("\n")
 		output = append(output, newLine...)
 	}
-	fmt.Println("\n > OUTPUT ", output)
+	// fmt.Println("\n > OUTPUT ", output)
 	return output
 	// if err := json.Unmarshal([]byte(item), &item1); err != nil {
 }
@@ -37,9 +37,9 @@ func envelopeEncoderPy(items []Item) []byte {
 		// 	output = output + string(byteString)
 		// }
 	}
-	fmt.Println("\n > envelopeEncoder OUTPUT", output)
+	// fmt.Println("\n > envelopeEncoder OUTPUT", output)
 	splitted := strings.Split(output, "\n")
-	fmt.Println("\n > splitted length", len(splitted))
+	fmt.Println("\n > envelopeEncoderPy splitted length", len(splitted))
 
 	buf := encodeGzip([]byte(output))
 	return buf.Bytes()

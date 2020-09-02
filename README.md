@@ -197,15 +197,18 @@ initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
 08/30 Python items in array of items...?
+0. run both.json 1 tx again
+1. rm length attribute from all 7 or 8 transactions in old_both.json (if errors, then re-record using new Tx stuff I updated today in sentry-demos/tracing.git)
 
 UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
 UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
 
 
-bulk creation (cronjob) from JSON again  
+#### future
+Cronjob for 5,000/hr (3.6million for 30 days)
 
 Envelopes + Sessions for Mobile  
 
--H id for selecting 1 vs -H all for selecting all  
+cloud:  
 move `context.Background()` to `func init()`  
 ./go.mod and ./api/go.mod  

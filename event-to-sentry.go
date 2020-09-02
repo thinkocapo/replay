@@ -173,6 +173,31 @@ type Item struct {
 	User map[string]interface{} `json:"user,omitempty"`
 }
 
+type Item2 struct {
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at string `json:"sent_at,omitempty"`
+
+	Length int `json:"length,omitempty"`
+	Type string `json:"type,omitempty"`
+	Content_type string `json:"content_type,omitempty"`
+
+	Start_timestamp float64 `json:"start_timestamp,omitempty"`
+	Transaction string `json:"transaction,omitempty"`
+	Server_name string `json:"server_name,omitempty"`
+	Tags map[string]interface{} `json:"tags,omitempty"`
+	Contexts map[string]interface{} `json:"contexts,omitempty"`
+	Timestamp float64 `json:"timestamp,omitempty"`
+	Extra map[string]interface{} `json:"extra,omitempty"`
+	Request map[string]interface{} `json:"request,omitempty"`
+	Environment string `json:"environment,omitempty"`
+	Platform string `json:"platform,omitempty"`
+	// Todo spans []
+	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	User map[string]interface{} `json:"user,omitempty"`
+}
+
+// TODO need an ItemFinal that has unified timestamp?
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
