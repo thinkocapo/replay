@@ -10,7 +10,8 @@ import (
 // func envelopeEncoder(envelope string) []byte {
 // 	return []byte(envelope)
 // }
-func envelopeEncoderJs(items []Item) []byte {
+// func envelopeEncoderJs(items []Item) []byte {
+func envelopeEncoderJs(items []interface{}) []byte {
 	output := []byte{}
 	for _, item := range items {
 		// fmt.Println("\n > envelopeEncoder", item)
@@ -22,7 +23,8 @@ func envelopeEncoderJs(items []Item) []byte {
 	return output
 	// if err := json.Unmarshal([]byte(item), &item1); err != nil {
 }
-func envelopeEncoderPy(items []Item) []byte {
+// func envelopeEncoderPy(items []Item) []byte {
+func envelopeEncoderPy(items []interface{}) []byte {
 	output := ""
 	for idx, item := range items {
 		byteString, _ := json.Marshal(item)
@@ -62,4 +64,5 @@ func pyEncoder(body map[string]interface{}) []byte {
 
 type BodyEncoder func(map[string]interface{}) []byte
 // type EnvelopeEncoder func(string) []byte OG
-type EnvelopeEncoder func(items []Item) []byte
+// type EnvelopeEncoder func(items []Item) []byte
+type EnvelopeEncoder func(items []interface{}) []byte

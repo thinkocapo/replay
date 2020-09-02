@@ -6,8 +6,9 @@ import (
 	"reflect"
 	"strings"
 )
-// []interface{}
-func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) {
+
+// func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) {
+func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
@@ -26,7 +27,8 @@ func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) 
 	}
 	fmt.Println("\n > # of envelopeItems in envelope", len(envelopeItems))
 
-	items := []Item{}
+	// items := []Item{}
+	var items  []interface{}
 
 	for idx, item := range envelopeItems {
 		fmt.Printf("\n> item.string %v %T \n", idx, item) // string
@@ -37,7 +39,7 @@ func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) 
 			// if ever 9 numbers in a row
 			// then it's Item2{}
 
-		item1 := Item{}
+		// item1 := Item{}
 		// item2 := Item2{}
 
 		// if err := json.Unmarshal([]byte(item), &item1); err != nil {
@@ -54,9 +56,9 @@ func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) 
 		if err := json.Unmarshal([]byte(item), &parsed); err != nil {
 			panic(err)
 		}
-		fmt.Println("parsed.platform", parsed["platform"])
+		// fmt.Println("parsed.platform", parsed["platform"])
 
-		fmt.Println("PARSED", parsed)
+		// fmt.Println("PARSED", parsed)
 
 		if val, ok := parsed["timestamp"]; ok {
 			fmt.Println("\n > parsed[timestamp]", val)
@@ -74,7 +76,9 @@ func decodeEnvelope(event Event) ([]Item, Timestamper, EnvelopeEncoder, string) 
 			fmt.Println("\n > no timestamp, must be a header")
 		}
 
-		items = append(items, item1)
+		// TODO return interface{}, and do Item{} type later, or never!
+		items = append(items, parsed)
+		// items = append(items, item1)
 	}
 	fmt.Println("\n # of items in []Item{}", len(items))
 

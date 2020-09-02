@@ -147,7 +147,9 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 }
 
 type Envelope struct {
-	items []Item
+	// TODO items {}interface
+	items []interface{}
+	// items []Item
 }
 
 type Item struct {
@@ -253,7 +255,8 @@ func main() {
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
-		var items []Item
+		// var items []Item
+		var items []interface{}
 		if (event.Kind == "error") {			
 			
 			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
@@ -267,7 +270,6 @@ func main() {
 		} else if (event.Kind == "transaction") {
 			
 			items, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-
 			// transformations...
 			// envelope = timestamper(envelope)
 			// envelope = eventIds(envelope)

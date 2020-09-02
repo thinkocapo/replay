@@ -37,7 +37,8 @@ func marshalJSON(body map[string]interface{}) []byte {
 	return bodyBytes
 }
 
-func marshalJSONItem(item Item) []byte {
+// func marshalJSONItem(item Item) []byte {
+func marshalJSONItem(item interface{}) []byte {
 	//fmt.Println("\n > marshalJSONItem BEFORE", item) // {2b7e81ebe33349cda2a77f04c30e8174 2020-08-29T05:43:31.286573Z}
 	itemBytes, errItemBytes := json.Marshal(item)
 	if errItemBytes != nil {
