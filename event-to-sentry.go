@@ -269,7 +269,8 @@ func main() {
 			
 			envelopeItems, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 			// envelope = timestamper(envelope)
-			// envelope = eventIds(envelope)
+			eventIds(envelopeItems)
+
 			// update the traceIdS
 			// update release, user
 
@@ -291,7 +292,7 @@ func main() {
 			if responseDataErr != nil {
 				log.Fatal(responseDataErr)
 			}
-			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
+			fmt.Printf("> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("> %s event IGNORED", event.Kind)
 		}

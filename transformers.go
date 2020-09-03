@@ -21,6 +21,22 @@ func eventId(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
+func eventIds(envelopeItems []interface{}) {
+	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
+	for _, item := range envelopeItems {
+		eventId := item.(map[string]interface{})["event_id"]
+		fmt.Printf("> item uuid %v | type %T \n", eventId, item) // interface{}
+		// if has event_id
+		if (eventId != nil) {
+			// store that event_id (where?)
+			fmt.Println("> HAS event_id - BEFORE", item.(map[string]interface{})["event_id"])
+			item.(map[string]interface{})["event_id"] = uuid4
+			fmt.Println("> HAS event_id - AFTER", item.(map[string]interface{})["event_id"])
+			// item["event_id"] = uuid4 // (need check if multipl event_id's somehow there?)
+		}
+	}
+}
+
 // CalVer-lite
 func release(body map[string]interface{}) map[string]interface{} {
 	date := time.Now()
