@@ -196,32 +196,25 @@ Google Cloud SDK 303.0.0
 initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
-08/30 Python items in array of items...?
 DONE test that can rm length attribute from all 8 transactions in old_both.json, and send to Sentry
 DONE remove 'length' attribute from the item map
 DONE re-record a data set with PR data npm-sentry-tracing
-
 
 1. update eventId's on Transactions so can replay them.
 eventId is in first envelope item as well as largest envelope item, for both JS + PY transactions.  
 per item but inside 1 envelope, generate new event_id and put on both envelope items here.
 
-optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.
+2. update Timestamps - on transaction envelopes
 
-2. traceId - is in largest envelope item, for both JS + PY transactions
-keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and give each item in itemPointersArray the same new generated Id
+3. update TraceId's - on transaction envelopes
+traceId - is in largest envelope item, for both JS + PY transactions
+keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
 
-notes...
-1. ^ update each itemInterface in place...?
-2. 'OR' return envelope array-of-map[string]interfaces{} back to a string. then update
-3. ^ update each itemInterface in place...and put to some kind of 'output' envelope
-
-
-
-
-5.
-UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
-UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
+Notes:  
+optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.  
+update each itemInterface in place...?  
+update each itemInterface in place...and put to some kind of 'output' envelope  
+double-check ordering of Spans, sessions/transactions linked appropriately  
 
 #### future
 Cronjob for 5,000/hr (3.6million for 30 days)
