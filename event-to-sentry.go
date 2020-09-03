@@ -147,7 +147,7 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 }
 
 type Envelope struct {
-	// TODO items {}interface
+	// TODO items {}interface'
 	items []interface{}
 	// items []Item
 }
@@ -275,6 +275,8 @@ func main() {
 			// envelope = eventIds(envelope)
 			// update the traceIdS
 			// update release, user
+
+			items = removeLengthField(items)
 			
 			// undertaker()			
 			requestBody = envelopeEncoder(items)

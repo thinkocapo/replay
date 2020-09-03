@@ -65,3 +65,11 @@ func undertake(body map[string]interface{}) {
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "h4ckweek"
 }
+
+// Python Transactions have "length"
+func removeLengthField(items []interface{}) []interface{} {
+	for _, item := range items {
+		delete(item.(map[string]interface{}), "length")
+	}
+	return items
+}

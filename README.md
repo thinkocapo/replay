@@ -197,12 +197,15 @@ initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
 08/30 Python items in array of items...?
-0. run both.json 1 tx again
-1. rm length attribute from all 7 or 8 transactions in old_both.json (if errors, then re-record using new Tx stuff I updated today in sentry-demos/tracing.git)
+1. WORKS rm length attribute from all 7 or 8 transactions in old_both.json (if errors, then re-record using new Tx stuff I updated today in sentry-demos/tracing.git)
 
+2. remove 'length' attribute from the interface. (put it back in both_eight.json first. only did 4 of them?)
+3. re-record a data set with merged PR data??
+4. re-test
+
+5.
 UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
 UNDERTAKER ordering of Spans, sessions/transactions linked appropriately  
-
 
 #### future
 Cronjob for 5,000/hr (3.6million for 30 days)

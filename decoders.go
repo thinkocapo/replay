@@ -76,6 +76,8 @@ func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, s
 			fmt.Println("\n > no timestamp, must be a header")
 		}
 
+		// TODO 6:55p remove length off of 'parsed' here, or a transformer must do it!
+
 		// TODO return interface{}, and do Item{} type later, or never!
 		items = append(items, parsed)
 		// items = append(items, item1)
