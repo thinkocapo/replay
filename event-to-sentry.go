@@ -146,11 +146,9 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
-type Envelope struct {
-	// TODO items {}interface'
-	items []interface{}
-	// items []Item
-}
+// type Envelope struct {
+// 	items []interface{}
+// }
 
 type Item struct {
 	Event_id string `json:"event_id,omitempty"`
@@ -248,38 +246,38 @@ func main() {
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
-		var body map[string]interface{}
-		// var envelope string
+		var bodyError map[string]interface{}
+		var envelopeItems []interface{}
+
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
-		// var items []Item
-		var items []interface{}
+
 		if (event.Kind == "error") {			
 			
-			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
-			body = eventId(body)
-			body = release(body)
-			body = user(body)
-			body = timestamper(body, event.Platform)
-			undertake(body)
-			requestBody = bodyEncoder(body)
+			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
+			bodyError = eventId(bodyError)
+			bodyError = release(bodyError)
+			bodyError = user(bodyError)
+			bodyError = timestamper(bodyError, event.Platform)
+			undertake(bodyError)
+			requestBody = bodyEncoder(bodyError)
 
 		} else if (event.Kind == "transaction") {
 			
-			items, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-			// transformations...
+			envelopeItems, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 			// envelope = timestamper(envelope)
 			// envelope = eventIds(envelope)
 			// update the traceIdS
 			// update release, user
 
-			items = removeLengthField(items)
+			envelopeItems = removeLengthField(envelopeItems)
 			
+			// TODO
 			// undertaker()			
-			requestBody = envelopeEncoder(items)
+			requestBody = envelopeEncoder(envelopeItems)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
@@ -295,7 +293,7 @@ func main() {
 			}
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
-			fmt.Printf("\n> %s event IGNORED", event.Kind)
+			fmt.Printf("> %s event IGNORED", event.Kind)
 		}
 
 		// TODO - break early, or auto-select 1 before the for loop

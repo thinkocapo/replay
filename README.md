@@ -197,11 +197,27 @@ initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
 08/30 Python items in array of items...?
-1. WORKS rm length attribute from all 7 or 8 transactions in old_both.json (if errors, then re-record using new Tx stuff I updated today in sentry-demos/tracing.git)
+DONE test that can rm length attribute from all 8 transactions in old_both.json, and send to Sentry
+DONE remove 'length' attribute from the item map
+DONE re-record a data set with PR data npm-sentry-tracing
 
-2. remove 'length' attribute from the interface. (put it back in both_eight.json first. only did 4 of them?)
-3. re-record a data set with merged PR data??
-4. re-test
+
+1. update eventId's on Transactions so can replay them.
+eventId is in first envelope item as well as largest envelope item, for both JS + PY transactions.  
+per item but inside 1 envelope, generate new event_id and put on both envelope items here.
+
+optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.
+
+2. traceId - is in largest envelope item, for both JS + PY transactions
+keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and give each item in itemPointersArray the same new generated Id
+
+notes...
+1. ^ update each itemInterface in place...?
+2. 'OR' return envelope array-of-map[string]interfaces{} back to a string. then update
+3. ^ update each itemInterface in place...and put to some kind of 'output' envelope
+
+
+
 
 5.
 UNDERTAKER transaction envelope (go) Timestamps and event/Trace Id's  
@@ -215,3 +231,5 @@ Envelopes + Sessions for Mobile
 cloud:  
 move `context.Background()` to `func init()`  
 ./go.mod and ./api/go.mod  
+
+interfaces

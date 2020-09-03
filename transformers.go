@@ -66,7 +66,7 @@ func undertake(body map[string]interface{}) {
 	tags["undertaker"] = "h4ckweek"
 }
 
-// Python Transactions have "length"
+// Python Transactions have "length". Remove it or else rejected.
 func removeLengthField(items []interface{}) []interface{} {
 	for _, item := range items {
 		delete(item.(map[string]interface{}), "length")
