@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, string) {
+func decodeEnvelope(event Event) ([]interface{}, EnvelopeTimestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
@@ -38,12 +38,12 @@ func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, s
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
+		return items, updateEnvelopeTimestamps, envelopeEncoderJs, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return items, updateTimestamps, envelopeEncoderPy, storeEndpoint
+		return items, updateEnvelopeTimestamps, envelopeEncoderPy, storeEndpoint
 	}
 
-	return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
+	return items, updateEnvelopeTimestamps, envelopeEncoderJs, storeEndpoint
 }
 
 // TODO remove 'TRANSACTION' from here
@@ -81,5 +81,3 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
-
-type Timestamper func(map[string]interface{}, string) map[string]interface{}

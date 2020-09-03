@@ -8,6 +8,31 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type Timestamper func(map[string]interface{}, string) map[string]interface{}
+type EnvelopeTimestamper func([]interface{}) []interface{}
+
+func updateEnvelopeTimestamps(envelopeItems []interface{}) []interface{} {
+	for _, item := range envelopeItems {
+		start_timestamp := item.(map[string]interface{})["start_timestamp"]
+		timestamp := item.(map[string]interface{})["timestamp"]
+
+		if (start_timestamp != nil && timestamp != nil) {
+			fmt.Printf("> ITEM timestamp %v | start_timestamp %v \n", timestamp, start_timestamp) // interface{}
+		}
+
+		// if (timestamp | start_timestamp != nil) {
+
+			// store that event_id (where?)
+			// fmt.Println("> HAS event_id - BEFORE", item.(map[string]interface{})["event_id"])
+			// item.(map[string]interface{})["event_id"] = uuid4
+			// fmt.Println("> HAS event_id - AFTER", item.(map[string]interface{})["event_id"])
+			// // item["event_id"] = uuid4 // (need check if multipl event_id's somehow there?)
+
+		// }
+	}
+	return envelopeItems
+}
+
 /*
 PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
 JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
