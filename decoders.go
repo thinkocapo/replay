@@ -2,42 +2,48 @@ package main
 
 import (
 	"fmt"
+	"encoding/json"
 	"strings"
 )
 
-func decodeEnvelope(event Event) (string, Timestamper, EnvelopeEncoder, string) {
+func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
 	PYTHON := event.Platform == "python"
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
-	envelope := event.Body
-
-	items := strings.Split(envelope, "\n")
-	fmt.Println("\n > # of items in envelope", len(items))
-	for idx, _ := range items {
-		fmt.Println("> item", idx)
-		// TODO need do this for every item in items
-		// var item map[string]interface{}
-		// if err := json.Unmarshal([]byte(items[0]), &item); err != nil {
-			// panic(err)
-		// }
+	envelope := event.Body // fmt.Println("\n > envelope INPUT from event.Body", envelope)
+	
+	// Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
+	envelopeItems := strings.Split(envelope, "\n")
+	length := len(envelopeItems)
+	if (envelopeItems[length-1] == "") {
+		envelopeItems = envelopeItems[:length-1]
 	}
 
-	// TODO return envelope array-of-map[string]interfaces{} back to a string
-	// TODO return bodyEncoder for []byte(envelope) maybe called 'envelopeEncoder'. Go strings are already utf-8 encoded
+	fmt.Printf("\n > Platform %v | # of envelopeItems in envelope %v \n", event.Platform, len(envelopeItems))
+
+	var items  []interface{}
+	for idx, itemString := range envelopeItems {
+		fmt.Printf("> item # %v | type %T \n", idx, itemString) // string
+
+		var itemInterface map[string]interface{} // or interface{}?
+		if err := json.Unmarshal([]byte(itemString), &itemInterface); err != nil {
+			panic(err)
+		}
+		items = append(items, itemInterface)
+	}
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
+		return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return envelope, updateTimestamps, envelopeEncoderPy, storeEndpoint
+		return items, updateTimestamps, envelopeEncoderPy, storeEndpoint
 	}
 
-	return envelope, updateTimestamps, envelopeEncoder, storeEndpoint
+	return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
 }
 
 // TODO remove 'TRANSACTION' from here
@@ -55,6 +61,7 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	storeEndpoint := matchDSN(projectDSNs, event)
 	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
+	// var b BodyEncoder?
 	switch {
 	case ANDROID && TRANSACTION:
 		return body, updateTimestamp, pyEncoder, storeEndpoint
@@ -75,23 +82,4 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
 
-// Encoders
-func envelopeEncoder(envelope string) []byte {
-	return []byte(envelope)
-}
-func envelopeEncoderPy(envelope string) []byte {
-	buf := encodeGzip([]byte(envelope))
-	return buf.Bytes()
-}
-func jsEncoder(body map[string]interface{}) []byte {
-	return marshalJSON(body)
-}
-func pyEncoder(body map[string]interface{}) []byte {
-	bodyBytes := marshalJSON(body)
-	buf := encodeGzip(bodyBytes)
-	return buf.Bytes()
-}
-
-type BodyEncoder func(map[string]interface{}) []byte
-type EnvelopeEncoder func(string) []byte
 type Timestamper func(map[string]interface{}, string) map[string]interface{}

@@ -146,6 +146,58 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
+// type Envelope struct {
+// 	items []interface{}
+// }
+
+type Item struct {
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at string `json:"sent_at,omitempty"`
+
+	Length int `json:"length,omitempty"`
+	Type string `json:"type,omitempty"`
+	Content_type string `json:"content_type,omitempty"`
+
+	Start_timestamp string `json:"start_timestamp,omitempty"`
+	Transaction string `json:"transaction,omitempty"`
+	Server_name string `json:"server_name,omitempty"`
+	Tags map[string]interface{} `json:"tags,omitempty"`
+	Contexts map[string]interface{} `json:"contexts,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
+	Extra map[string]interface{} `json:"extra,omitempty"`
+	Request map[string]interface{} `json:"request,omitempty"`
+	Environment string `json:"environment,omitempty"`
+	Platform string `json:"platform,omitempty"`
+	// Todo spans []
+	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	User map[string]interface{} `json:"user,omitempty"`
+}
+
+type Item2 struct {
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at string `json:"sent_at,omitempty"`
+
+	Length int `json:"length,omitempty"`
+	Type string `json:"type,omitempty"`
+	Content_type string `json:"content_type,omitempty"`
+
+	Start_timestamp float64 `json:"start_timestamp,omitempty"`
+	Transaction string `json:"transaction,omitempty"`
+	Server_name string `json:"server_name,omitempty"`
+	Tags map[string]interface{} `json:"tags,omitempty"`
+	Contexts map[string]interface{} `json:"contexts,omitempty"`
+	Timestamp float64 `json:"timestamp,omitempty"`
+	Extra map[string]interface{} `json:"extra,omitempty"`
+	Request map[string]interface{} `json:"request,omitempty"`
+	Environment string `json:"environment,omitempty"`
+	Platform string `json:"platform,omitempty"`
+	// Todo spans []
+	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	User map[string]interface{} `json:"user,omitempty"`
+}
+
+// TODO need an ItemFinal that has unified timestamp?
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -159,7 +211,7 @@ func init() {
 	py = flag.String("py", "", "python DSN")
 	flag.Parse()
 
-	// Use SAAS DSN's for Tx's as getsentry/sentry 10.0.0 doesn't support Tx's yet
+	// sentry +10.0.0 supports performance monitoring, transactions
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	if (*js != "") {
@@ -170,13 +222,6 @@ func init() {
 		projectDSNs["python"] = parseDSN(*py)
 	}
 
-	// TODO "panic: runtime error: slice bounds out of range [7:0]" if these are not set
-	// projectDSNs["android"] = parseDSN(os.Getenv("DSN_ANDROID"))
-	// projectDSNs["python_gateway"] = parseDSN(os.Getenv("DSN_PYTHON_GATEWAY"))
-	// projectDSNs["python_django"] = parseDSN(os.Getenv("DSN_PYTHON_DJANGO"))
-	// projectDSNs["python_celery"] = parseDSN(os.Getenv("DSN_PYTHON_CELERY"))
-
-	// fmt.Println("> --db json flag", *db)
 	if *db == "" {
 		database = os.Getenv("JSON")
 	} else {
@@ -201,8 +246,9 @@ func main() {
 	for idx, event := range events {
 		fmt.Printf("> EVENT# %v \n", idx)
 
-		var body map[string]interface{}
-		var envelope string
+		var bodyError map[string]interface{}
+		var envelopeItems []interface{}
+
 		var timestamper Timestamper 
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
@@ -211,23 +257,27 @@ func main() {
 
 		if (event.Kind == "error") {			
 			
-			body, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
-			body = eventId(body)
-			body = release(body)
-			body = user(body)
-			body = timestamper(body, event.Platform)
-			undertake(body)
-			requestBody = bodyEncoder(body)
+			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
+			bodyError = eventId(bodyError)
+			bodyError = release(bodyError)
+			bodyError = user(bodyError)
+			bodyError = timestamper(bodyError, event.Platform)
+			undertake(bodyError)
+			requestBody = bodyEncoder(bodyError)
 
 		} else if (event.Kind == "transaction") {
 			
-			envelope, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-			// fmt.Printf(" %T %T %T %T\n", timestamper, envelopeEncoder, storeEndpoint)
+			envelopeItems, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
+			// envelope = timestamper(envelope)
+			// envelope = eventIds(envelope)
+			// update the traceIdS
+			// update release, user
 
-			// TODO transform the envelope Array, update traceId, release, user, timestamps
+			envelopeItems = removeLengthField(envelopeItems)
 			
+			// TODO
 			// undertaker()			
-			requestBody = envelopeEncoder(envelope)
+			requestBody = envelopeEncoder(envelopeItems)
 		}
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
@@ -243,7 +293,7 @@ func main() {
 			}
 			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
-			fmt.Printf("\n> %s event IGNORED", event.Kind)
+			fmt.Printf("> %s event IGNORED", event.Kind)
 		}
 
 		// TODO - break early, or auto-select 1 before the for loop
@@ -257,6 +307,7 @@ func main() {
 }
 
 func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
+	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 	if requestBody == nil {
 		log.Fatalln("buildRequest missing requestBody")
 	}
