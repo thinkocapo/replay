@@ -9,26 +9,16 @@ import (
 )
 
 type Timestamper func(map[string]interface{}, string) map[string]interface{}
-type EnvelopeTimestamper func([]interface{}) []interface{}
+type EnvelopeTimestamper func([]interface{}, string) []interface{}
 
-func updateEnvelopeTimestamps(envelopeItems []interface{}) []interface{} {
+func updateEnvelopeTimestamps(envelopeItems []interface{}, platform string) []interface{} {
 	for _, item := range envelopeItems {
+		// check that the envelope item has 'start_timestamp' 'timestamp' on it
 		start_timestamp := item.(map[string]interface{})["start_timestamp"]
 		timestamp := item.(map[string]interface{})["timestamp"]
-
 		if (start_timestamp != nil && timestamp != nil) {
-			fmt.Printf("> ITEM timestamp %v | start_timestamp %v \n", timestamp, start_timestamp) // interface{}
+			item = updateTimestamps(item.(map[string]interface{}), platform)
 		}
-
-		// if (timestamp | start_timestamp != nil) {
-
-			// store that event_id (where?)
-			// fmt.Println("> HAS event_id - BEFORE", item.(map[string]interface{})["event_id"])
-			// item.(map[string]interface{})["event_id"] = uuid4
-			// fmt.Println("> HAS event_id - AFTER", item.(map[string]interface{})["event_id"])
-			// // item["event_id"] = uuid4 // (need check if multipl event_id's somehow there?)
-
-		// }
 	}
 	return envelopeItems
 }

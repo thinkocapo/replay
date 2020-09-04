@@ -246,7 +246,7 @@ func main() {
 			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 			// envelope = timestamper(envelope)
 			envelopeItems = eventIds(envelopeItems)
-			envelopeItems = envelopeTimestamper(envelopeItems)
+			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 
 			// update the traceIdS
 			// update release, user
@@ -271,7 +271,7 @@ func main() {
 			}
 			fmt.Printf("> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
 		} else {
-			fmt.Printf("> %s event IGNORED", event.Kind)
+			fmt.Printf("> %s event IGNORED \n", event.Kind)
 		}
 
 		// TODO - break early, or auto-select 1 before the for loop
