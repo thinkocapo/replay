@@ -32,7 +32,6 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	return envelopeItems
 }
 
-// item.context.trace.release for js
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
 
@@ -132,4 +131,25 @@ func removeLengthField(items []interface{}) []interface{} {
 		delete(item.(map[string]interface{}), "length")
 	}
 	return items
+}
+
+// TODO could put this to decodeEnvelope? and return it to event-to-sentry. or reference this func from there
+func getEnvelopeTraceIds(items []interface{}) []interface{}{
+	//item.context.trace.traceId
+	for _, item := range items {
+		context := item.(map[string]interface{})
+		trace := context["trace"].(map[string]interface{})
+		trace_id := trace["trace_id"]
+		fmt.Println("\n > trace_id", trace_id)
+		if (trace_id != nil) {
+			//TODO set it in the in-memory store of trace_id's, because a completely different envelope may have the same
+			// { "<trace_id": pointer_to_Item }
+		}
+	}
+	return items
+}
+
+// Runs after all transactions (envelopes) have been iterated through.
+func setEnvelopeTraceIds(items []interface{}) {
+
 }

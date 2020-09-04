@@ -219,7 +219,6 @@ func main() {
 		panic(err)
 	}
 
-	// TODO rename body as errorBody or eventPayload?
 	for _, event := range events {
 		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
 		var bodyError map[string]interface{}
@@ -245,15 +244,19 @@ func main() {
 			envelopeItems = eventIds(envelopeItems)
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
-			// update the traceIdS
+			envelopeItems = getEnvelopeTraceIds(envelopeItems)
+
 			// update user if missing
 			envelopeItems = removeLengthField(envelopeItems)
-			// undertaker()			
 			requestBody = envelopeEncoder(envelopeItems)
+			// undertaker()			
 		}
 
-		request := buildRequest(requestBody, event.Headers, storeEndpoint)
+		// 1. Array of Envelopes
+			// encode later, after setting new TraceId
+			// build Request later
 
+		request := buildRequest(requestBody, event.Headers, storeEndpoint)
 		if !*ignore {
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
@@ -275,6 +278,9 @@ func main() {
 
 		time.Sleep(1000 * time.Millisecond)
 	}
+	// 2. Update All Envelopes with proper Trace Id - setEnvelopeTraceIds
+	// 3. Send all to Sentry.io
+		// build all requests, or have that done ahead of time.
 	return
 }
 
