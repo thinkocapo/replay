@@ -139,11 +139,13 @@ func getEnvelopeTraceIds(items []interface{}) []interface{}{
 	for _, item := range items {
 		context := item.(map[string]interface{})
 		trace := context["trace"].(map[string]interface{})
-		trace_id := trace["trace_id"]
+		trace_id := trace["trace_id"].(string)
 		fmt.Println("\n > trace_id", trace_id)
-		if (trace_id != nil) {
-			//TODO set it in the in-memory store of trace_id's, because a completely different envelope may have the same
-			// { "<trace_id": pointer_to_Item }
+
+		if (trace_id != "") {
+			// timestamp := item.(map[string]interface{})["timestamp"].(string)
+			fmt.Println("\n trace_id ", trace_id)
+			traceIdMap[trace_id] = append(traceIdMap[trace_id], item)
 		}
 	}
 	return items
@@ -151,5 +153,17 @@ func getEnvelopeTraceIds(items []interface{}) []interface{}{
 
 // Runs after all transactions (envelopes) have been iterated through.
 func setEnvelopeTraceIds(items []interface{}) {
+	// compiles but not needed
+	// for _, item := range traceIdMap[trace_id] {
 
+	newTraceId := "1973824kjsdf"
+
+	for trace_id, items := range traceIdMap {
+		fmt.Println("> setEnvelopeTraceIds trace_id", trace_id)
+		for _, item := range items {
+			context := item.(map[string]interface{})
+			trace := context["trace"].(map[string]interface{})
+			trace["trace_id"] = newTraceId
+		}
+	}
 }

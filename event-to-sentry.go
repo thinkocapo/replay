@@ -30,6 +30,11 @@ var (
 	SENTRY_URL  string
 	exists      bool
 	projectDSNs map[string]*DSN
+	// traceIdMap0 map[string][]*Item
+	traceIdMap map[string][]interface{}
+	
+	// traceIdMap2 map[string][]string
+	// traceIdMap := map[string][]*interface{}
 )
 
 type DSN struct {
@@ -150,7 +155,18 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 // 	items []interface{}
 // }
 
+// type Item map[string]interface{}
+
+// type Timestamp time.Time
+type Timestamp struct {
+	time.Time
+	rfc3339 bool
+}
+
 type Item struct {
+	Timestamp Timestamp `json:"timestamp,omitempty"`
+	// Timestamp time.Time `json:"timestamp,omitempty"`
+	
 	Event_id string `json:"event_id,omitempty"`
 	Sent_at string `json:"sent_at,omitempty"`
 
@@ -163,7 +179,8 @@ type Item struct {
 	Server_name string `json:"server_name,omitempty"`
 	Tags map[string]interface{} `json:"tags,omitempty"`
 	Contexts map[string]interface{} `json:"contexts,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"`
+	
+
 	Extra map[string]interface{} `json:"extra,omitempty"`
 	Request map[string]interface{} `json:"request,omitempty"`
 	Environment string `json:"environment,omitempty"`
@@ -179,6 +196,8 @@ func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
+
+	traceIdMap = make(map[string][]interface{})
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
@@ -271,7 +290,7 @@ func main() {
 			fmt.Printf("> %s event IGNORED \n", event.Kind)
 		}
 
-		// TODO - break early, or auto-select 1 before the for loop
+		// break early, or auto-select 1 before the for loop
 		// if !*all {
 		// 	return
 		// }
