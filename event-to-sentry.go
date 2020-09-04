@@ -173,29 +173,6 @@ type Item struct {
 	User map[string]interface{} `json:"user,omitempty"`
 }
 
-type Item2 struct {
-	Event_id string `json:"event_id,omitempty"`
-	Sent_at string `json:"sent_at,omitempty"`
-
-	Length int `json:"length,omitempty"`
-	Type string `json:"type,omitempty"`
-	Content_type string `json:"content_type,omitempty"`
-
-	Start_timestamp float64 `json:"start_timestamp,omitempty"`
-	Transaction string `json:"transaction,omitempty"`
-	Server_name string `json:"server_name,omitempty"`
-	Tags map[string]interface{} `json:"tags,omitempty"`
-	Contexts map[string]interface{} `json:"contexts,omitempty"`
-	Timestamp float64 `json:"timestamp,omitempty"`
-	Extra map[string]interface{} `json:"extra,omitempty"`
-	Request map[string]interface{} `json:"request,omitempty"`
-	Environment string `json:"environment,omitempty"`
-	Platform string `json:"platform,omitempty"`
-	// Todo spans []
-	Sdk map[string]interface{} `json:"sdk,omitempty"`
-	User map[string]interface{} `json:"user,omitempty"`
-}
-
 // TODO need an ItemFinal that has unified timestamp?
 
 func init() {
@@ -243,20 +220,19 @@ func main() {
 	}
 
 	// TODO rename body as errorBody or eventPayload?
-	for idx, event := range events {
-		fmt.Printf("> EVENT# %v \n", idx)
-
+	for _, event := range events {
+		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
 		var bodyError map[string]interface{}
 		var envelopeItems []interface{}
 
 		var timestamper Timestamper 
+		var envelopeTimestamper EnvelopeTimestamper
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
 
 		if (event.Kind == "error") {			
-			
 			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
 			bodyError = eventId(bodyError)
 			bodyError = release(bodyError)
@@ -264,18 +240,14 @@ func main() {
 			bodyError = timestamper(bodyError, event.Platform)
 			undertake(bodyError)
 			requestBody = bodyEncoder(bodyError)
-
 		} else if (event.Kind == "transaction") {
-			
-			envelopeItems, timestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-			// envelope = timestamper(envelope)
-			// envelope = eventIds(envelope)
+			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
+			envelopeItems = eventIds(envelopeItems)
+			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
+			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			// update the traceIdS
-			// update release, user
-
+			// update user if missing
 			envelopeItems = removeLengthField(envelopeItems)
-			
-			// TODO
 			// undertaker()			
 			requestBody = envelopeEncoder(envelopeItems)
 		}
@@ -291,9 +263,9 @@ func main() {
 			if responseDataErr != nil {
 				log.Fatal(responseDataErr)
 			}
-			fmt.Printf("\n> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
+			fmt.Printf("> KIND|RESPONSE: %s %s\n", event.Kind, string(responseData))
 		} else {
-			fmt.Printf("> %s event IGNORED", event.Kind)
+			fmt.Printf("> %s event IGNORED \n", event.Kind)
 		}
 
 		// TODO - break early, or auto-select 1 before the for loop

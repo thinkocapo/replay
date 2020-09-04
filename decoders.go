@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, string) {
+func decodeEnvelope(event Event) ([]interface{}, EnvelopeTimestamper, EnvelopeEncoder, string) {
 
 	TRANSACTION := event.Kind == "transaction"
 	JAVASCRIPT := event.Platform == "javascript"
@@ -14,7 +14,7 @@ func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, s
 
 	storeEndpoint := matchDSN(projectDSNs, event)
 
-	envelope := event.Body // fmt.Println("\n > envelope INPUT from event.Body", envelope)
+	envelope := event.Body
 	
 	// Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
 	envelopeItems := strings.Split(envelope, "\n")
@@ -23,11 +23,10 @@ func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, s
 		envelopeItems = envelopeItems[:length-1]
 	}
 
-	fmt.Printf("\n > Platform %v | # of envelopeItems in envelope %v \n", event.Platform, len(envelopeItems))
+	fmt.Printf("\n> KIND|PLATFORM transaction %v %v items in envelope\n", event.Platform, len(envelopeItems))
 
 	var items  []interface{}
-	for idx, itemString := range envelopeItems {
-		fmt.Printf("> item # %v | type %T \n", idx, itemString) // string
+	for _, itemString := range envelopeItems {
 
 		var itemInterface map[string]interface{} // or interface{}?
 		if err := json.Unmarshal([]byte(itemString), &itemInterface); err != nil {
@@ -38,12 +37,12 @@ func decodeEnvelope(event Event) ([]interface{}, Timestamper, EnvelopeEncoder, s
 	
 	switch {
 	case JAVASCRIPT && TRANSACTION:
-		return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
+		return items, updateEnvelopeTimestamps, envelopeEncoderJs, storeEndpoint
 	case PYTHON && TRANSACTION:
-		return items, updateTimestamps, envelopeEncoderPy, storeEndpoint
+		return items, updateEnvelopeTimestamps, envelopeEncoderPy, storeEndpoint
 	}
 
-	return items, updateTimestamps, envelopeEncoderJs, storeEndpoint
+	return items, updateEnvelopeTimestamps, envelopeEncoderJs, storeEndpoint
 }
 
 // TODO remove 'TRANSACTION' from here
@@ -59,7 +58,6 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 	TRANSACTION := event.Kind == "transaction"
 
 	storeEndpoint := matchDSN(projectDSNs, event)
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
 
 	// var b BodyEncoder?
 	switch {
@@ -81,5 +79,3 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	return body, updateTimestamps, jsEncoder, storeEndpoint
 }
-
-type Timestamper func(map[string]interface{}, string) map[string]interface{}

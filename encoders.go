@@ -1,9 +1,7 @@
 package main
 
 import (
-	// "fmt"
 	"encoding/json"
-	// "strings"
 )
 
 func envelopeEncoderJs(items []interface{}) []byte {

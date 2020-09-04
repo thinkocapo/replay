@@ -199,30 +199,27 @@ initialize your file.json to an empty array [] because it gets appended to
 DONE test that can rm length attribute from all 8 transactions in old_both.json, and send to Sentry
 DONE remove 'length' attribute from the item map
 DONE re-record a data set with PR data npm-sentry-tracing
+DONE update eventId's on Transactions so can replay them.
+eventId is in envelope's first item as well as largest envelope item, so 2 out of 3, for both JS + PY transactions.  
+DONE update Timestamps - on transaction envelopes
+3 items in envelope and start_timestamp+timestamp are on the 3rd item of the 3.
+Appears they always have both. Not one without the other.
 
-1. update eventId's on Transactions so can replay them.
-eventId is in first envelope item as well as largest envelope item, for both JS + PY transactions.  
-per item but inside 1 envelope, generate new event_id and put on both envelope items here.
+Update the Release
 
-2. update Timestamps - on transaction envelopes
-
-3. update TraceId's - on transaction envelopes
+Udate TraceId's - on transaction envelopes
 traceId - is in largest envelope item, for both JS + PY transactions
 keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
 
 Notes:  
-optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.  
-update each itemInterface in place...?  
-update each itemInterface in place...and put to some kind of 'output' envelope  
+optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.
 double-check ordering of Spans, sessions/transactions linked appropriately  
 
 #### future
+shellscript w/ sentry-cli for source maps, w/ Release according to CalVer
 Cronjob for 5,000/hr (3.6million for 30 days)
 
-Envelopes + Sessions for Mobile  
-
-cloud:  
-move `context.Background()` to `func init()`  
-./go.mod and ./api/go.mod  
-
-interfaces
+Mobile Envelopes, Sessions
+Cloud move `context.Background()` to `func init()`  
+Other ./go.mod and ./api/go.mod  
+Other interfaces

@@ -8,6 +8,21 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type Timestamper func(map[string]interface{}, string) map[string]interface{}
+type EnvelopeTimestamper func([]interface{}, string) []interface{}
+
+func updateEnvelopeTimestamps(envelopeItems []interface{}, platform string) []interface{} {
+	for _, item := range envelopeItems {
+		// Check that the envelope item has 'start_timestamp' 'timestamp' on it
+		start_timestamp := item.(map[string]interface{})["start_timestamp"]
+		timestamp := item.(map[string]interface{})["timestamp"]
+		if (start_timestamp != nil && timestamp != nil) {
+			item = updateTimestamps(item.(map[string]interface{}), platform)
+		}
+	}
+	return envelopeItems
+}
+
 /*
 PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
 JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
@@ -21,16 +36,14 @@ Float form is like 1.5914674155654302e+09
 
 // Errors
 func updateTimestamp(body map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Println("> Error timestamp before", body["timestamp"])
 	body["timestamp"] = time.Now().Unix()
-	fmt.Println("> Error timestamp after ", body["timestamp"])
 	return body
 }
 
 // Transactions - keep start and end timestamps relative to each other by computing the difference and new timestamps based on that
 func updateTimestamps(body map[string]interface{}, platform string) map[string]interface{} {
-	fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
-	fmt.Printf("> updateTimestamps PARENT       timestamp before %v (%T)", body["timestamp"], body["timestamp"])
+	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT       timestamp before %v (%T)", body["timestamp"], body["timestamp"])
 
 	var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 	if platform == "python" {
@@ -48,13 +61,10 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 
 	// Parent Trace
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	// fmt.Print("\n> parentDifference before", parentDifference)
 	rand.Seed(time.Now().UnixNano())
 	percentage := 0.01 + rand.Float64()*(0.20-0.01)
-	// fmt.Println("\n> percentage", percentage)
 	rate := decimal.NewFromFloat(percentage)
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-	// fmt.Print("\n> parentDifference after", parentDifference)
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
@@ -69,10 +79,10 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 
 	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and this is what happens in Javascript
 	// logging with 'decimal type for readability and convertability
-	fmt.Printf("\n> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
-	fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
 
-	// Span(s)
+	// Spans
 	for _, span := range body["spans"].([]interface{}) {
 		sp := span.(map[string]interface{})
 		// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
@@ -92,9 +102,7 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-		// fmt.Println("> spanDifference before", spanDifference)
 		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
-		// fmt.Println("> spanDifference after", spanDifference)
 
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 
