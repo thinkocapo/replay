@@ -221,6 +221,7 @@ func main() {
 
 	// TODO rename body as errorBody or eventPayload?
 	for _, event := range events {
+		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
 		var bodyError map[string]interface{}
 		var envelopeItems []interface{}
 
@@ -232,7 +233,6 @@ func main() {
 		var requestBody []byte
 
 		if (event.Kind == "error") {			
-			
 			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
 			bodyError = eventId(bodyError)
 			bodyError = release(bodyError)
@@ -240,19 +240,14 @@ func main() {
 			bodyError = timestamper(bodyError, event.Platform)
 			undertake(bodyError)
 			requestBody = bodyEncoder(bodyError)
-
 		} else if (event.Kind == "transaction") {
-			
 			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 			envelopeItems = eventIds(envelopeItems)
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			// update the traceIdS
-			// update release, user
-
+			// update user if missing
 			envelopeItems = removeLengthField(envelopeItems)
-			
-			// TODO
 			// undertaker()			
 			requestBody = envelopeEncoder(envelopeItems)
 		}
@@ -268,7 +263,7 @@ func main() {
 			if responseDataErr != nil {
 				log.Fatal(responseDataErr)
 			}
-			fmt.Printf("> EVENT KIND: %s | RESPONSE: %s\n", event.Kind, string(responseData))
+			fmt.Printf("> KIND|RESPONSE: %s %s\n", event.Kind, string(responseData))
 		} else {
 			fmt.Printf("> %s event IGNORED \n", event.Kind)
 		}

@@ -17,7 +17,7 @@ func eventId(body map[string]interface{}) map[string]interface{} {
 	}
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	body["event_id"] = uuid4
-	fmt.Println("> event_id updated", body["event_id"])
+	fmt.Println("\n> event_id updated", body["event_id"])
 	return body
 }
 
@@ -32,42 +32,52 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	return envelopeItems
 }
 
-// 2 JS tx's, 1 JS error
-// item.context.trace.release
+// item.context.trace.release for js
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
-		if (kind == "error") { // && platform == "javascript"
-			fmt.Println("\n\n > > I'm SURPRISED I'M LOGGIN ")
-			item = release(item.(map[string]interface{}))
-		}
-		if (kind == "transaction") {
-			fmt.Println("\n > > item RELEASE", item.(map[string]interface{})["release"])
-			release := item.(map[string]interface{})["release"]
-			if (release != nil) {
-				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["release"])
-				item.(map[string]interface{})["release"] = "634"
-				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["release"])
+
+		currentRelease := item.(map[string]interface{})["release"]
+		if (currentRelease != nil) {
+
+			// "cannot call non-function release"
+			// item = release(item.(map[string]interface{}))
+
+			date := time.Now()
+			month := date.Month()
+			day := date.Day()
+			var week int
+			switch {
+			case day <= 7:
+				week = 1
+			case day >= 8 && day <= 14:
+				week = 2
+			case day >= 15 && day <= 21:
+				week = 3
+			case day >= 22:
+				week = 4
 			}
-
-			/*
-			contexts := item.(map[string]interface{})["contexts"]
-			if (contexts != nil) {
-				// fmt.Println("\n\n > > THIS HAS CONTEXT")
-				// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
-
-				// trace := contexts.(map[string]interface{})["trace"]
-				// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
-	
-				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-				item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
-				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-
-				// NO because nested too far
-				// item = release(trace.(map[string]interface{}))
-			}
-			*/
-			// release := trace.(map[string]interface{})["release"]
+			release := fmt.Sprint(int(month), ".", week)
+			item.(map[string]interface{})["release"] = release
 		}
+
+		/*
+		contexts := item.(map[string]interface{})["contexts"]
+		if (contexts != nil) {
+			// fmt.Println("\n\n > > THIS HAS CONTEXT")
+			// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
+
+			// trace := contexts.(map[string]interface{})["trace"]
+			// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
+
+			fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+			item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
+			fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+
+			// NO because nested too far
+			// item = release(trace.(map[string]interface{}))
+		}
+		*/
+		// release := trace.(map[string]interface{})["release"]
 	}
 	return envelopeItems
 }
@@ -90,7 +100,6 @@ func release(body map[string]interface{}) map[string]interface{} {
 	}
 	release := fmt.Sprint(int(month), ".", week)
 	body["release"] = release
-	fmt.Println("> release", body["release"])
 	return body
 }
 
