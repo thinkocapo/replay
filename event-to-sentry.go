@@ -244,10 +244,9 @@ func main() {
 		} else if (event.Kind == "transaction") {
 			
 			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
-			// envelope = timestamper(envelope)
 			envelopeItems = eventIds(envelopeItems)
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
-
+			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			// update the traceIdS
 			// update release, user
 

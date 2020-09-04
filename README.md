@@ -201,12 +201,13 @@ DONE remove 'length' attribute from the item map
 DONE re-record a data set with PR data npm-sentry-tracing
 DONE update eventId's on Transactions so can replay them.
 eventId is in envelope's first item as well as largest envelope item, so 2 out of 3, for both JS + PY transactions.  
-
-2. update Timestamps - on transaction envelopes
+DONE update Timestamps - on transaction envelopes
 3 items in envelope and start_timestamp+timestamp are on the 3rd item of the 3.
 Appears they always have both. Not one without the other.
 
-3. update TraceId's - on transaction envelopes
+Update the Release
+
+Udate TraceId's - on transaction envelopes
 traceId - is in largest envelope item, for both JS + PY transactions
 keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
 

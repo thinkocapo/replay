@@ -25,11 +25,48 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	for _, item := range envelopeItems {
 		eventId := item.(map[string]interface{})["event_id"]
-		// fmt.Printf("> item eventId %v | type %T \n", eventId, item) // interface{}
 		if (eventId != nil) {
-			// fmt.Println("> HAS event_id - BEFORE", item.(map[string]interface{})["event_id"])
 			item.(map[string]interface{})["event_id"] = uuid4
-			// fmt.Println("> HAS event_id - AFTER", item.(map[string]interface{})["event_id"])
+		}
+	}
+	return envelopeItems
+}
+
+// 2 JS tx's, 1 JS error
+// item.context.trace.release
+func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
+	for _, item := range envelopeItems {
+		if (kind == "error") { // && platform == "javascript"
+			fmt.Println("\n\n > > I'm SURPRISED I'M LOGGIN ")
+			item = release(item.(map[string]interface{}))
+		}
+		if (kind == "transaction") {
+			fmt.Println("\n > > item RELEASE", item.(map[string]interface{})["release"])
+			release := item.(map[string]interface{})["release"]
+			if (release != nil) {
+				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["release"])
+				item.(map[string]interface{})["release"] = "634"
+				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["release"])
+			}
+
+			/*
+			contexts := item.(map[string]interface{})["contexts"]
+			if (contexts != nil) {
+				// fmt.Println("\n\n > > THIS HAS CONTEXT")
+				// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
+
+				// trace := contexts.(map[string]interface{})["trace"]
+				// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
+	
+				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+				item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
+				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+
+				// NO because nested too far
+				// item = release(trace.(map[string]interface{}))
+			}
+			*/
+			// release := trace.(map[string]interface{})["release"]
 		}
 	}
 	return envelopeItems
