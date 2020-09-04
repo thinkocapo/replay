@@ -2,18 +2,19 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"github.com/joho/godotenv"
 	"strings"
 	"time"
-	"encoding/json"
+
+	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var httpClient = &http.Client{}
@@ -23,16 +24,16 @@ var (
 	id          *string
 	ignore      *bool
 	database    string
-	db			*string
-	js			*string
-	py			*string
+	db          *string
+	js          *string
+	py          *string
 	dsn         DSN
 	SENTRY_URL  string
 	exists      bool
 	projectDSNs map[string]*DSN
 	// traceIdMap0 map[string][]*Item
 	traceIdMap map[string][]interface{}
-	
+
 	// traceIdMap2 map[string][]string
 	// traceIdMap := map[string][]*interface{}
 )
@@ -113,19 +114,18 @@ func (d DSN) envelopeEndpoint() string {
 }
 
 type Event struct {
-	Platform    string `json:"platform"`
-	Kind        string `json:"kind"`
-	Headers     map[string]string `json:"headers"`
-	Body        string `json:"body"`
+	Platform string            `json:"platform"`
+	Kind     string            `json:"kind"`
+	Headers  map[string]string `json:"headers"`
+	Body     string            `json:"body"`
 }
 
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
-
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	
+
 	platform := event.Platform
 
 	var storeEndpoint string
@@ -166,27 +166,26 @@ type Timestamp struct {
 type Item struct {
 	Timestamp Timestamp `json:"timestamp,omitempty"`
 	// Timestamp time.Time `json:"timestamp,omitempty"`
-	
-	Event_id string `json:"event_id,omitempty"`
-	Sent_at string `json:"sent_at,omitempty"`
 
-	Length int `json:"length,omitempty"`
-	Type string `json:"type,omitempty"`
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at  string `json:"sent_at,omitempty"`
+
+	Length       int    `json:"length,omitempty"`
+	Type         string `json:"type,omitempty"`
 	Content_type string `json:"content_type,omitempty"`
 
-	Start_timestamp string `json:"start_timestamp,omitempty"`
-	Transaction string `json:"transaction,omitempty"`
-	Server_name string `json:"server_name,omitempty"`
-	Tags map[string]interface{} `json:"tags,omitempty"`
-	Contexts map[string]interface{} `json:"contexts,omitempty"`
-	
+	Start_timestamp string                 `json:"start_timestamp,omitempty"`
+	Transaction     string                 `json:"transaction,omitempty"`
+	Server_name     string                 `json:"server_name,omitempty"`
+	Tags            map[string]interface{} `json:"tags,omitempty"`
+	Contexts        map[string]interface{} `json:"contexts,omitempty"`
 
-	Extra map[string]interface{} `json:"extra,omitempty"`
-	Request map[string]interface{} `json:"request,omitempty"`
-	Environment string `json:"environment,omitempty"`
-	Platform string `json:"platform,omitempty"`
+	Extra       map[string]interface{} `json:"extra,omitempty"`
+	Request     map[string]interface{} `json:"request,omitempty"`
+	Environment string                 `json:"environment,omitempty"`
+	Platform    string                 `json:"platform,omitempty"`
 	// Todo spans []
-	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	Sdk  map[string]interface{} `json:"sdk,omitempty"`
 	User map[string]interface{} `json:"user,omitempty"`
 }
 
@@ -210,11 +209,11 @@ func init() {
 	// sentry +10.0.0 supports performance monitoring, transactions
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	if (*js != "") {
+	if *js != "" {
 		projectDSNs["javascript"] = parseDSN(*js)
 	}
 	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	if (*py != "") {
+	if *py != "" {
 		projectDSNs["python"] = parseDSN(*py)
 	}
 
@@ -243,14 +242,14 @@ func main() {
 		var bodyError map[string]interface{}
 		var envelopeItems []interface{}
 
-		var timestamper Timestamper 
+		var timestamper Timestamper
 		var envelopeTimestamper EnvelopeTimestamper
 		var bodyEncoder BodyEncoder
 		var envelopeEncoder EnvelopeEncoder
 		var storeEndpoint string
 		var requestBody []byte
 
-		if (event.Kind == "error") {			
+		if event.Kind == "error" {
 			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
 			bodyError = eventId(bodyError)
 			bodyError = release(bodyError)
@@ -258,22 +257,22 @@ func main() {
 			bodyError = timestamper(bodyError, event.Platform)
 			undertake(bodyError)
 			requestBody = bodyEncoder(bodyError)
-		} else if (event.Kind == "transaction") {
+		} else if event.Kind == "transaction" {
 			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
 			envelopeItems = eventIds(envelopeItems)
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
-			envelopeItems = getEnvelopeTraceIds(envelopeItems)
+			getEnvelopeTraceIds(envelopeItems)
 
 			// update user if missing
 			envelopeItems = removeLengthField(envelopeItems)
 			requestBody = envelopeEncoder(envelopeItems)
-			// undertaker()			
+			// undertaker()
 		}
 
 		// 1. Array of Envelopes
-			// encode later, after setting new TraceId
-			// build Request later
+		// encode later, after setting new TraceId
+		// build Request later
 
 		request := buildRequest(requestBody, event.Headers, storeEndpoint)
 		if !*ignore {
@@ -297,9 +296,14 @@ func main() {
 
 		time.Sleep(1000 * time.Millisecond)
 	}
+
+	// TODO envelopeItems is diff after each iteration.... so need 1 global array for ALL events' envelope items...? revisit the
+	// traceIdMap
+	setEnvelopeTraceIds()
+
 	// 2. Update All Envelopes with proper Trace Id - setEnvelopeTraceIds
 	// 3. Send all to Sentry.io
-		// build all requests, or have that done ahead of time.
+	// build all requests, or have that done ahead of time.
 	return
 }
 
@@ -321,10 +325,9 @@ func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpo
 	}
 
 	for key, value := range eventHeaders {
-		if (key != "X-Sentry-Auth") {
+		if key != "X-Sentry-Auth" {
 			request.Header.Set(key, value)
 		}
 	}
 	return request
 }
-

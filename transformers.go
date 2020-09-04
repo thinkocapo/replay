@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"math/rand"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // same eventId cannot be accepted twice by Sentry
@@ -25,7 +26,7 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	for _, item := range envelopeItems {
 		eventId := item.(map[string]interface{})["event_id"]
-		if (eventId != nil) {
+		if eventId != nil {
 			item.(map[string]interface{})["event_id"] = uuid4
 		}
 	}
@@ -36,7 +37,7 @@ func envelopeReleases(envelopeItems []interface{}, platform string, kind string)
 	for _, item := range envelopeItems {
 
 		currentRelease := item.(map[string]interface{})["release"]
-		if (currentRelease != nil) {
+		if currentRelease != nil {
 
 			// "cannot call non-function release"
 			// item = release(item.(map[string]interface{}))
@@ -60,21 +61,21 @@ func envelopeReleases(envelopeItems []interface{}, platform string, kind string)
 		}
 
 		/*
-		contexts := item.(map[string]interface{})["contexts"]
-		if (contexts != nil) {
-			// fmt.Println("\n\n > > THIS HAS CONTEXT")
-			// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
+			contexts := item.(map[string]interface{})["contexts"]
+			if (contexts != nil) {
+				// fmt.Println("\n\n > > THIS HAS CONTEXT")
+				// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
 
-			// trace := contexts.(map[string]interface{})["trace"]
-			// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
+				// trace := contexts.(map[string]interface{})["trace"]
+				// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
 
-			fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-			item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
-			fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
+				item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
+				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
 
-			// NO because nested too far
-			// item = release(trace.(map[string]interface{}))
-		}
+				// NO because nested too far
+				// item = release(trace.(map[string]interface{}))
+			}
 		*/
 		// release := trace.(map[string]interface{})["release"]
 	}
@@ -134,36 +135,74 @@ func removeLengthField(items []interface{}) []interface{} {
 }
 
 // TODO could put this to decodeEnvelope? and return it to event-to-sentry. or reference this func from there
-func getEnvelopeTraceIds(items []interface{}) []interface{}{
-	//item.context.trace.traceId
+//item.context.trace.traceId
+func getEnvelopeTraceIds(items []interface{}) {
 	for _, item := range items {
-		context := item.(map[string]interface{})
-		trace := context["trace"].(map[string]interface{})
-		trace_id := trace["trace_id"].(string)
-		fmt.Println("\n > trace_id", trace_id)
+		contexts := item.(map[string]interface{})["contexts"]
 
-		if (trace_id != "") {
-			// timestamp := item.(map[string]interface{})["timestamp"].(string)
-			fmt.Println("\n trace_id ", trace_id)
-			traceIdMap[trace_id] = append(traceIdMap[trace_id], item)
+		// fmt.Println("> getEnvelopeTraceIds", contexts)
+
+		if contexts != nil {
+			if _, found := contexts.(map[string]interface{})["trace"]; found { // if value, found :=
+				trace := contexts.(map[string]interface{})["trace"]
+				trace_id := trace.(map[string]interface{})["trace_id"].(string)
+				// fmt.Printf("> VICTORY...trace_id BEFORE%v\n", trace_id)
+				if trace_id != "" {
+					// timestamp := item.(map[string]interface{})["timestamp"].(string)
+					traceIdMap[trace_id] = append(traceIdMap[trace_id], item)
+					// fmt.Println("\n VICTOR trace_id ", trace_id)
+				}
+			}
 		}
+
+		// MP
+		// contexts := item.(map[string]interface{})["contexts"]
+		// if (contexts != nil) {
+		// trace := contexts.(map[string]interface{})["trace"]
+
+		// 	trace := contexts.(map[string]interface{})["trace"].(map[string]interface{})
+		// 	trace_id := trace["trace_id"].(string)
+		// 	fmt.Println("> trace_id BEFORE1", trace_id)
+		// 	fmt.Println("\n > trace_id", trace_id)
+
+		// 	if trace_id != "" {
+		// 		// timestamp := item.(map[string]interface{})["timestamp"].(string)
+		// 		fmt.Println("\n trace_id ", trace_id)
+		// 		traceIdMap[trace_id] = append(traceIdMap[trace_id], item)
+		// 	}
+		// }
+
 	}
-	return items
 }
 
 // Runs after all transactions (envelopes) have been iterated through.
-func setEnvelopeTraceIds(items []interface{}) {
+func setEnvelopeTraceIds() {
 	// compiles but not needed
 	// for _, item := range traceIdMap[trace_id] {
 
-	newTraceId := "1973824kjsdf"
+	// self.trace_id = trace_id or uuid.uuid4().hex
+	// self.span_id = span_id or uuid.uuid4().hex[16:]
 
-	for trace_id, items := range traceIdMap {
-		fmt.Println("> setEnvelopeTraceIds trace_id", trace_id)
+	// if trace_id is not None:
+	// trace_id = "{:032x}".format(int(trace_id, 16))
+	// if span_id is not None:
+	// span_id = "{:016x}".format(int(span_id, 16))
+
+	for currentTrace_id, items := range traceIdMap {
+		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
+		newTraceId := uuid4
+
+		fmt.Println("\n> setEnvelopeTraceIds trace_id", currentTrace_id)
 		for _, item := range items {
-			context := item.(map[string]interface{})
-			trace := context["trace"].(map[string]interface{})
-			trace["trace_id"] = newTraceId
+			// contexts := item.(map[string]interface{})
+			contexts := item.(map[string]interface{})["contexts"]
+			trace := contexts.(map[string]interface{})["trace"]
+			// trace := contexts.(map[string]interface{})["trace"]
+
+			// fmt.Println("> trace_id BEFORE2", trace_id)
+			trace.(map[string]interface{})["trace_id"] = newTraceId
+			fmt.Println("> trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"])
+			// fmt.Println("> trace_id AFTER", item.(map[string]interface{})["context"].(map[string]interface{})["trace"].(map[string]interface{}))
 		}
 	}
 }
