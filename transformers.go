@@ -155,7 +155,7 @@ func getEnvelopeTraceIds(items []interface{}) {
 					for _, value := range traceIds {
 
 						if trace_id == value {
-							fmt.Println("\n X X X X X X X XX amtch X X X X X ")
+							// fmt.Println("\n X X X X X X X XX amtch X X X X X ")
 							matched = true
 						}
 					}
@@ -192,24 +192,51 @@ func getEnvelopeTraceIds(items []interface{}) {
 func setEnvelopeTraceIds(requests []Transport) {
 	fmt.Println("\n> setEnvelopeTraceIds <", traceIds)
 
-	for _, currentTrace_id := range traceIds {
-		fmt.Println("\n> current traceIds trace_id |", currentTrace_id)
+	for _, TRACE_ID := range traceIds {
+		fmt.Println("\n> current traceIds trace_id |", TRACE_ID)
 
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-		newTraceId := uuid4
+		NEW_TRACE_ID := uuid4
 
 		for _, transport := range requests {
+			if transport.kind == "error" {
+				contexts := transport.bodyError["contexts"]
+				if contexts != nil {
+					trace := contexts.(map[string]interface{})["trace"]
+					if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
+						fmt.Println("\n> MATCHED Error trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
+						trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+						fmt.Println("> MATCHED Error trace_id AFTER", transport.bodyError["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+					}
+				}
+			}
 			if transport.kind == "transaction" {
 				for _, item := range transport.envelopeItems {
 					contexts := item.(map[string]interface{})["contexts"]
 					if contexts != nil {
-						trace := contexts.(map[string]interface{})["trace"]
-						if currentTrace_id == trace.(map[string]interface{})["trace_id"] {
-							fmt.Println("\n> MATCHED trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
+						// fmt.Println("\n> + + + + + + +  CONTEXTS  + + + + +  ", contexts)
+						// spans := item.(map[string]interface{})["spans"]
+						// fmt.Println("XXXXXXXXXXXXX", spans)
 
-							trace.(map[string]interface{})["trace_id"] = newTraceId
-							// item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"] = newTraceId
-							fmt.Println("> MATCHED trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+						trace := contexts.(map[string]interface{})["trace"]
+						if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
+							fmt.Println("\n> MATCHED Transaction trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
+							trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+							fmt.Println("> MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+						}
+					}
+					if _, found := item.(map[string]interface{})["spans"]; found {
+						fmt.Println("\n 0 0 00 0 0 0 00 0 0 00 0 00 HAS SPANS 0 0 0 0 0 00 000 0 0")
+						spans := item.(map[string]interface{})["spans"]
+
+						if len(spans.([]map[string]interface{})) > 0 {
+							for _, value := range spans.([]map[string]interface{}) {
+								fmt.Println("\n> - - - - - - - - UPDATE SPAN ID - - - - - - - - - ")
+								value["trace_id"] = NEW_TRACE_ID
+								// if key == "trace_id" {
+								// 	value = NEW_TRACE_ID
+								// }
+							}
 						}
 					}
 				}
@@ -223,11 +250,11 @@ func setEnvelopeTraceIds(requests []Transport) {
 	}
 
 	// for _, transport := range requests {
-	// 	// for currentTrace_id, _ := range traceIdMap {
-	// 	for _, currentTrace_id := range traceIds {
+	// 	// for TRACE_ID, _ := range traceIdMap {
+	// 	for _, TRACE_ID := range traceIds {
 	// 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-	// 		newTraceId := uuid4
-	// 		fmt.Println("\n> current traceIds trace_id |", currentTrace_id)
+	// 		NEW_TRACE_ID := uuid4
+	// 		fmt.Println("\n> current traceIds trace_id |", TRACE_ID)
 
 	// 		// ERRORS
 	// 		if transport.kind == "error" {
@@ -238,11 +265,11 @@ func setEnvelopeTraceIds(requests []Transport) {
 	// 				contexts := item.(map[string]interface{})["contexts"]
 	// 				if contexts != nil {
 	// 					trace := contexts.(map[string]interface{})["trace"]
-	// 					if currentTrace_id == trace.(map[string]interface{})["trace_id"] {
+	// 					if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
 	// 						fmt.Println("\n> MATCHED trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
 
-	// 						// trace.(map[string]interface{})["trace_id"] = newTraceId
-	// 						item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"] = newTraceId
+	// 						// trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+	// 						item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"] = NEW_TRACE_ID
 	// 						fmt.Println("> MATCHED trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
 	// 					}
 	// 				}
@@ -260,3 +287,5 @@ func setEnvelopeTraceIds(requests []Transport) {
 // trace_id = "{:032x}".format(int(trace_id, 16))
 // if span_id is not None:
 // span_id = "{:016x}".format(int(span_id, 16))
+
+// item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"] = NEW_TRACE_ID

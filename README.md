@@ -205,10 +205,15 @@ DONE update Timestamps - on transaction envelopes
 3 items in envelope and start_timestamp+timestamp are on the 3rd item of the 3.
 Appears they always have both. Not one without the other.
 DONE Update the Release
-
-Udate TraceId's - on transaction envelopes
+DONE Udate TraceId's - on transaction envelopes
 traceId - is in largest envelope item, for both JS + PY transactions
 keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
+
+DONE Update traceId on Errors (should match one of the traceId's after) and now py transaction is linked to py error
+
+/toolstore parent traceId needs to match the spans traceId. the span's never got updated!
+
+Update spanIds? may need this in order for them to link. getSpanIds function maybe
 
 
 Double-Check:
