@@ -189,14 +189,14 @@ func setEnvelopeTraceIds(requests []Transport) {
 						trace := contexts.(map[string]interface{})["trace"]
 						if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
 							trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-							fmt.Println("> MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+							fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
 							if _, found := item.(map[string]interface{})["spans"]; found {
 								spans := item.(map[string]interface{})["spans"]
 								if len(spans.([]interface{})) > 0 {
 									for _, value := range spans.([]interface{}) {
 										// fmt.Println("\n> BEFORE ", value.(map[string]interface{})["trace_id"])
 										value.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-										fmt.Println("> SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
+										fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
 									}
 								}
 							}
