@@ -204,22 +204,29 @@ eventId is in envelope's first item as well as largest envelope item, so 2 out o
 DONE update Timestamps - on transaction envelopes
 3 items in envelope and start_timestamp+timestamp are on the 3rd item of the 3.
 Appears they always have both. Not one without the other.
-
-Update the Release
-
-Udate TraceId's - on transaction envelopes
+DONE Update the Release
+DONE Udate TraceId's - on transaction envelopes
 traceId - is in largest envelope item, for both JS + PY transactions
 keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
 
-Notes:  
-optionally turn the item interface{} into a Item struct, just ot make sure has everything needed.
-double-check ordering of Spans, sessions/transactions linked appropriately  
+DONE Update traceId on Errors (should match one of the traceId's after) and now py transaction is linked to py error
+
+/toolstore parent traceId needs to match the spans traceId. the span's never got updated!
+
+Update spanIds? may need this in order for them to link. getSpanIds function maybe
+
+
+Double-Check:
+Ordering of Spans, sessions/transactions linked appropriately  
 
 #### future
-shellscript w/ sentry-cli for source maps, w/ Release according to CalVer
+Shellscript w/ sentry-cli for source maps, w/ Release according to CalVer
 Cronjob for 5,000/hr (3.6million for 30 days)
 
+Refactor:  
+optionally turn the item interface{} into a Item struct, and use Timestamp type for start_timestamp/timestamp.
+
 Mobile Envelopes, Sessions
+
 Cloud move `context.Background()` to `func init()`  
 Other ./go.mod and ./api/go.mod  
-Other interfaces

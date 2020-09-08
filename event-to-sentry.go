@@ -1,19 +1,19 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"github.com/joho/godotenv"
 	"strings"
 	"time"
-	"encoding/json"
+
+	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var httpClient = &http.Client{}
@@ -23,13 +23,19 @@ var (
 	id          *string
 	ignore      *bool
 	database    string
-	db			*string
-	js			*string
-	py			*string
+	db          *string
+	js          *string
+	py          *string
 	dsn         DSN
 	SENTRY_URL  string
 	exists      bool
 	projectDSNs map[string]*DSN
+	// traceIdMap0 map[string][]*Item
+	traceIdMap map[string][]interface{}
+	traceIds   []string
+
+	// traceIdMap2 map[string][]string
+	// traceIdMap := map[string][]*interface{}
 )
 
 type DSN struct {
@@ -108,19 +114,18 @@ func (d DSN) envelopeEndpoint() string {
 }
 
 type Event struct {
-	Platform    string `json:"platform"`
-	Kind        string `json:"kind"`
-	Headers     map[string]string `json:"headers"`
-	Body        string `json:"body"`
+	Platform string            `json:"platform"`
+	Kind     string            `json:"kind"`
+	Headers  map[string]string `json:"headers"`
+	Body     string            `json:"body"`
 }
 
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
 
-
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
-	
+
 	platform := event.Platform
 
 	var storeEndpoint string
@@ -150,26 +155,37 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 // 	items []interface{}
 // }
 
-type Item struct {
-	Event_id string `json:"event_id,omitempty"`
-	Sent_at string `json:"sent_at,omitempty"`
+// type Item map[string]interface{}
 
-	Length int `json:"length,omitempty"`
-	Type string `json:"type,omitempty"`
+// type Timestamp time.Time
+type Timestamp struct {
+	time.Time
+	rfc3339 bool
+}
+
+type Item struct {
+	Timestamp Timestamp `json:"timestamp,omitempty"`
+	// Timestamp time.Time `json:"timestamp,omitempty"`
+
+	Event_id string `json:"event_id,omitempty"`
+	Sent_at  string `json:"sent_at,omitempty"`
+
+	Length       int    `json:"length,omitempty"`
+	Type         string `json:"type,omitempty"`
 	Content_type string `json:"content_type,omitempty"`
 
-	Start_timestamp string `json:"start_timestamp,omitempty"`
-	Transaction string `json:"transaction,omitempty"`
-	Server_name string `json:"server_name,omitempty"`
-	Tags map[string]interface{} `json:"tags,omitempty"`
-	Contexts map[string]interface{} `json:"contexts,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"`
-	Extra map[string]interface{} `json:"extra,omitempty"`
-	Request map[string]interface{} `json:"request,omitempty"`
-	Environment string `json:"environment,omitempty"`
-	Platform string `json:"platform,omitempty"`
+	Start_timestamp string                 `json:"start_timestamp,omitempty"`
+	Transaction     string                 `json:"transaction,omitempty"`
+	Server_name     string                 `json:"server_name,omitempty"`
+	Tags            map[string]interface{} `json:"tags,omitempty"`
+	Contexts        map[string]interface{} `json:"contexts,omitempty"`
+
+	Extra       map[string]interface{} `json:"extra,omitempty"`
+	Request     map[string]interface{} `json:"request,omitempty"`
+	Environment string                 `json:"environment,omitempty"`
+	Platform    string                 `json:"platform,omitempty"`
 	// Todo spans []
-	Sdk map[string]interface{} `json:"sdk,omitempty"`
+	Sdk  map[string]interface{} `json:"sdk,omitempty"`
 	User map[string]interface{} `json:"user,omitempty"`
 }
 
@@ -179,6 +195,8 @@ func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
+
+	traceIdMap = make(map[string][]interface{})
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
@@ -191,11 +209,11 @@ func init() {
 	// sentry +10.0.0 supports performance monitoring, transactions
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	if (*js != "") {
+	if *js != "" {
 		projectDSNs["javascript"] = parseDSN(*js)
 	}
 	projectDSNs["python"] = parseDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	if (*py != "") {
+	if *py != "" {
 		projectDSNs["python"] = parseDSN(*py)
 	}
 
@@ -218,88 +236,69 @@ func main() {
 	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
 	}
-
-	// TODO rename body as errorBody or eventPayload?
+	requests := []Transport{}
 	for _, event := range events {
 		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
-		var bodyError map[string]interface{}
-		var envelopeItems []interface{}
 
-		var timestamper Timestamper 
-		var envelopeTimestamper EnvelopeTimestamper
-		var bodyEncoder BodyEncoder
-		var envelopeEncoder EnvelopeEncoder
-		var storeEndpoint string
-		var requestBody []byte
+		// X-Sentry-Trace and py/js errors have a trace_id too
+		// can do errors and transactions separate from each other?
 
-		if (event.Kind == "error") {			
-			bodyError, timestamper, bodyEncoder, storeEndpoint = decodeError(event)
+		if event.Kind == "error" {
+			bodyError, timestamper, bodyEncoder, storeEndpoint := decodeError(event)
 			bodyError = eventId(bodyError)
 			bodyError = release(bodyError)
 			bodyError = user(bodyError)
 			bodyError = timestamper(bodyError, event.Platform)
-			undertake(bodyError)
-			requestBody = bodyEncoder(bodyError)
-		} else if (event.Kind == "transaction") {
-			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint = decodeEnvelope(event)
+
+			requests = append(requests, Transport{
+				kind:         event.Kind,
+				platform:     event.Platform,
+				eventHeaders: event.Headers,
+
+				bodyError:     bodyError,
+				storeEndpoint: storeEndpoint,
+				bodyEncoder:   bodyEncoder,
+			})
+
+		} else if event.Kind == "transaction" {
+			envelopeItems, envelopeTimestamper, envelopeEncoder, storeEndpoint := decodeEnvelope(event)
 			envelopeItems = eventIds(envelopeItems)
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
-			// update the traceIdS
-			// update user if missing
 			envelopeItems = removeLengthField(envelopeItems)
-			// undertaker()			
-			requestBody = envelopeEncoder(envelopeItems)
+
+			// fills global traceIdMap
+			getEnvelopeTraceIds(envelopeItems)
+
+			requests = append(requests, Transport{
+				kind:         event.Kind,
+				platform:     event.Platform,
+				eventHeaders: event.Headers,
+				//event: Event
+
+				envelopeItems:   envelopeItems,
+				storeEndpoint:   storeEndpoint,
+				envelopeEncoder: envelopeEncoder,
+			})
 		}
 
-		request := buildRequest(requestBody, event.Headers, storeEndpoint)
-
-		if !*ignore {
-			response, requestErr := httpClient.Do(request)
-			if requestErr != nil {
-				log.Fatal(requestErr)
-			}
-			responseData, responseDataErr := ioutil.ReadAll(response.Body)
-			if responseDataErr != nil {
-				log.Fatal(responseDataErr)
-			}
-			fmt.Printf("> KIND|RESPONSE: %s %s\n", event.Kind, string(responseData))
-		} else {
-			fmt.Printf("> %s event IGNORED \n", event.Kind)
-		}
-
-		// TODO - break early, or auto-select 1 before the for loop
-		// if !*all {
-		// 	return
-		// }
-
-		time.Sleep(1000 * time.Millisecond)
 	}
+	fmt.Println("\n > REQUESTS transport length", len(requests))
+
+	setEnvelopeTraceIds(requests)
+	encodeAndSendEvents(requests, *ignore)
+
 	return
 }
 
-func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
-	if requestBody == nil {
-		log.Fatalln("buildRequest missing requestBody")
-	}
-	if eventHeaders == nil {
-		log.Fatalln("buildRequest missing eventHeaders")
-	}
-	if storeEndpoint == "" {
-		log.Fatalln("buildRequest missing storeEndpoint")
-	}
+// TODO envelopeItems is diff after each iteration.... so need 1 global array for ALL events' envelope items...? revisit the
+// traceIdMap in here:
 
-	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
-	if errNewRequest != nil {
-		log.Fatalln(errNewRequest)
-	}
+// "factory"
+// 2. Update All Envelopes with proper Trace Id - setEnvelopeTraceIds
+// 3. Send all to Sentry.io
+// build all requests, or have that done ahead of time?
 
-	for key, value := range eventHeaders {
-		if (key != "X-Sentry-Auth") {
-			request.Header.Set(key, value)
-		}
-	}
-	return request
-}
-
+// requestHub.add(error_or_transaction?)
+// requestHubError.add
+// requestHubTransaction.add
