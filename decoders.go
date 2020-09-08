@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -15,17 +15,17 @@ func decodeEnvelope(event Event) ([]interface{}, EnvelopeTimestamper, EnvelopeEn
 	storeEndpoint := matchDSN(projectDSNs, event)
 
 	envelope := event.Body
-	
+
 	// Python transaction envelopes have a terminating '\n' char which causes unmarshaling to fail, "panic: unexpected end of JSON input" so remove the empty item that Splitting creates
 	envelopeItems := strings.Split(envelope, "\n")
 	length := len(envelopeItems)
-	if (envelopeItems[length-1] == "") {
+	if envelopeItems[length-1] == "" {
 		envelopeItems = envelopeItems[:length-1]
 	}
 
 	fmt.Printf("\n> KIND|PLATFORM transaction %v %v items in envelope\n", event.Platform, len(envelopeItems))
 
-	var items  []interface{}
+	var items []interface{}
 	for _, itemString := range envelopeItems {
 
 		var itemInterface map[string]interface{} // or interface{}?
@@ -34,7 +34,7 @@ func decodeEnvelope(event Event) ([]interface{}, EnvelopeTimestamper, EnvelopeEn
 		}
 		items = append(items, itemInterface)
 	}
-	
+
 	switch {
 	case JAVASCRIPT && TRANSACTION:
 		return items, updateEnvelopeTimestamps, envelopeEncoderJs, storeEndpoint
@@ -59,7 +59,6 @@ func decodeError(event Event) (map[string]interface{}, Timestamper, BodyEncoder,
 
 	storeEndpoint := matchDSN(projectDSNs, event)
 
-	// var b BodyEncoder?
 	switch {
 	case ANDROID && TRANSACTION:
 		return body, updateTimestamp, pyEncoder, storeEndpoint

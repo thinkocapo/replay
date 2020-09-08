@@ -240,9 +240,6 @@ func main() {
 	for _, event := range events {
 		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
 
-		// X-Sentry-Trace and py/js errors have a trace_id too
-		// can do errors and transactions separate from each other?
-
 		if event.Kind == "error" {
 			bodyError, timestamper, bodyEncoder, storeEndpoint := decodeError(event)
 			bodyError = eventId(bodyError)
@@ -251,12 +248,11 @@ func main() {
 			bodyError = timestamper(bodyError, event.Platform)
 
 			requests = append(requests, Transport{
-				kind:         event.Kind,
-				platform:     event.Platform,
-				eventHeaders: event.Headers,
-
-				bodyError:     bodyError,
+				kind:          event.Kind,
+				platform:      event.Platform,
+				eventHeaders:  event.Headers,
 				storeEndpoint: storeEndpoint,
+				bodyError:     bodyError,
 				bodyEncoder:   bodyEncoder,
 			})
 
@@ -266,39 +262,22 @@ func main() {
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			envelopeItems = removeLengthField(envelopeItems)
-
-			// fills global traceIdMap
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{
-				kind:         event.Kind,
-				platform:     event.Platform,
-				eventHeaders: event.Headers,
-				//event: Event
-
-				envelopeItems:   envelopeItems,
+				kind:            event.Kind,
+				platform:        event.Platform,
+				eventHeaders:    event.Headers,
 				storeEndpoint:   storeEndpoint,
+				envelopeItems:   envelopeItems,
 				envelopeEncoder: envelopeEncoder,
 			})
 		}
 
 	}
-	fmt.Println("\n > REQUESTS transport length", len(requests))
 
 	setEnvelopeTraceIds(requests)
 	encodeAndSendEvents(requests, *ignore)
 
 	return
 }
-
-// TODO envelopeItems is diff after each iteration.... so need 1 global array for ALL events' envelope items...? revisit the
-// traceIdMap in here:
-
-// "factory"
-// 2. Update All Envelopes with proper Trace Id - setEnvelopeTraceIds
-// 3. Send all to Sentry.io
-// build all requests, or have that done ahead of time?
-
-// requestHub.add(error_or_transaction?)
-// requestHubError.add
-// requestHubTransaction.add

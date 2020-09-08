@@ -9,43 +9,22 @@ import (
 	"time"
 )
 
-// var httpClient = &http.Client{}
-
-var (
-// all         *bool
-// id          *string
-// ignore      *bool
-// database    string
-// db          *string
-// js          *string
-// py          *string
-// dsn         DSN
-// SENTRY_URL  string
-)
-
 // TODO maybe?
 type Theencoder interface {
 	encodeit() []byte
 }
 
+// TODO factory? how to rename?
 type Transport struct {
-	kind          string
-	platform      string
-	eventHeaders  map[string]string
-	storeEndpoint string
-
-	bodyError   map[string]interface{}
-	bodyEncoder BodyEncoder
-
-	// TODO
-	encoded []byte
-
+	kind            string
+	platform        string
+	eventHeaders    map[string]string
+	storeEndpoint   string
+	encoded         []byte
+	bodyError       map[string]interface{}
+	bodyEncoder     BodyEncoder
 	envelopeItems   []interface{}
-	envelopeEncoder EnvelopeEncoder // TODO Type or a function here?
-
-	// NO, but maybe for 'requests'
-	// envelopeItems []interface{}
-	// bodyErrors []map[string]
+	envelopeEncoder EnvelopeEncoder
 }
 
 // TODO many need....
@@ -56,7 +35,6 @@ type Transport struct {
 func encodeAndSendEvents(requests []Transport, ignore bool) {
 	fmt.Println("\n> encodeAndSendEvents ...............")
 	for _, transport := range requests {
-		// var encoded []byte
 		if transport.kind == "transaction" {
 			transport.encoded = transport.envelopeEncoder(transport.envelopeItems)
 		}
@@ -65,7 +43,6 @@ func encodeAndSendEvents(requests []Transport, ignore bool) {
 		}
 		request := buildRequest(transport.encoded, transport.eventHeaders, transport.storeEndpoint)
 
-		// TODO - the ignore flag...
 		if !ignore {
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
