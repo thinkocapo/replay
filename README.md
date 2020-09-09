@@ -196,37 +196,23 @@ Google Cloud SDK 303.0.0
 initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
-DONE test that can rm length attribute from all 8 transactions in old_both.json, and send to Sentry
-DONE remove 'length' attribute from the item map
-DONE re-record a data set with PR data npm-sentry-tracing
-DONE update eventId's on Transactions so can replay them.
-eventId is in envelope's first item as well as largest envelope item, so 2 out of 3, for both JS + PY transactions.  
-DONE update Timestamps - on transaction envelopes
-3 items in envelope and start_timestamp+timestamp are on the 3rd item of the 3.
-Appears they always have both. Not one without the other.
-DONE Update the Release
-DONE Udate TraceId's - on transaction envelopes
-traceId - is in largest envelope item, for both JS + PY transactions
-keep a map of map[id's]itemPointersArray 2. at end, iterate through this map and update each item in itemPointersArray by reference, with a new generated Id
+DONE saas it
+DONE sentry-cli integration w/ source maps
+- timestamps, remove randomization
+- cronjob from Mac, w/ cli
 
-DONE Update traceId on Errors (should match one of the traceId's after) and now py transaction is linked to py error
-
-/toolstore parent traceId needs to match the spans traceId. the span's never got updated!
-
-Update spanIds? may need this in order for them to link. getSpanIds function maybe
-
-
-Double-Check:
-Ordering of Spans, sessions/transactions linked appropriately  
+- cloud function that works again
+- cloud scheduler the cloud function
 
 #### future
-Shellscript w/ sentry-cli for source maps, w/ Release according to CalVer
+- sentry-cli from cloud scheduler (do from Macbook once a week, for now)
+
 Cronjob for 5,000/hr (3.6million for 30 days)
 
 Refactor:  
-optionally turn the item interface{} into a Item struct, and use Timestamp type for start_timestamp/timestamp.
+Item interface{} as Item struct? Timestamp type for start_timestamp/timestamp.
 
-Mobile Envelopes, Sessions
+Test Mobile Envelopes 
+Test Mobile Sessions
 
-Cloud move `context.Background()` to `func init()`  
-Other ./go.mod and ./api/go.mod  
+./go.mod, ./api/go.mod  
