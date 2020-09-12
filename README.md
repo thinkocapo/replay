@@ -134,7 +134,8 @@ Make sure it compiles locally first `go build -o ignore *.go`
 Optionally run it as a local client (see client.go)
 
 ```
-gcloud functions deploy <name> --runtime go111 --trigger-http --set-env-vars BUCKET=<bucket>
+cd api // ignore-event-to-sentry.go
+gcloud functions deploy <name> --runtime go113 --trigger-http --set-env-vars BUCKET=<bucket>
 gcloud functions describe <name>  
 gsutil ls -r gs://<bucket>/
 ```
@@ -198,14 +199,21 @@ initialize your file.json to an empty array [] because it gets appended to
 ## Todo
 DONE saas it
 DONE sentry-cli integration w/ source maps
-- timestamps, remove randomization
-- cronjob from Mac, w/ cli
+DONE timestamps,
+    w/ randomizations
+    - js /toolstores Resources appear too early, and 'toolsreceived' didn't line up. But may poor looking Tx's/spans w/out undertaker as well.
+    - js checkout 'processing shopping cart result' appears both early and late
+    - py get_tools 'connect to db' overlaps 'run query', 'format results' can appear early
+    - py checkout GOOD
+    w/out randomization SELECTED
 
-- cloud function that works again
-- cloud scheduler the cloud function
+- event-to-sentry.go w/ Cloud Storage for the json
+- event-to-sentry.go in Cloud Function
+- cloud scheduler the Cloud Function
 
+- sentry-cli CalVer releases from Macbook once a week, for now
 #### future
-- sentry-cli from cloud scheduler (do from Macbook once a week, for now)
+- sentry-cli from cloud scheduler (Cloud Run Service)
 
 Cronjob for 5,000/hr (3.6million for 30 days)
 
