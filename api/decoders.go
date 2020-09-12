@@ -1,4 +1,4 @@
-package main
+package undertaker
 
 import (
 	"encoding/json"
@@ -27,7 +27,6 @@ func decodeEnvelope(event Event) ([]interface{}, EnvelopeTimestamper, EnvelopeEn
 
 	var items []interface{}
 	for _, itemString := range envelopeItems {
-
 		var itemInterface map[string]interface{} // or interface{}?
 		if err := json.Unmarshal([]byte(itemString), &itemInterface); err != nil {
 			panic(err)

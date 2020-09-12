@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -31,8 +33,8 @@ var (
 	exists      bool
 	projectDSNs map[string]*DSN
 	// traceIdMap0 map[string][]*Item
-	traceIdMap map[string][]interface{}
-	traceIds   []string
+	//traceIdMap map[string][]interface{}
+	traceIds []string
 
 	// traceIdMap2 map[string][]string
 	// traceIdMap := map[string][]*interface{}
@@ -196,7 +198,7 @@ func init() {
 		log.Print("No .env file found")
 	}
 
-	traceIdMap = make(map[string][]interface{})
+	//traceIdMap = make(map[string][]interface{})
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
@@ -225,13 +227,34 @@ func init() {
 }
 
 func main() {
-	jsonFile, err := os.Open(database)
+	// TODO read from CloudStorage
+	// jsonFile, err := os.Open(database)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// CLOUD STORAGE
+	bucket := os.Getenv("BUCKET")
+	object := "npm-sentry-tracing.json"
+	fmt.Println("DATASET object", object)
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("storage.NewClient:", err)
+		return
+	}
+	defer client.Close()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
+	defer cancel()
+	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+	if err != nil {
+		log.Fatalln("NewReader:", err)
+		return
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	defer jsonFile.Close()
+	// START
+	byteValue, _ := ioutil.ReadAll(rc) // jsonFile
+	// defer jsonFile.Close()
 	events := make([]Event, 0)
 	if err := json.Unmarshal(byteValue, &events); err != nil {
 		panic(err)
@@ -239,9 +262,6 @@ func main() {
 	requests := []Transport{}
 	for _, event := range events {
 		fmt.Printf("\n> KIND|PLATFORM %v %v ", event.Kind, event.Platform)
-
-		// X-Sentry-Trace and py/js errors have a trace_id too
-		// can do errors and transactions separate from each other?
 
 		if event.Kind == "error" {
 			bodyError, timestamper, bodyEncoder, storeEndpoint := decodeError(event)
@@ -251,12 +271,11 @@ func main() {
 			bodyError = timestamper(bodyError, event.Platform)
 
 			requests = append(requests, Transport{
-				kind:         event.Kind,
-				platform:     event.Platform,
-				eventHeaders: event.Headers,
-
-				bodyError:     bodyError,
+				kind:          event.Kind,
+				platform:      event.Platform,
+				eventHeaders:  event.Headers,
 				storeEndpoint: storeEndpoint,
+				bodyError:     bodyError,
 				bodyEncoder:   bodyEncoder,
 			})
 
@@ -266,39 +285,22 @@ func main() {
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			envelopeItems = removeLengthField(envelopeItems)
-
-			// fills global traceIdMap
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{
-				kind:         event.Kind,
-				platform:     event.Platform,
-				eventHeaders: event.Headers,
-				//event: Event
-
-				envelopeItems:   envelopeItems,
+				kind:            event.Kind,
+				platform:        event.Platform,
+				eventHeaders:    event.Headers,
 				storeEndpoint:   storeEndpoint,
+				envelopeItems:   envelopeItems,
 				envelopeEncoder: envelopeEncoder,
 			})
 		}
 
 	}
-	fmt.Println("\n > REQUESTS transport length", len(requests))
 
 	setEnvelopeTraceIds(requests)
 	encodeAndSendEvents(requests, *ignore)
 
 	return
 }
-
-// TODO envelopeItems is diff after each iteration.... so need 1 global array for ALL events' envelope items...? revisit the
-// traceIdMap in here:
-
-// "factory"
-// 2. Update All Envelopes with proper Trace Id - setEnvelopeTraceIds
-// 3. Send all to Sentry.io
-// build all requests, or have that done ahead of time?
-
-// requestHub.add(error_or_transaction?)
-// requestHubError.add
-// requestHubTransaction.add

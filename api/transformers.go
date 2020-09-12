@@ -1,4 +1,4 @@
-package main
+package undertaker
 
 import (
 	"fmt"
@@ -34,7 +34,6 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
-
 		currentRelease := item.(map[string]interface{})["release"]
 		if currentRelease != nil {
 
@@ -55,28 +54,11 @@ func envelopeReleases(envelopeItems []interface{}, platform string, kind string)
 			case day >= 22:
 				week = 4
 			}
+
 			release := fmt.Sprint(int(month), ".", week)
+
 			item.(map[string]interface{})["release"] = release
 		}
-
-		/*
-			contexts := item.(map[string]interface{})["contexts"]
-			if (contexts != nil) {
-				// fmt.Println("\n\n > > THIS HAS CONTEXT")
-				// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
-
-				// trace := contexts.(map[string]interface{})["trace"]
-				// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
-
-				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-				item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
-				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-
-				// NO because nested too far
-				// item = release(trace.(map[string]interface{}))
-			}
-		*/
-		// release := trace.(map[string]interface{})["release"]
 	}
 	return envelopeItems
 }
@@ -136,13 +118,11 @@ func removeLengthField(items []interface{}) []interface{} {
 func getEnvelopeTraceIds(items []interface{}) {
 	for _, item := range items {
 		contexts := item.(map[string]interface{})["contexts"]
-
 		if contexts != nil {
 			if _, found := contexts.(map[string]interface{})["trace"]; found {
 				trace := contexts.(map[string]interface{})["trace"]
 				trace_id := trace.(map[string]interface{})["trace_id"].(string)
 				if trace_id != "" {
-					//traceIdMap[trace_id] = append(traceIdMap[trace_id], item)
 					matched := false
 					for _, value := range traceIds {
 						if trace_id == value {
@@ -163,8 +143,6 @@ func setEnvelopeTraceIds(requests []Transport) {
 	fmt.Println("\n> setEnvelopeTraceIds <", traceIds)
 
 	for _, TRACE_ID := range traceIds {
-		fmt.Println("\n> TRACE_ID", TRACE_ID)
-
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 		NEW_TRACE_ID := uuid4
 
@@ -189,14 +167,13 @@ func setEnvelopeTraceIds(requests []Transport) {
 						trace := contexts.(map[string]interface{})["trace"]
 						if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
 							trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-							fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+							//fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
 							if _, found := item.(map[string]interface{})["spans"]; found {
 								spans := item.(map[string]interface{})["spans"]
 								if len(spans.([]interface{})) > 0 {
 									for _, value := range spans.([]interface{}) {
-										// fmt.Println("\n> BEFORE ", value.(map[string]interface{})["trace_id"])
 										value.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-										fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
+										//fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
 									}
 								}
 							}

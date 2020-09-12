@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 )
 
 func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
@@ -30,19 +29,22 @@ func encodeGzip(b []byte) bytes.Buffer {
 	return buf
 }
 
-func unmarshalEnvelope(bytes []byte) []string {
-	var envelope string
-	envelope = string(bytes)
-	envelopeContents := strings.Split(envelope, "\n")
+func marshalJSON(body map[string]interface{}) []byte {
+	bodyBytes, errBodyBytes := json.Marshal(body)
+	if errBodyBytes != nil {
+		fmt.Println(errBodyBytes)
+	}
+	return bodyBytes
+}
 
-	fmt.Print(envelopeContents[0], "\n")
-	fmt.Print(envelopeContents[1], "\n")
-	fmt.Print(envelopeContents[2], "\n")
-
-	// if err := json.Unmarshal(bytes, &text); err != nil {
-	// 	panic(err)
-	// }
-	return envelopeContents
+func marshalJSONItem(item interface{}) []byte {
+	//fmt.Println("\n > marshalJSONItem BEFORE", item) // {2b7e81ebe33349cda2a77f04c30e8174 2020-08-29T05:43:31.286573Z}
+	itemBytes, errItemBytes := json.Marshal(item)
+	if errItemBytes != nil {
+		fmt.Println(errItemBytes)
+	}
+	//fmt.Println("\n > marshalJSONItem ", string(itemBytes)) // {"event_id":"2b7e81ebe33349cda2a77f04c30e8174","sent_at":"2020-08-29T05:43:31.286573Z"}
+	return itemBytes
 }
 
 func unmarshalJSON(bytes []byte) map[string]interface{} {
@@ -53,10 +55,11 @@ func unmarshalJSON(bytes []byte) map[string]interface{} {
 	return _interface
 }
 
-func marshalJSON(body map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(body)
-	if errBodyBytes != nil {
-		fmt.Println(errBodyBytes)
-	}
-	return bodyBytes
-}
+// func unmarshalJSONItem(item string) Item {
+// 	var _interface Item
+// 	if err := json.Unmarshal([]byte(item), &_interface); err != nil {
+// 		panic(err)
+// 	}
+// 	return _interface
+// 	// return Item{id: "test"} // wouldn't work
+// }
