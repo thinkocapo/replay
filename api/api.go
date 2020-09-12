@@ -9,11 +9,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/getsentry/sentry-go"
+	// _ "github.com/mattn/go-sqlite3"
+	// "github.com/getsentry/sentry-go"
+	// sentryhttp "github.com/getsentry/sentry-go/http"
 )
 
 var httpClient = &http.Client{}
@@ -186,19 +190,46 @@ type Item struct {
 // TODO need an ItemFinal that has unified timestamp?
 
 func init() {
-	fmt.Print("Init...")
+	fmt.Print("Init...123")
+	// err := sentry.Init(sentry.ClientOptions{
+	// 	Dsn: "https://879a3ddfdd5241b0b4f6fcf9011896ad@o87286.ingest.sentry.io/5426957",
+	// 	Debug: false,
+	// })
+	// if err != nil {
+	// 	log.Fatalf("sentry.Init: %s", err)
+	// }
+	// defer sentry.Flush(2 * time.Second)
+}
+
+type DsnPair struct {
+	Dsn1 string `json:"dsn1"`
+	Dsn2 string `json:"dsn2"`
 }
 
 func ReplayJson(w http.ResponseWriter, r *http.Request) {
-	dsn := r.Header.Get("dsn")   // py default for just 1 python error
-	dsn1 := r.Header.Get("dsn1") // js
-	dsn2 := r.Header.Get("dsn2") // py
-	fmt.Println("dsn", dsn)
-	fmt.Println("dsn1", dsn1)
-	fmt.Println("dsn2", dsn2)
+	// sentryHandler := sentryhttp.New(sentryhttp.Options{})
+	// sentry.CaptureMessage("SDK WORKS")
 
-	if dsn == "" && dsn1 == "" && dsn2 == "" {
-		fmt.Fprint(w, "no DSN key provided")
+	var d DsnPair
+
+	err0 := json.NewDecoder(r.Body).Decode(&d)
+	if err0 != nil {
+		sentry.CaptureException(err0)
+		http.Error(w, err0.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Println("dsn", d)
+	dsn1 := d.Dsn1
+	dsn2 := d.Dsn2
+
+	dsn := r.Header.Get("dsn") // py default for just 1 python error
+	// dsn1 := r.Header.Get("dsn1") // js
+	// dsn2 := r.Header.Get("dsn2") // py
+	fmt.Println("dsn1 is", dsn1)
+	fmt.Println("dsn2 is", dsn2)
+
+	if dsn1 == "" && dsn2 == "" {
+		fmt.Fprint(w, "missing a DSN key")
 		return
 	}
 
@@ -279,5 +310,7 @@ func ReplayJson(w http.ResponseWriter, r *http.Request) {
 	setEnvelopeTraceIds(requests)
 	encodeAndSendEvents(requests)
 
-	fmt.Fprint(w, "DONE")
+	message := "DONE" + strconv.Itoa(len(requests)) + "requests"
+	fmt.Fprint(w, message)
+	// fmt.Fprint(w, "DONE %s %s", "requests", "sdf")
 }

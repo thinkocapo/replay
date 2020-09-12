@@ -207,9 +207,9 @@ DONE timestamps,
     - py checkout GOOD
     w/out randomization SELECTED
 
-- event-to-sentry.go w/ Cloud Storage for the json
-- event-to-sentry.go in Cloud Function
-- cloud scheduler the Cloud Function
+DONE event-to-sentry.go w/ Cloud Storage for the json
+DONE event-to-sentry.go in Cloud Function
+- cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
 
 - sentry-cli CalVer releases from Macbook once a week, for now
 #### future
