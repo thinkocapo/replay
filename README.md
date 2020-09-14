@@ -209,13 +209,17 @@ DONE timestamps,
 
 DONE event-to-sentry.go w/ Cloud Storage for the json
 DONE event-to-sentry.go in Cloud Function
-- cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
+DONE cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
 
-- sentry-cli CalVer releases from Macbook once a week, for now
+DONE sentry-cli release-configuration.sh
+DONE sentry-cli CalVer releases in shell script
+DONE sentry-cli in crontab (weekly monday mornings so starts tomorrow)
+- Clock drift bring 10 days back
+
 #### future
-- sentry-cli from cloud scheduler (Cloud Run Service)
+- Compute Enginer VM for sentry-cli automation and SDG
+- Cronjob for 5,000/hr (3.6million for 30 days)
 
-Cronjob for 5,000/hr (3.6million for 30 days)
 
 Refactor:  
 Item interface{} as Item struct? Timestamp type for start_timestamp/timestamp.
