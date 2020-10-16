@@ -118,6 +118,8 @@ Macbook's cronjob manager for sending events in the background while you work
 
 # every 5 minutes
 */5 * * * 1-5 cd /<path>/<to>/undertaker/ && ./event-to-sentry-<name> --all
+
+0 0 * * MON cd /<path>/tracing && /<path/tracing/release-config.sh
 ```
 
 https://crontab.guru/
@@ -159,6 +161,55 @@ https://cloud.google.com/functions/docs/quickstart (gcloud cli)
 https://cloud.google.com/functions/docs/quickstart#whats-next  
 https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
 "go mod tidy"
+
+## Demo Automation - Mobile
+#### Compute Engine VM
+
+Select MicroT2 w/ Ubuntu 16.04LTS
+
+1. launch SSH
+
+2. Generate SSH key 
+https://docs.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
+3. 
+touch ~/.ssh/config  
+```
+Host *
+  IgnoreUnknown AddKeysToAgent,UseKeychain
+  AddKeysToAgent yes
+  UseKeychain yes
+```
+
+`ssh-add -k ~/.ssh/id_rsa` don't use -K, use -k
+
+4. Add new SSH Key to your Github Account online  
+https://docs.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account
+
+5. `git clone git@github.com:thinkocapo/SessionDataGenerator.git`
+
+6. `apt-get install openjdk-8-jdk`
+DO NOT install JRE or any 'headless' marked version because that's the JRE
+
+7. 
+```
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+
+you@<vm_name>:~$ which java
+/usr/bin/java
+
+you@<vm_name>:~$ java -version
+openjdk version "1.8.0_265"
+OpenJDK Runtime Environment (build 1.8.0_265-8u265-b01-0ubuntu2~16.04-b01)
+OpenJDK 64-Bit Server VM (build 25.265-b01, mixed mode)
+```
+402 MB used
+
+https://www.linode.com/docs/development/java/install-java-on-ubuntu-16-04/ (2019)
+
+8. `cd SessionDataGenerator && ./gradlew run`
+let it run to completion even if says 0%, IDLE, then re-run and should work
 
 
 ## Notes
@@ -209,13 +260,24 @@ DONE timestamps,
 
 DONE event-to-sentry.go w/ Cloud Storage for the json
 DONE event-to-sentry.go in Cloud Function
-- cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
+DONE cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
 
-- sentry-cli CalVer releases from Macbook once a week, for now
+DONE sentry-cli release-configuration.sh
+DONE sentry-cli CalVer releases in shell script
+DONE sentry-cli in crontab (weekly monday mornings so starts tomorrow)
+
+- Clock drift bring 10 days back 
+    - dbl-check what datetime.now() in a /tmp/script.go gives you
+    - run locally ignore-event-tosentry.go and see what timestamps read as...
+    
+- Big data set (min.100)
+
+- MOBILE start w/ ComputeEnginer VM (ubuntu)
+
 #### future
-- sentry-cli from cloud scheduler (Cloud Run Service)
-
-Cronjob for 5,000/hr (3.6million for 30 days)
+- Compute Enginer VM for sentry-cli automation and SDG
+- Cronjob for 5,000/hr (3.6million for 30 days)
+- Page Navigation in the 100-1,000 sized data set.
 
 Refactor:  
 Item interface{} as Item struct? Timestamp type for start_timestamp/timestamp.
