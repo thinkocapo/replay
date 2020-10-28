@@ -43,6 +43,7 @@ api/read
 *read
 *key.json
 *.json
+sales*
 
 .DS_Store
 *.db

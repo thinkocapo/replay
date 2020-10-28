@@ -147,7 +147,7 @@ func setEnvelopeTraceIds(requests []Transport) {
 		NEW_TRACE_ID := uuid4
 
 		for idx, transport := range requests {
-			fmt.Println("> TRANSPORT", idx, transport.kind, transport.platform)
+			//fmt.Println("> TRANSPORT", idx, transport.kind, transport.platform)
 
 			if transport.kind == "error" {
 				contexts := transport.bodyError["contexts"]

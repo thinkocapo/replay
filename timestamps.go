@@ -11,7 +11,6 @@ type Timestamper func(map[string]interface{}, string) map[string]interface{}
 type EnvelopeTimestamper func([]interface{}, string) []interface{}
 
 func updateEnvelopeTimestamps(envelopeItems []interface{}, platform string) []interface{} {
-	fmt.Println("updateEnvelopeTimestamps...")
 	for _, item := range envelopeItems {
 		// Check that the envelope item has 'start_timestamp' 'timestamp' on it
 		start_timestamp := item.(map[string]interface{})["start_timestamp"]
@@ -37,9 +36,13 @@ Float form is like 1.5914674155654302e+09
 // Errors
 func updateTimestamp(body map[string]interface{}, platform string) map[string]interface{} {
 	body["timestamp"] = time.Now().Unix()
+	// fmt.Println("*** Error Timestamp GOOD ***", body["timestamp"])
 	return body
 }
 
+// TODO run 100-1000 tx's in a dataset, for better variability.
+// TODO instead of multiplying by the rate,
+// TODO reduce the range of the rates...
 // Transactions - keep start and end timestamps relative to each other by computing the difference and new timestamps based on that
 func updateTimestamps(body map[string]interface{}, platform string) map[string]interface{} {
 	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
@@ -59,11 +62,6 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		parentEndTimestamp = decimal.NewFromFloat(body["timestamp"].(float64))
 	}
 
-	// TODO run 100-1000 tx's in a dataset, for better variability.
-
-	// TODO instead of multiplying by the rate,
-	// TODO reduce the range of the rates...
-
 	// Parent Trace
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
 	// rand.Seed(time.Now().UnixNano())
@@ -72,15 +70,25 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 	// parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+	fmt.Println("*** unixTimestampString 1 ***", unixTimestampString)
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+	fmt.Println("*** newParentStartTimestamp 2 ***", newParentStartTimestamp)
+
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
 	if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
 		fmt.Print("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
 	}
 
+	// OG
 	body["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 	body["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
+	fmt.Println("*** newParentStartTimestamp ***", body["start_timestamp"])
+	fmt.Println("*** newParentEndTimestamp ***", body["timestamp"])
+
+	// PR
+	// body["start_timestamp"] = decimal.NewFromFloat(body["start_timestamp"].(float64))
+	// body["timestamp"] = decimal.NewFromFloat(body["timestamp"].(float64))
 
 	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and this is what happens in Javascript
 	// logging with 'decimal type for readability and convertability
@@ -121,8 +129,14 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 			fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
 
+		// OG
 		sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
+
+		// PR
+		//sp["start_timestamp"] = decimal.NewFromFloat(sp["start_timestamp"].(float64))
+		//sp["timestamp"] = decimal.NewFromFloat(sp["timestamp"].(float64))
+		// fmt.Println("*** sp['start_timestamp'] ***", sp["start_timestamp"])
 
 		// logging with decimal for readability and convertability
 		// fmt.Printf("\n> updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])

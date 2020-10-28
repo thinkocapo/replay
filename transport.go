@@ -33,7 +33,7 @@ type Transport struct {
 // }
 
 func encodeAndSendEvents(requests []Transport, ignore bool) {
-	fmt.Println("\n> encodeAndSendEvents")
+	// fmt.Println("\n> encodeAndSendEvents")
 	for _, transport := range requests {
 		if transport.kind == "transaction" {
 			transport.encoded = transport.envelopeEncoder(transport.envelopeItems)
