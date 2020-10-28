@@ -33,7 +33,7 @@ type Transport struct {
 // }
 
 func encodeAndSendEvents(requests []Transport, ignore bool) {
-	fmt.Println("\n> encodeAndSendEvents ...............")
+	fmt.Println("\n> encodeAndSendEvents")
 	for _, transport := range requests {
 		if transport.kind == "transaction" {
 			transport.encoded = transport.envelopeEncoder(transport.envelopeItems)
@@ -62,7 +62,7 @@ func encodeAndSendEvents(requests []Transport, ignore bool) {
 }
 
 func buildRequest(requestBody []byte, eventHeaders map[string]string, storeEndpoint string) *http.Request {
-	fmt.Printf("> storeEndpoint %v \n", storeEndpoint)
+	fmt.Printf("> sentry endpoint %v \n", storeEndpoint)
 	if requestBody == nil {
 		log.Fatalln("buildRequest missing requestBody")
 	}

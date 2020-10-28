@@ -196,7 +196,7 @@ func setEnvelopeTraceIds(requests []Transport) {
 									for _, value := range spans.([]interface{}) {
 										// fmt.Println("\n> BEFORE ", value.(map[string]interface{})["trace_id"])
 										value.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-										fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
+										//fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
 									}
 								}
 							}
