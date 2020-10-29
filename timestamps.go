@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -63,7 +62,7 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		parentEndTimestamp = decimal.NewFromFloat(body["timestamp"].(float64))
 	}
 
-	// Parent Trace
+	// TRACE PARENT
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
 	// rand.Seed(time.Now().UnixNano())
 	// percentage := 0.01 + rand.Float64()*(0.20-0.01)
@@ -81,34 +80,18 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		fmt.Print("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
 	}
 
-	// OG
-	// body["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
-	// body["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
-	// fmt.Println("\n >>>>>>>>>>>>>", newParentStartTimestamp.String())
-
-	// PR1
-	// body["start_timestamp"] = decimal.NewFromFloat(body["start_timestamp"].(float64))
-	// body["timestamp"] = decimal.NewFromFloat(body["timestamp"].(float64))
-
-	// PR2
-	// body["start_timestamp"], _ = strconv.ParseFloat(newParentStartTimestamp.String(), 64)
-	// body["timestamp"], _ = strconv.ParseFloat(newParentEndTimestamp.String(), 64)
-
-	// PR3
-	// body["start_timestamp"] = newParentStartTimestamp.String()[:7]
-	// body["timestamp"] = newParentEndTimestamp.String()[:7]
-	body["start_timestamp"], _ = strconv.ParseInt(newParentStartTimestamp.String()[:10], 10, 64)
-	body["timestamp"], _ = strconv.ParseInt(newParentEndTimestamp.String()[:10], 10, 64)
+	body["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
+	body["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
 
 	fmt.Println("*** body['start_timestamp'] ***", body["start_timestamp"])
 	fmt.Println("*** body['timestamp'] ***", body["timestamp"])
 
 	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and this is what happens in Javascript
 	// logging with 'decimal type for readability and convertability
-	//fmt.Printf("> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
+	// fmt.Printf("> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
 	// fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
 
-	// Spans
+	// SPANS
 	for _, span := range body["spans"].([]interface{}) {
 		sp := span.(map[string]interface{})
 		// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
@@ -142,27 +125,8 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 			fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
 
-		// OG
-		// sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
-		// sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
-
-		// PR1
-		//sp["start_timestamp"] = decimal.NewFromFloat(sp["start_timestamp"].(float64))
-		//sp["timestamp"] = decimal.NewFromFloat(sp["timestamp"].(float64))
-
-		// PR2
-		// strconv.ParseFloat("3.1415", 64)
-		// sp["start_timestamp"], _ = strconv.ParseFloat(newSpanStartTimestamp.String(), 64)
-		// sp["timestamp"], _ = strconv.ParseFloat(newSpanEndTimestamp.String(), 64)
-
-		// PR3
-		// sp["start_timestamp"] = newSpanStartTimestamp.String()[:7]
-		// sp["timestamp"] = newSpanEndTimestamp.String()[:7]
-		sp["start_timestamp"], _ = strconv.ParseInt(newSpanStartTimestamp.String()[:10], 10, 64)
-		sp["timestamp"], _ = strconv.ParseInt(newSpanEndTimestamp.String()[:10], 10, 64)
-
-		fmt.Printf("*** sp['start_timestamp'] %v***\n", sp["start_timestamp"])
-		fmt.Printf("*** sp['timestamp'] *** %v\n", sp["timestamp"])
+		sp["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
+		sp["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
 		// logging with decimal for readability and convertability
 		// fmt.Printf("\n> updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(sp["start_timestamp"].(float64)), sp["start_timestamp"])
