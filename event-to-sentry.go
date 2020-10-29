@@ -290,6 +290,7 @@ func main() {
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			envelopeItems = removeLengthField(envelopeItems)
+			envelopeItems = sentAt(envelopeItems)
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{

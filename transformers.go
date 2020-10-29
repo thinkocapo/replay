@@ -32,6 +32,25 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	return envelopeItems
 }
 
+func sentAt(envelopeItems []interface{}) []interface{} {
+	for _, item := range envelopeItems {
+		sentAt := item.(map[string]interface{})["sent_at"]
+		if sentAt != nil {
+			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			fmt.Println(">>>>>>>> sent_at", unixTimestampString)
+			// newTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+
+			// item.(map[string]interface{})["sent_at"] = time.Now().UnixNano()
+			// item.(map[string]interface{})["sent_at"], _ = newTimestamp.Round(7).Float64()
+			// item.(map[string]interface{})["sent_at"] = newTimestamp.String()
+			item.(map[string]interface{})["sent_at"] = time.Now().UTC()
+
+			fmt.Println("\n>>>>>>> sent_at", item.(map[string]interface{})["sent_at"])
+		}
+	}
+	return envelopeItems
+}
+
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
 
