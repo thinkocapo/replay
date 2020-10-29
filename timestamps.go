@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -64,10 +65,10 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 
 	// TRACE PARENT
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	// rand.Seed(time.Now().UnixNano())
-	// percentage := 0.01 + rand.Float64()*(0.20-0.01)
-	// rate := decimal.NewFromFloat(percentage)
-	// parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+	rand.Seed(time.Now().UnixNano())
+	percentage := 0.01 + rand.Float64()*(0.20-0.01)
+	rate := decimal.NewFromFloat(percentage)
+	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	// fmt.Println("*** unixTimestampString 1 ***", unixTimestampString)
@@ -111,9 +112,10 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-		// spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+		spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 		// should use newParentStartTimestamp instead of spanStartTimestamp?
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
@@ -121,6 +123,11 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 
+		// EXPERIMENT 1:03p
+		// newSpanStartTimestamp = newSpanStartTimestamp.Mul(rate.Add(decimal.NewFromFloat(1)))
+		// newSpanEndTimestamp = newSpanEndTimestamp.Mul(rate.Add(decimal.NewFromFloat(1)))
+
+		// TODO may need to remove, if multiplying by rate change
 		if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
 			fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
