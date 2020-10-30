@@ -44,13 +44,10 @@ func sentAt(envelopeItems []interface{}) []interface{} {
 
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
-
 		currentRelease := item.(map[string]interface{})["release"]
 		if currentRelease != nil {
-
 			// "cannot call non-function release"
 			// item = release(item.(map[string]interface{}))
-
 			date := time.Now()
 			month := date.Month()
 			day := date.Day()
@@ -68,25 +65,6 @@ func envelopeReleases(envelopeItems []interface{}, platform string, kind string)
 			release := fmt.Sprint(int(month), ".", week)
 			item.(map[string]interface{})["release"] = release
 		}
-
-		/*
-			contexts := item.(map[string]interface{})["contexts"]
-			if (contexts != nil) {
-				// fmt.Println("\n\n > > THIS HAS CONTEXT")
-				// fmt.Println("\n > > contexts RELEASE", contexts.(map[string]interface{})["release"])
-
-				// trace := contexts.(map[string]interface{})["trace"]
-				// fmt.Println("\n > > trace RELEASE", trace.(map[string]interface{})["release"])
-
-				fmt.Println("\n > > Release BEFORE", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-				item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"] = "619"
-				fmt.Println("\n > > Release AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["release"])
-
-				// NO because nested too far
-				// item = release(trace.(map[string]interface{}))
-			}
-		*/
-		// release := trace.(map[string]interface{})["release"]
 	}
 	return envelopeItems
 }
@@ -113,17 +91,9 @@ func release(body map[string]interface{}) map[string]interface{} {
 }
 
 func user(body map[string]interface{}) map[string]interface{} {
-	// if body["user"] == nil {
 	body["user"] = make(map[string]interface{})
 	user := body["user"].(map[string]interface{})
-	rand.Seed(time.Now().UnixNano())
-	alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
-	var alphanumeric string
-	for i := 0; i < 3; i++ {
-		alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
-	}
-	user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
-	// }
+	user["email"] = createUser()
 	return body
 }
 
@@ -131,18 +101,20 @@ func users(envelopeItems []interface{}) []interface{} {
 	for _, item := range envelopeItems {
 		user := item.(map[string]interface{})["user"]
 		if user != nil {
-			fmt.Println("+++++ user not null on envelope item 1 +++++", user.(map[string]interface{})["email"])
-			rand.Seed(time.Now().UnixNano())
-			alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
-			var alphanumeric string
-			for i := 0; i < 3; i++ {
-				alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
-			}
-			user.(map[string]interface{})["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
-			fmt.Println("+++++ user not null on envelope item 2 +++++", user.(map[string]interface{})["email"])
+			user.(map[string]interface{})["email"] = createUser()
 		}
 	}
 	return envelopeItems
+}
+
+func createUser() string {
+	rand.Seed(time.Now().UnixNano())
+	alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+	var alphanumeric string
+	for i := 0; i < 3; i++ {
+		alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
+	}
+	return fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 }
 
 func undertake(body map[string]interface{}) {
