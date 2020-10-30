@@ -40,6 +40,7 @@ DSN_PYTHON_CELERY=
 
 // set this here as your default or pass it at runtime using --db
 SQLITE=
+JSON=?
 ```
 
 2. `pip3 install -r ./python/requirements.txt` for the proxy  
@@ -65,7 +66,8 @@ Note - Transactions are not supported if using DSN's from `getsentry/onpremise` 
 ./bin/event-to-sentry --id=<id> -i
 ./bin/event-to-sentry --all
 ```
-or use `--js` `--py` to pass DSN's when running the executable
+or use `--js` `--py` to pass DSN's when running the executable  
+`--db` if passing a .json stored locally, otherwise it will use what's in .env for `JSON`. But right now, reads from Cloud Storage **only**  
 ```
 ./bin/event-to-sentry --all --db=am-transactions-timeout-sqlite.db
 ./bin/event-to-sentry --all --db=<path_to_.db> --js=<javascripti_DSN> --py=<python_DSN>

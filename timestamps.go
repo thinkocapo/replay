@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -11,7 +12,6 @@ type Timestamper func(map[string]interface{}, string) map[string]interface{}
 type EnvelopeTimestamper func([]interface{}, string) []interface{}
 
 func updateEnvelopeTimestamps(envelopeItems []interface{}, platform string) []interface{} {
-	fmt.Println("updateEnvelopeTimestamps...")
 	for _, item := range envelopeItems {
 		// Check that the envelope item has 'start_timestamp' 'timestamp' on it
 		start_timestamp := item.(map[string]interface{})["start_timestamp"]
@@ -40,6 +40,8 @@ func updateTimestamp(body map[string]interface{}, platform string) map[string]in
 	return body
 }
 
+// TODO instead of multiplying by the rate, reduce the range of the rates?
+
 // Transactions - keep start and end timestamps relative to each other by computing the difference and new timestamps based on that
 func updateTimestamps(body map[string]interface{}, platform string) map[string]interface{} {
 	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
@@ -59,20 +61,16 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		parentEndTimestamp = decimal.NewFromFloat(body["timestamp"].(float64))
 	}
 
-	// TODO run 100-1000 tx's in a dataset, for better variability.
-
-	// TODO instead of multiplying by the rate,
-	// TODO reduce the range of the rates...
-
-	// Parent Trace
+	// TRACE PARENT
 	parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
-	// rand.Seed(time.Now().UnixNano())
-	// percentage := 0.01 + rand.Float64()*(0.20-0.01)
-	// rate := decimal.NewFromFloat(percentage)
-	// parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+	rand.Seed(time.Now().UnixNano())
+	percentage := 0.01 + rand.Float64()*(0.20-0.01)
+	rate := decimal.NewFromFloat(percentage)
+	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
 	if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
@@ -87,7 +85,7 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 	// fmt.Printf("> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(body["start_timestamp"].(float64)), body["start_timestamp"])
 	// fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(body["timestamp"].(float64)), body["timestamp"])
 
-	// Spans
+	// SPANS
 	for _, span := range body["spans"].([]interface{}) {
 		sp := span.(map[string]interface{})
 		// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", sp["start_timestamp"], sp["start_timestamp"])
@@ -107,9 +105,10 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		}
 
 		spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
-		// spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+		spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 		spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+		spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 		// should use newParentStartTimestamp instead of spanStartTimestamp?
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())

@@ -65,7 +65,8 @@ func parseDSN(rawurl string) *DSN {
 
 	var host string
 	if strings.Contains(rawurl, "ingest.sentry.io") {
-		host = "ingest.sentry.io"
+		// TODO need to slice the o87286 dynamically
+		host = "o87286.ingest.sentry.io"
 	}
 	if strings.Contains(rawurl, "@localhost:") {
 		host = "localhost:9000"
@@ -90,8 +91,9 @@ func parseDSN(rawurl string) *DSN {
 
 func (d DSN) storeEndpoint() string {
 	var fullurl string
-	if d.host == "ingest.sentry.io" {
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
+	if strings.Contains(d.host, "ingest.sentry.io") {
+		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
+		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
@@ -103,8 +105,8 @@ func (d DSN) storeEndpoint() string {
 }
 func (d DSN) envelopeEndpoint() string {
 	var fullurl string
-	if d.host == "ingest.sentry.io" {
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
+	if strings.Contains(d.host, "ingest.sentry.io") {
+		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key[1:], "&sentry_version=7")
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
@@ -285,6 +287,7 @@ func main() {
 			envelopeItems = envelopeTimestamper(envelopeItems, event.Platform)
 			envelopeItems = envelopeReleases(envelopeItems, event.Platform, event.Kind)
 			envelopeItems = removeLengthField(envelopeItems)
+			envelopeItems = sentAt(envelopeItems)
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{

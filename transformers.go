@@ -32,6 +32,16 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	return envelopeItems
 }
 
+func sentAt(envelopeItems []interface{}) []interface{} {
+	for _, item := range envelopeItems {
+		sentAt := item.(map[string]interface{})["sent_at"]
+		if sentAt != nil {
+			item.(map[string]interface{})["sent_at"] = time.Now().UTC()
+		}
+	}
+	return envelopeItems
+}
+
 func envelopeReleases(envelopeItems []interface{}, platform string, kind string) []interface{} {
 	for _, item := range envelopeItems {
 
@@ -163,13 +173,13 @@ func setEnvelopeTraceIds(requests []Transport) {
 	fmt.Println("\n> setEnvelopeTraceIds <", traceIds)
 
 	for _, TRACE_ID := range traceIds {
-		fmt.Println("\n> TRACE_ID", TRACE_ID)
+		//fmt.Println("\n> TRACE_ID", TRACE_ID)
 
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 		NEW_TRACE_ID := uuid4
 
-		for idx, transport := range requests {
-			fmt.Println("> TRANSPORT", idx, transport.kind, transport.platform)
+		for _, transport := range requests {
+			//fmt.Println("> TRANSPORT", idx, transport.kind, transport.platform)
 
 			if transport.kind == "error" {
 				contexts := transport.bodyError["contexts"]
@@ -189,14 +199,14 @@ func setEnvelopeTraceIds(requests []Transport) {
 						trace := contexts.(map[string]interface{})["trace"]
 						if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
 							trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-							fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+							//fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
 							if _, found := item.(map[string]interface{})["spans"]; found {
 								spans := item.(map[string]interface{})["spans"]
 								if len(spans.([]interface{})) > 0 {
 									for _, value := range spans.([]interface{}) {
 										// fmt.Println("\n> BEFORE ", value.(map[string]interface{})["trace_id"])
 										value.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-										fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
+										//fmt.Println(">   SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
 									}
 								}
 							}
