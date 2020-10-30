@@ -113,18 +113,36 @@ func release(body map[string]interface{}) map[string]interface{} {
 }
 
 func user(body map[string]interface{}) map[string]interface{} {
-	if body["user"] == nil {
-		body["user"] = make(map[string]interface{})
-		user := body["user"].(map[string]interface{})
-		rand.Seed(time.Now().UnixNano())
-		alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
-		var alphanumeric string
-		for i := 0; i < 3; i++ {
-			alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
-		}
-		user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+	// if body["user"] == nil {
+	body["user"] = make(map[string]interface{})
+	user := body["user"].(map[string]interface{})
+	rand.Seed(time.Now().UnixNano())
+	alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+	var alphanumeric string
+	for i := 0; i < 3; i++ {
+		alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
 	}
+	user["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+	// }
 	return body
+}
+
+func users(envelopeItems []interface{}) []interface{} {
+	for _, item := range envelopeItems {
+		user := item.(map[string]interface{})["user"]
+		if user != nil {
+			fmt.Println("+++++ user not null on envelope item 1 +++++", user.(map[string]interface{})["email"])
+			rand.Seed(time.Now().UnixNano())
+			alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+			var alphanumeric string
+			for i := 0; i < 3; i++ {
+				alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
+			}
+			user.(map[string]interface{})["email"] = fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+			fmt.Println("+++++ user not null on envelope item 2 +++++", user.(map[string]interface{})["email"])
+		}
+	}
+	return envelopeItems
 }
 
 func undertake(body map[string]interface{}) {
