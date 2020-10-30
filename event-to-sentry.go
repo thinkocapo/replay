@@ -91,7 +91,6 @@ func parseDSN(rawurl string) *DSN {
 
 func (d DSN) storeEndpoint() string {
 	var fullurl string
-	// if d.host == "ingest.sentry.io" {
 	if strings.Contains(d.host, "ingest.sentry.io") {
 		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
@@ -106,9 +105,7 @@ func (d DSN) storeEndpoint() string {
 }
 func (d DSN) envelopeEndpoint() string {
 	var fullurl string
-	// if d.host == "ingest.sentry.io" {
 	if strings.Contains(d.host, "ingest.sentry.io") {
-		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key[1:], "&sentry_version=7")
 	}
 	if d.host == "localhost:9000" {

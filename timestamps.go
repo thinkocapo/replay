@@ -37,13 +37,11 @@ Float form is like 1.5914674155654302e+09
 // Errors
 func updateTimestamp(body map[string]interface{}, platform string) map[string]interface{} {
 	body["timestamp"] = time.Now().Unix()
-	fmt.Println("*** Error Timestamp GOOD ***", body["timestamp"])
 	return body
 }
 
-// TODO run 100-1000 tx's in a dataset, for better variability.
-// TODO instead of multiplying by the rate,
-// TODO reduce the range of the rates...
+// TODO instead of multiplying by the rate, reduce the range of the rates?
+
 // Transactions - keep start and end timestamps relative to each other by computing the difference and new timestamps based on that
 func updateTimestamps(body map[string]interface{}, platform string) map[string]interface{} {
 	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) \n", body["start_timestamp"], body["start_timestamp"])
@@ -71,9 +69,7 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 	parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
 	unixTimestampString := fmt.Sprint(time.Now().UnixNano())
-	// fmt.Println("*** unixTimestampString 1 ***", unixTimestampString)
 	newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-	// fmt.Println("*** newParentStartTimestamp 2 ***", newParentStartTimestamp)
 
 	newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
@@ -83,9 +79,6 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 
 	body["start_timestamp"], _ = newParentStartTimestamp.Round(7).Float64()
 	body["timestamp"], _ = newParentEndTimestamp.Round(7).Float64()
-
-	fmt.Println("*** body['start_timestamp'] ***", body["start_timestamp"])
-	fmt.Println("*** body['timestamp'] ***", body["timestamp"])
 
 	// Could conver back to RFC3339Nano (as that's what the python sdk uses for transactions Python Transactions use) but Floats are working and this is what happens in Javascript
 	// logging with 'decimal type for readability and convertability
@@ -123,11 +116,6 @@ func updateTimestamps(body map[string]interface{}, platform string) map[string]i
 		newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
 		newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 
-		// EXPERIMENT 1:03p
-		// newSpanStartTimestamp = newSpanStartTimestamp.Mul(rate.Add(decimal.NewFromFloat(1)))
-		// newSpanEndTimestamp = newSpanEndTimestamp.Mul(rate.Add(decimal.NewFromFloat(1)))
-
-		// TODO may need to remove, if multiplying by rate change
 		if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
 			fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
 		}
