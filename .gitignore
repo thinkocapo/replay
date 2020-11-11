@@ -47,3 +47,5 @@ sales*
 
 .DS_Store
 *.db
+
+*.sh

@@ -26,6 +26,7 @@ func eventIds(envelopeItems []interface{}) []interface{} {
 	for _, item := range envelopeItems {
 		eventId := item.(map[string]interface{})["event_id"]
 		if eventId != nil {
+			fmt.Println("\n> event_id eventIds", uuid4)
 			item.(map[string]interface{})["event_id"] = uuid4
 		}
 	}

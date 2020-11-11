@@ -237,7 +237,7 @@ func main() {
 
 	// CLOUD STORAGE
 	bucket := os.Getenv("BUCKET")
-	object := "npm-sentry-tracing.json"
+	object := database
 	fmt.Println("DATASET object", object)
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)

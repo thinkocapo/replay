@@ -73,6 +73,8 @@ or use `--js` `--py` to pass DSN's when running the executable
 ./bin/event-to-sentry --all --db=<path_to_.db> --js=<javascripti_DSN> --py=<python_DSN>
 ```
 
+`go build -o bin/sdk-upgrade *.go && ./bin/sdk-upgrade -i`
+
 See your events in Sentry
 
 ## Run in Cloud Function
