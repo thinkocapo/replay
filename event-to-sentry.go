@@ -117,6 +117,9 @@ func (d DSN) envelopeEndpoint() string {
 	return fullurl
 }
 
+type EventJson struct {
+	eventId string `json:"eventId"`
+}
 type Event struct {
 	Platform string            `json:"platform"`
 	Kind     string            `json:"kind"`
@@ -234,6 +237,9 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+
+	readJsons()
+	return
 
 	// CLOUD STORAGE
 	bucket := os.Getenv("BUCKET")
