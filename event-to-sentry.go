@@ -118,7 +118,7 @@ func (d DSN) envelopeEndpoint() string {
 }
 
 type EventJson struct {
-	eventId string `json:"eventId"`
+	EventId string `json:"event_id"`
 }
 type Event struct {
 	Platform string            `json:"platform"`

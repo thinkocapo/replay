@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -34,6 +36,7 @@ func readJsons() string {
 	bucketHandle := client.Bucket(bucketName)
 
 	// lists the contents of a bucket in Google Cloud Storage.
+	var fileNames []string
 	query := &storage.Query{Prefix: "event"}
 	it := bucketHandle.Objects(ctx, query)
 	for {
@@ -42,32 +45,42 @@ func readJsons() string {
 			break
 		}
 		if err != nil {
-			log.Fatal("listBucket: unable to list bucket %q: %v", bucketHandle, err)
+			log.Fatalln("listBucket: unable to list bucket", err)
 		}
+		fileNames = append(fileNames, obj.Name)
 		printObj(obj)
-		// fmt.Println(">>>>> obj", obj)
-		// d.dumpStats(obj)
+	}
+	fmt.Println(">>>>> files", len(fileNames))
+
+	// Read each file's content
+	var events []EventJson
+	for _, fileName := range fileNames {
+		fmt.Println("> file", fileName)
+		rc, err := bucketHandle.Object(fileName).NewReader(ctx)
+		if err != nil {
+			log.Fatalln("NewReader:", err)
+		}
+		byteValue, _ := ioutil.ReadAll(rc) // jsonFile
+		// defer jsonFile.Close()
+		// event := make([]EventJson, 0)
+		var event EventJson
+		if err := json.Unmarshal(byteValue, &event); err != nil {
+			panic(err)
+		}
+
+		events = append(events, event)
 	}
 
-	// read each file content
-	// file := database
-	// fmt.Println("DATASET file", file)
-	// rc, err := client.Bucket(bucket).Object(file).NewReader(ctx)
-	// if err != nil {
-	// 	log.Fatalln("NewReader:", err)
-	// }
-	// byteValue, _ := ioutil.ReadAll(rc) // jsonFile
-	// // defer jsonFile.Close()
-	// events := make([]EventJson, 0)
-	// if err := json.Unmarshal(byteValue, &events); err != nil {
-	// 	panic(err)
-	// }
+	fmt.Println(">>>>> events []EventJson", len(events))
+	for _, e := range events {
+		fmt.Println("> event.eventId", e.EventId)
+	}
 
 	return "read those jsons"
 }
 
 func printObj(obj *storage.ObjectAttrs) {
-	fmt.Printf("(filename: /%v/%v, \n", obj.Bucket, obj.Name)
+	fmt.Printf("filename: /%v/%v \n", obj.Bucket, obj.Name)
 	// fmt.Printf("ContentType: %q, ", obj.ContentType)
 	// fmt.Printf("ACL: %#v, ", obj.ACL)
 	// fmt.Printf("Owner: %v, ", obj.Owner)
