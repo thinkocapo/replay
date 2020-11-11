@@ -73,7 +73,23 @@ func readJsons() string {
 
 	fmt.Println(">>>>> events []EventJson", len(events))
 	for _, e := range events {
+		// match DSN based on js vs python
+		// decide Errors vs Transaction. if error.... make an Error struct. if transaction.... make a Transaction struct.... call methods on both
+		// if e.Type == "error" {
+
+		// }
+		// if e.Type == "transaction" {
+
+		// }
+
 		fmt.Println("> event.eventId", e.EventId)
+		// TODO
+		// assuming Error
+		// event = eventId(event) // would be error.eventId(), error.release(), error.user(), error.timestamp()
+		// event = release(event)
+		// event = user(event)
+		// event = updateTimestamp(event)
+
 	}
 
 	return "read those jsons"
