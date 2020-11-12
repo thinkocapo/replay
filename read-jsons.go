@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -50,12 +52,10 @@ func readJsons() string {
 		fileNames = append(fileNames, obj.Name)
 		printObj(obj)
 	}
-	fmt.Println(">>>>> files", len(fileNames))
 
 	// Read each file's content
 	var events []EventJson
 	for _, fileName := range fileNames {
-		fmt.Println("> file", fileName)
 		rc, err := bucketHandle.Object(fileName).NewReader(ctx)
 		if err != nil {
 			log.Fatalln("NewReader:", err)
@@ -64,16 +64,17 @@ func readJsons() string {
 		// defer jsonFile.Close()
 		// event := make([]EventJson, 0)
 		var event EventJson
-		if err := json.Unmarshal(byteValue, &event); err != nil {
+		if err := json.Unmarshal(byteValue, &event); err != nil { // TODO float64 vs int64
 			panic(err)
 		}
 
 		events = append(events, event)
 	}
 
-	fmt.Println(">>>>> events []EventJson", len(events))
+	// fmt.Println(">>>>> events []EventJson", len(events))
+
 	for _, event := range events {
-		// match DSN based on js vs python
+		// TODO match DSN based on js vs python, call on EventJson?
 		if event.Type == "error" {
 			fmt.Println("> error")
 			eventError := Error{event.EventId, event.Release, event.User, event.Timestamp}
@@ -81,22 +82,52 @@ func readJsons() string {
 			eventError.release()
 			eventError.user()
 			eventError.setTimestamp()
+
+			storeEndpoint := matchDSN(projectDSNs, event)
+			requests = append(requests, Request{
+				event: eventError,
+				storeEndpoint: 
+			})
 		}
 		if event.Type == "transaction" {
 			fmt.Println("> transaction")
-			eventTransaction := Transaction{event.EventId, event.Release, event.User, event.Timestamp}
-			eventTransaction.eventIds()
-			eventTransaction.setReleases()
-			eventTransaction.setUsers()
-			eventTransaction.setTimestamps()
+			// eventTransaction := Transaction{event.EventId, event.Release, event.User, event.Timestamp}
+			// eventTransaction.eventIds()
+			// eventTransaction.setReleases()
+			// eventTransaction.setUsers()
+			// eventTransaction.setTimestamps()
 
-			eventTransaction.sentAt()
-			eventTransaction.removeLengthField()
-
+			// eventTransaction.sentAt()
+			// eventTransaction.removeLengthField()
 		}
-
-		fmt.Println("> event.eventId", event.EventId)
+		// fmt.Println(">>>>>>>>event.eventId", event)
 	}
+
+	// BUILD REQUEST
+	// TODO requestBody?
+	// TODO storeEndpoint?
+	request, errNewRequest := http.NewRequest("POST", storeEndpoint, bytes.NewReader(requestBody)) // &buf
+	if errNewRequest != nil {
+		log.Fatalln(errNewRequest)
+	}
+	eventHeaders := [2]string{"content-type", "x-sentry-auth"}
+	request.Header.Set("content-type", "application/json")
+	fmt.Printf("*** SENTRY_AUTH_KEY ***\n", os.Getenv("SENTRY_AUTH_KEY"))
+	request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
+	// for _, key := range eventHeaders {
+	// // if key != "x-Sentry-Auth" {
+	// request.Header.Set(key, "asdf")
+	// // }
+	// }
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil {
+		log.Fatal(requestErr)
+	}
+	responseData, responseDataErr := ioutil.ReadAll(response.Body)
+	if responseDataErr != nil {
+		log.Fatal(responseDataErr)
+	}
+	fmt.Printf("> KIND|RESPONSE: %s \n", string(responseData))
 
 	return "read those jsons"
 }

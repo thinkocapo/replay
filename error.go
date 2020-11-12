@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Error struct {
 	EventId   string                 `json:"event_id"`
 	Release   string                 `json:"release"`
 	User      map[string]interface{} `json:"user"`
-	Timestamp int64                  `json:"timestamp"`
+	Timestamp float64                `json:"timestamp"`
 	// Type      string                 `json:"type"`
 }
 
@@ -22,7 +24,7 @@ func (e Error) eventId() Error {
 	// }
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	e.EventId = uuid4
-	fmt.Println("\n> event_id updated", e.EventId)
+	// fmt.Println("\n> event_id updated", e.EventId)
 	return e
 }
 
@@ -55,6 +57,16 @@ func (e Error) user() Error {
 }
 
 func (e Error) setTimestamp() Error {
-	e.Timestamp = time.Now().Unix()
+	timestamp := fmt.Sprint(time.Now().Unix())
+	timestampDecimal, err1 := decimal.NewFromString(timestamp[:10] + "." + timestamp[10:])
+	fmt.Print("> timestampDecimal", timestampDecimal)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	timestampFinal, err2 := timestampDecimal.Round(7).Float64()
+	if err2 == false {
+		log.Fatal(err2)
+	}
+	e.Timestamp = timestampFinal
 	return e
 }
