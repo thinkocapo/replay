@@ -121,7 +121,7 @@ type EventJson struct {
 	EventId   string                 `json:"event_id"`
 	Release   string                 `json:"release"`
 	User      map[string]interface{} `json:"user"`
-	Timestamp string                 `json:"timestamp"`
+	Timestamp int64                  `json:"timestamp"` // not float64?
 	Type      string                 `json:"type"`
 }
 type Event struct {

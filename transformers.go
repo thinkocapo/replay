@@ -70,7 +70,7 @@ func envelopeReleases(envelopeItems []interface{}, platform string, kind string)
 	return envelopeItems
 }
 
-// CalVer-lite
+// CalVer https://calver.org/
 func release(body map[string]interface{}) map[string]interface{} {
 	date := time.Now()
 	month := date.Month()
