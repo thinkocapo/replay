@@ -123,6 +123,7 @@ type EventJson struct {
 	User      map[string]interface{} `json:"user"`
 	Timestamp float64                `json:"timestamp"`
 	Type      string                 `json:"type"`
+	Platform  string                 `json:"platform"`
 }
 type Event struct {
 	Platform string            `json:"platform"`
@@ -134,7 +135,17 @@ type Event struct {
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
-
+func findDSN(projectDSNs map[string]*DSN, platform string) string {
+	// var storeEndpoint string
+	if platform == "javascript" {
+		return projectDSNs["javascript"].storeEndpoint()
+	} else if platform == "python" {
+		return projectDSNs["python"].storeEndpoint()
+	} else {
+		log.Fatal("platform type not supported")
+	}
+	return ""
+}
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 
 	platform := event.Platform
@@ -287,8 +298,9 @@ func main() {
 				platform:      event.Platform,
 				eventHeaders:  event.Headers,
 				storeEndpoint: storeEndpoint,
-				bodyError:     bodyError,
-				bodyEncoder:   bodyEncoder,
+
+				bodyError:   bodyError,
+				bodyEncoder: bodyEncoder,
 			})
 
 		} else if event.Kind == "transaction" {
@@ -302,10 +314,11 @@ func main() {
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{
-				kind:            event.Kind,
-				platform:        event.Platform,
-				eventHeaders:    event.Headers,
-				storeEndpoint:   storeEndpoint,
+				kind:          event.Kind,
+				platform:      event.Platform,
+				eventHeaders:  event.Headers,
+				storeEndpoint: storeEndpoint,
+
 				envelopeItems:   envelopeItems,
 				envelopeEncoder: envelopeEncoder,
 			})
