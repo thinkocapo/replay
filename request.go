@@ -26,10 +26,12 @@ func (r Request) sendRequest() bool {
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
-	// eventHeaders := [2]string{"content-type", "x-sentry-auth"}
+	// fmt.Printf("*** storeEndpoint *** %v\n", r.storeEndpoint)
+	fmt.Printf("\n*** storeEndpoint *** %v\n", r.storeEndpoint)
+	fmt.Printf("*** x-sentry-auth *** %v\n", os.Getenv("SENTRY_AUTH_KEY"))
+
 	request.Header.Set("content-type", "application/json")
-	fmt.Printf("*** SENTRY_AUTH_KEY ***\n", os.Getenv("SENTRY_AUTH_KEY"))
-	request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
+	// request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
 
 	// for _, key := range eventHeaders {
 	// // if key != "x-Sentry-Auth" {

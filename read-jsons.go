@@ -83,10 +83,10 @@ func readJsons() string {
 			eventError.user()
 			eventError.setTimestamp()
 
-			storeEndpoint := findDSN(projectDSNs, eventError.Platform)
+			// storeEndpoint := findDSN(projectDSNs, eventError.Platform)
 			requests = append(requests, Request{
 				errorPayload:  eventError,
-				storeEndpoint: storeEndpoint,
+				storeEndpoint: dsnToStoreEndpoint(projectDSNs, eventError.Platform),
 			})
 		}
 		if event.Type == "transaction" {

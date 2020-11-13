@@ -135,7 +135,7 @@ type Event struct {
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
-func findDSN(projectDSNs map[string]*DSN, platform string) string {
+func dsnToStoreEndpoint(projectDSNs map[string]*DSN, platform string) string {
 	// var storeEndpoint string
 	if platform == "javascript" {
 		return projectDSNs["javascript"].storeEndpoint()
