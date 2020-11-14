@@ -12,7 +12,8 @@ import (
 
 /*
 Post-Ingestion from https://sentry.io/api/0/projects/<org>/<project>/events/<event_id>/json/
-skip _meta, _metrics, errors
+Either don't sound needed or give 'Discarded unknown attribute'
+skip _meta, _metrics, errors, location, title
 */
 type Error struct {
 	EventId   string                 `json:"event_id"`
@@ -37,8 +38,12 @@ type Error struct {
 	Hashes          []string               `json:"hashes"`          // nothing new but also no processing error warnings
 	Key_id          string                 `json:"key_id"`
 	Level           string                 `json:"level"`
-	Location        string                 `json:"location"`
 	Logger          string                 `json:"logger"`
+	Metadata        map[string]interface{} `json:"metadata"`
+	Received        float64                `json:"received"`
+	Request         map[string]interface{} `json:"request"`
+	Sdk             map[string]interface{} `json:"sdk"`
+	Version         string                 `json:"version"`
 }
 
 func (e *Error) eventId() {
