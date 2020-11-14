@@ -10,13 +10,35 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+/*
+Post-Ingestion from https://sentry.io/api/0/projects/<org>/<project>/events/<event_id>/json/
+skip _meta, _metrics, errors
+*/
 type Error struct {
 	EventId   string                 `json:"event_id"`
 	Release   string                 `json:"release"`
 	User      map[string]interface{} `json:"user"`
 	Timestamp float64                `json:"timestamp"`
-	// Type      string                 `json:"type"`
-	Platform string `json:"platform"`
+	Type      string                 `json:"type"`
+	Platform  string                 `json:"platform"`
+
+	Project int `json:"project"`
+	// Dist     string `json:"dist"`
+	Message string `json:"message"`
+	// Datetime string `json:"datetime"`
+	Tags            [][]string             `json:"tags"`
+	Breadcrumbs     map[string]interface{} `json:"breadcrumbs"`
+	Contexts        map[string]interface{} `json:"contexts"`
+	Culprit         string                 `json:"culprit"`
+	Environment     string                 `json:"environment"`
+	Exception       map[string]interface{} `json:"exception"`
+	Fingerprint     []string               `json:"fingerprint"`     // nothing new but also no processing error warnings
+	Grouping_config map[string]interface{} `json:"grouping_config"` // nothing new but also no processing error warnings
+	Hashes          []string               `json:"hashes"`          // nothing new but also no processing error warnings
+	Key_id          string                 `json:"key_id"`
+	Level           string                 `json:"level"`
+	Location        string                 `json:"location"`
+	Logger          string                 `json:"logger"`
 }
 
 func (e *Error) eventId() {

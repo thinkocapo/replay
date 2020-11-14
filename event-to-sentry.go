@@ -118,14 +118,38 @@ func (d DSN) envelopeEndpoint() string {
 	return fullurl
 }
 
-type EventJson struct {
-	EventId   string                 `json:"event_id"`
-	Release   string                 `json:"release"`
-	User      map[string]interface{} `json:"user"`
-	Timestamp float64                `json:"timestamp"`
-	Type      string                 `json:"type"`
-	Platform  string                 `json:"platform"`
+type TypeSwitch struct {
+	Kind string `json:"type"`
 }
+type EventJson struct {
+	// EventId    string                 `json:"event_id"`
+	// Release    string                 `json:"release"`
+	// User       map[string]interface{} `json:"user"`
+	// Timestamp  float64                `json:"timestamp"`
+	// Platform   string                 `json:"platform"`
+	TypeSwitch `json:"type"`
+	*Error
+	*Transaction
+}
+
+func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
+	if err := json.Unmarshal(data, &eventJson.TypeSwitch); err != nil {
+		return err
+	}
+	switch eventJson.Kind {
+	case "error":
+		eventJson.Error = &Error{}
+		fmt.Println(">>> ERROR")
+		return json.Unmarshal(data, eventJson.Error)
+	case "transaction":
+		fmt.Println(">>> TRANSACTION")
+		eventJson.Transaction = &Transaction{}
+		return json.Unmarshal(data, eventJson.Transaction)
+	default:
+		return fmt.Errorf("unrecognized type value %q", eventJson.Type)
+	}
+}
+
 type Event struct {
 	Platform string            `json:"platform"`
 	Kind     string            `json:"kind"`

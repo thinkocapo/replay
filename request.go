@@ -7,19 +7,19 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
 type Request struct {
-	errorPayload       Error
+	EventJson
 	transactionPayload Transaction
 	storeEndpoint      string
 }
 
 func (r Request) sendRequest(ignore bool) bool {
 
-	bodyBytes, errBodyBytes := json.Marshal(r.errorPayload)
+	// bodyBytes, errBodyBytes := json.Marshal(r.errorPayload)
+	bodyBytes, errBodyBytes := json.Marshal(r.Error)
 	if errBodyBytes != nil {
 		fmt.Println(errBodyBytes)
 	}
@@ -28,12 +28,16 @@ func (r Request) sendRequest(ignore bool) bool {
 		log.Fatalln(errNewRequest)
 	}
 
-	request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
-	request.Header.Set("content-type", "application/json")
+	// TODO 12;33p if both appearing, then don't need this:
+	// request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
+	// fmt.Printf("\n> x-sentry-auth %v\n", os.Getenv("SENTRY_AUTH_KEY"))
 
-	fmt.Printf("\n> x-sentry-auth %v\n", os.Getenv("SENTRY_AUTH_KEY"))
+	request.Header.Set("content-type", "application/json")
 	fmt.Printf("\n> storeEndpoint %v\n", r.storeEndpoint)
-	fmt.Printf("\n> errorPayload %+v \n", r.errorPayload)
+
+	// TODO remove this, b/c using UnmarshalJSON
+	// fmt.Printf("\n> errorPayload %+v \n", r.errorPayload)
+	fmt.Printf("\n> errorPayload %+v \n", r.Error)
 
 	if !ignore {
 		response, requestErr := httpClient.Do(request)

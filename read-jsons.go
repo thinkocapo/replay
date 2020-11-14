@@ -19,7 +19,6 @@ https://github.com/GoogleCloudPlatform/golang-samples/blob/8deb2909eadf32523007f
 */
 func readJsons(ignore bool) string {
 	bucketName := os.Getenv("BUCKET")
-
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -29,10 +28,8 @@ func readJsons(ignore bool) string {
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
 	defer cancel()
-
 	// Prepare bucket handle
 	bucketHandle := client.Bucket(bucketName)
-
 	// lists the contents of a bucket in Google Cloud Storage.
 	var fileNames []string
 	query := &storage.Query{Prefix: "event"}
@@ -63,37 +60,35 @@ func readJsons(ignore bool) string {
 		if err := json.Unmarshal(byteValue, &event); err != nil { // TODO float64 vs int64
 			panic(err)
 		}
-		fmt.Printf("\n> > > > > > >  EVENT > > > >  %+v \n", event)
+		// fmt.Printf("\n> > > > > > >  EVENT > > > >  %+v \n", event)
 		events = append(events, event)
 	}
 
 	requests := []Request{}
 
 	for _, event := range events {
-		// TODO match DSN based on js vs python, call on EventJson?
-		if event.Type == "error" {
-			fmt.Println("> error")
-			eventError := Error{event.EventId, event.Release, event.User, event.Timestamp, event.Platform}
+		// TODO match DSN here based on js vs python, call on EventJson?
+		if event.Kind == "error" {
+			fmt.Println("> error <")
+			// eventError := Error{event.EventId, event.Release, event.User, event.Timestamp, event.Platform}
 
-			fmt.Println("\n> event_id BEFORE", eventError.EventId)
-			eventError.eventId()
-			fmt.Println("\n> event_id AFTER", eventError.EventId)
-
-			// eventError.release()
-			// eventError.user()
-
-			fmt.Println("\n> timestamp BEFORE", eventError.Timestamp)
-			eventError.setTimestamp()
-			fmt.Println("\n> timestamp AFTER", eventError.Timestamp)
+			fmt.Println("\n> event_id BEFORE", event.Error.EventId)
+			fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
+			event.Error.eventId()
+			event.Error.release()
+			event.Error.user()
+			event.Error.setTimestamp()
+			fmt.Println("\n> event_id AFTER", event.Error.EventId)
+			fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
 
 			requests = append(requests, Request{
-				errorPayload:  eventError,
-				storeEndpoint: dsnToStoreEndpoint(projectDSNs, eventError.Platform),
+				EventJson:     event,
+				storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
 				// sentryAuthKey:
 			})
 		}
-		if event.Type == "transaction" {
-			fmt.Println("> transaction")
+		if event.Kind == "transaction" {
+			fmt.Println("> transaction <")
 			// eventTransaction := Transaction{event.EventId, event.Release, event.User, event.Timestamp}
 			// eventTransaction.eventIds()
 			// eventTransaction.setReleases()
