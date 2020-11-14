@@ -186,31 +186,31 @@ type Timestamp struct {
 	rfc3339 bool
 }
 
-type Item struct {
-	Timestamp Timestamp `json:"timestamp,omitempty"`
-	// Timestamp time.Time `json:"timestamp,omitempty"`
+// type Item struct {
+// 	Timestamp Timestamp `json:"timestamp,omitempty"`
+// 	// Timestamp time.Time `json:"timestamp,omitempty"`
 
-	Event_id string `json:"event_id,omitempty"`
-	Sent_at  string `json:"sent_at,omitempty"`
+// 	Event_id string `json:"event_id,omitempty"`
+// 	Sent_at  string `json:"sent_at,omitempty"`
 
-	Length       int    `json:"length,omitempty"`
-	Type         string `json:"type,omitempty"`
-	Content_type string `json:"content_type,omitempty"`
+// 	Length       int    `json:"length,omitempty"`
+// 	Type         string `json:"type,omitempty"`
+// 	Content_type string `json:"content_type,omitempty"`
 
-	Start_timestamp string                 `json:"start_timestamp,omitempty"`
-	Transaction     string                 `json:"transaction,omitempty"`
-	Server_name     string                 `json:"server_name,omitempty"`
-	Tags            map[string]interface{} `json:"tags,omitempty"`
-	Contexts        map[string]interface{} `json:"contexts,omitempty"`
+// 	Start_timestamp string                 `json:"start_timestamp,omitempty"`
+// 	Transaction     string                 `json:"transaction,omitempty"`
+// 	Server_name     string                 `json:"server_name,omitempty"`
+// 	Tags            map[string]interface{} `json:"tags,omitempty"`
+// 	Contexts        map[string]interface{} `json:"contexts,omitempty"`
 
-	Extra       map[string]interface{} `json:"extra,omitempty"`
-	Request     map[string]interface{} `json:"request,omitempty"`
-	Environment string                 `json:"environment,omitempty"`
-	Platform    string                 `json:"platform,omitempty"`
-	// Todo spans []
-	Sdk  map[string]interface{} `json:"sdk,omitempty"`
-	User map[string]interface{} `json:"user,omitempty"`
-}
+// 	Extra       map[string]interface{} `json:"extra,omitempty"`
+// 	Request     map[string]interface{} `json:"request,omitempty"`
+// 	Environment string                 `json:"environment,omitempty"`
+// 	Platform    string                 `json:"platform,omitempty"`
+// 	// Todo spans []
+// 	Sdk  map[string]interface{} `json:"sdk,omitempty"`
+// 	User map[string]interface{} `json:"user,omitempty"`
+// }
 
 // TODO need an ItemFinal that has unified timestamp?
 
