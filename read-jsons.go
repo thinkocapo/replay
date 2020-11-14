@@ -17,9 +17,7 @@ import (
 https://cloud.google.com/appengine/docs/standard/go111/googlecloudstorageclient/read-write-to-cloud-storage
 https://github.com/GoogleCloudPlatform/golang-samples/blob/8deb2909eadf32523007fd8fe9e8755a12c6d463/docs/appengine/storage/app.go
 */
-func readJsons() string {
-	fmt.Println("This is a readJsons test...")
-
+func readJsons(ignore bool) string {
 	bucketName := os.Getenv("BUCKET")
 
 	// Initialize/Connect the Client
@@ -65,11 +63,9 @@ func readJsons() string {
 		if err := json.Unmarshal(byteValue, &event); err != nil { // TODO float64 vs int64
 			panic(err)
 		}
-
+		fmt.Printf("\n> > > > > > >  EVENT > > > >  %+v \n", event)
 		events = append(events, event)
 	}
-
-	// fmt.Println(">>>>> events []EventJson", len(events))
 
 	requests := []Request{}
 
@@ -78,15 +74,22 @@ func readJsons() string {
 		if event.Type == "error" {
 			fmt.Println("> error")
 			eventError := Error{event.EventId, event.Release, event.User, event.Timestamp, event.Platform}
-			eventError.eventId()
-			eventError.release()
-			eventError.user()
-			eventError.setTimestamp()
 
-			// storeEndpoint := findDSN(projectDSNs, eventError.Platform)
+			fmt.Println("\n> event_id BEFORE", eventError.EventId)
+			eventError.eventId()
+			fmt.Println("\n> event_id AFTER", eventError.EventId)
+
+			// eventError.release()
+			// eventError.user()
+
+			fmt.Println("\n> timestamp BEFORE", eventError.Timestamp)
+			eventError.setTimestamp()
+			fmt.Println("\n> timestamp AFTER", eventError.Timestamp)
+
 			requests = append(requests, Request{
 				errorPayload:  eventError,
 				storeEndpoint: dsnToStoreEndpoint(projectDSNs, eventError.Platform),
+				// sentryAuthKey:
 			})
 		}
 		if event.Type == "transaction" {
@@ -102,7 +105,7 @@ func readJsons() string {
 		}
 	}
 
-	sendRequests(requests)
+	sendRequests(requests, ignore)
 	return "\n DONE \n"
 }
 

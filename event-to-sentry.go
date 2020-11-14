@@ -94,6 +94,7 @@ func (d DSN) storeEndpoint() string {
 	if strings.Contains(d.host, "ingest.sentry.io") {
 		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
+		// fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:])
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
@@ -253,7 +254,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	readJsons()
+	readJsons(*ignore)
 	return
 
 	// CLOUD STORAGE

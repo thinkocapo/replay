@@ -19,18 +19,16 @@ type Error struct {
 	Platform string `json:"platform"`
 }
 
-func (e Error) eventId() Error {
+func (e *Error) eventId() {
 	// if _, ok := e.EventId; !ok {
 	// 	log.Print("no event_id on object from DB")
 	// }
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	e.EventId = uuid4
-	// fmt.Println("\n> event_id updated", e.EventId)
-	return e
 }
 
 // CalVer https://calver.org/
-func (e Error) release() Error {
+func (e *Error) release() {
 	date := time.Now()
 	month := date.Month()
 	day := date.Day()
@@ -47,17 +45,15 @@ func (e Error) release() Error {
 	}
 	release := fmt.Sprint(int(month), ".", week)
 	e.Release = release
-	return e
 }
 
-func (e Error) user() Error {
+func (e *Error) user() {
 	e.User = make(map[string]interface{})
 	user := e.User //.(map[string]interface{})
 	user["email"] = createUser()
-	return e
 }
 
-func (e Error) setTimestamp() Error {
+func (e *Error) setTimestamp() {
 	timestamp := fmt.Sprint(time.Now().Unix())
 	timestampDecimal, err1 := decimal.NewFromString(timestamp[:10] + "." + timestamp[10:])
 	fmt.Print("> timestampDecimal\n", timestampDecimal)
@@ -69,5 +65,4 @@ func (e Error) setTimestamp() Error {
 		log.Fatal(err2)
 	}
 	e.Timestamp = timestampFinal
-	return e
 }

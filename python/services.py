@@ -31,11 +31,9 @@ def compress_gzip(dict_body):
 def get_event_type(payload, platform):
     body_dict = ''
     if platform == 'python':
-        print('\n****** PYTHON ')
         body_dict = decompress_gzip(payload)
         # body_dict = json.loads(decompress_gzip(payload))
     if platform == 'javascript':
-        print('\n****** JAVASCRIPT ')
         envelope = payload
         print('type(envelope) ist still bytes, so decode it', type(envelope))
 
