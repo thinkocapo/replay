@@ -118,6 +118,7 @@ func (d DSN) envelopeEndpoint() string {
 	return fullurl
 }
 
+// TODO put EventJson to its own eventjson.go already!
 type TypeSwitch struct {
 	Kind string `json:"type"`
 }
@@ -130,9 +131,6 @@ type EventJson struct {
 	TypeSwitch `json:"type"`
 	*Error
 	*Transaction
-
-	// TODO 6:12p YES so can call request.send()
-	// *Request
 }
 
 func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
@@ -153,21 +151,21 @@ func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (eventJson *EventJson) send() error {
-	// TODO make a Request using event and `dsnToStoreEndpoint(projectDSNs, event.Error.Platform)``,
-	// Kine -> error
-	// event.Error in the Request...
-	// Kind -> transaction
-	// event.Transaction in the Request
+// DONT NEED ANYMORE?
+// func (eventJson *EventJson) send() error {
+// TODO make a Request using event and `dsnToStoreEndpoint(projectDSNs, event.Error.Platform)``,
+// Kine -> error
+// event.Error in the Request...
+// Kind -> transaction
+// event.Transaction in the Request
 
-	// request = Request{
-	// 	EventJson:     event,
-	// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-	// })
+// request = Request{
+// 	EventJson:     event,
+// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+// })
 
-	// request.send()
-
-}
+// request.send()
+// }
 
 type Event struct {
 	Platform string            `json:"platform"`

@@ -55,13 +55,12 @@ func readJsons(ignore bool) string {
 		}
 		byteValue, _ := ioutil.ReadAll(rc)
 		var event EventJson
+		// UnmarshalJSON overriden in error.go
 		if err := json.Unmarshal(byteValue, &event); err != nil {
 			panic(err)
 		}
 		events = append(events, event)
 	}
-
-	requests := []Request{}
 
 	for _, event := range events {
 		// TODO match DSN here based on js vs python, call on EventJson?
@@ -77,39 +76,38 @@ func readJsons(ignore bool) string {
 
 			fmt.Println("\n> event_id AFTER", event.Error.EventId)
 			fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
-			requests = append(requests, Request{
-				EventJson:     event,
-				storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-			})
+			// requests = append(requests, Request{
+			// 	EventJson:     event,
+			// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+			// })
 		}
 		if event.Kind == "transaction" {
 			fmt.Println("> transaction <")
-			event.Transaction.eventIds()
-			event.Transaction.setReleases()
-			event.Transaction.setUsers()
-			event.Transaction.setTimestamps()
+			// event.Transaction.eventIds()
+			// event.Transaction.setReleases()
+			// event.Transaction.setUsers()
+			// event.Transaction.setTimestamps()
 
-			event.Transaction.sentAt()
-			event.Transaction.removeLengthField()
+			// event.Transaction.sentAt()
+			// event.Transaction.removeLengthField()
 
-			requests = append(requests, Request{
-				EventJson:     event,
-				storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-			})
+			// requests = append(requests, Request{
+			// 	EventJson:     event,
+			// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+			// })
 		}
-
-		// TODO 6:29P ****
-		// requests := newRequests(events)
 
 		// TODO can run once here `requests = append(requests, Request{` instead of inside Error as well as Transaction if-then block
 	}
 
-	// TODO - could take events[] from here and call event.send() on each...and in there do the request thing...?
-	// i.e. put the 'Request' as an embedded struct type on the EventJson ;)
+	// i.e. put the 'Request' as an embedded struct type on the EventJson ;)??
 
-	// TODO requests.send()
-	sendRequests(requests, ignore)
+	// TODO double check it's object was updated reference `fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)`
+	requests := Requests{events}
+	requests.send()
+
 	return "\n DONE \n"
+	// sendRequests(requests, ignore) // deprecate
 }
 
 func printObj(obj *storage.ObjectAttrs) {

@@ -11,35 +11,58 @@ import (
 )
 
 type Request struct {
-	EventJson
-	transactionPayload Transaction
-	storeEndpoint      string
+	Payload       []byte
+	StoreEndpoint string
 }
 
-func (r Request) sendRequest(ignore bool) bool {
+func NewRequest(event EventJson) *Request {
+	r := new(Request)
+	if event.Kind == "error" {
+		// fmt.Println("\n> timestamp AFTER 2", event.Error.Timestamp)
+		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Error.Platform)
 
-	// bodyBytes, errBodyBytes := json.Marshal(r.errorPayload)
-	bodyBytes, errBodyBytes := json.Marshal(r.Error)
-	if errBodyBytes != nil {
-		fmt.Println(errBodyBytes)
+		bodyBytes, errBodyBytes := json.Marshal(event.Error)
+		if errBodyBytes != nil {
+			fmt.Println(errBodyBytes)
+		}
+		r.Payload = bodyBytes
 	}
-	request, errNewRequest := http.NewRequest("POST", r.storeEndpoint, bytes.NewReader(bodyBytes)) // &buf
+	if event.Kind == "transaction" {
+		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform)
+
+		bodyBytes, errBodyBytes := json.Marshal(event.Transaction)
+		if errBodyBytes != nil {
+			fmt.Println(errBodyBytes)
+		}
+		r.Payload = bodyBytes
+	}
+	// TODO `r.Payload = bodyBytes` here
+	// TODO check if either Payload or StoreEndpoint are nil
+	// log.Fatal("unrecognized event.Kind", event.Kind)
+	return r
+}
+
+func (r Request) send() bool {
+
+	// DEPRECATING (moved this to NewRequest)
+	// bodyBytes, errBodyBytes := json.Marshal(r.errorPayload)
+	// bodyBytes, errBodyBytes := json.Marshal(r.Error)
+	// if errBodyBytes != nil {
+	// 	fmt.Println(errBodyBytes)
+	// }
+
+	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
 	if errNewRequest != nil {
 		log.Fatalln(errNewRequest)
 	}
 
-	// TODO 12;33p if both appearing, then don't need this:
-	// request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
-	// fmt.Printf("\n> x-sentry-auth %v\n", os.Getenv("SENTRY_AUTH_KEY"))
-
 	request.Header.Set("content-type", "application/json")
-	fmt.Printf("\n> storeEndpoint %v\n", r.storeEndpoint)
 
-	// TODO remove this, b/c using UnmarshalJSON
-	// fmt.Printf("\n> errorPayload %+v \n", r.errorPayload)
-	fmt.Printf("\n> errorPayload %+v \n", r.Error)
+	fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
+	// fmt.Printf("\n> errorPayload %+v \n", r.Payload)
 
-	if !ignore {
+	// fmt.Print("XXXXXX Value of ignore XXXXXXX", ignore)
+	if *ignore == false {
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil {
 			log.Fatal(requestErr)
@@ -55,10 +78,11 @@ func (r Request) sendRequest(ignore bool) bool {
 	return true
 }
 
-func sendRequests(requests []Request, ignore bool) bool {
+// DEPRECATING...
+func sendRequests(requests []Request) bool {
 	for _, request := range requests {
 		// if !ignore {
-		request.sendRequest(ignore)
+		request.send()
 		// } else {
 		// fmt.Printf("> %s event IGNORED \n", request.storeEndpoint)
 		// }
@@ -67,11 +91,16 @@ func sendRequests(requests []Request, ignore bool) bool {
 	return true
 }
 
-// TODO rename file to requests.send() ?
-// has access to event and storeEndpoint, so could do call dsnToStoreEndpoint() from here...
-// iterates through `for event := range requests.events`
 // request = Request{
 // 	EventJson:     event,
-// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform), // TODO move to Request constructor
 // })
-//request.send()
+
+// request = Request{
+// 	EventJson:     event,
+// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform), // TODO move to Request constructor
+// })
+
+// TODO 12;33p since both events are appearing, then don't need this:
+// request.Header.Set("x-sentry-auth", os.Getenv("SENTRY_AUTH_KEY"))
+// fmt.Printf("\n> x-sentry-auth %v\n", os.Getenv("SENTRY_AUTH_KEY"))

@@ -6,4 +6,6 @@ type Transaction struct {
 	User      map[string]interface{} `json:"user"`
 	Timestamp float64                `json:"timestamp"`
 	// Type      string                 `json:"type"`
+
+	Platform string `json:"platform"`
 }
