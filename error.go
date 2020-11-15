@@ -81,7 +81,7 @@ func (e *Error) user() {
 func (e *Error) setTimestamp() {
 	timestamp := fmt.Sprint(time.Now().Unix())
 	timestampDecimal, err1 := decimal.NewFromString(timestamp[:10] + "." + timestamp[10:])
-	fmt.Print("> timestampDecimal\n", timestampDecimal)
+	// fmt.Print("> timestampDecimal\n", timestampDecimal)
 	if err1 != nil {
 		log.Fatal(err1)
 	}

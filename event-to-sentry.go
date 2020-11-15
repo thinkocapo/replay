@@ -140,14 +140,12 @@ func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
 	switch eventJson.Kind {
 	case "error":
 		eventJson.Error = &Error{}
-		fmt.Println(">>> ERROR")
 		return json.Unmarshal(data, eventJson.Error)
 	case "transaction":
-		fmt.Println(">>> TRANSACTION")
 		eventJson.Transaction = &Transaction{}
 		return json.Unmarshal(data, eventJson.Transaction)
 	default:
-		return fmt.Errorf("unrecognized type value %q", eventJson.Type)
+		return fmt.Errorf("unrecognized type value %q", eventJson.Kind)
 	}
 }
 
