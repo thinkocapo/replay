@@ -66,24 +66,23 @@ func readJsons(ignore bool) string {
 		// TODO match DSN here based on js vs python, call on EventJson?
 		if event.Kind == "error" {
 			fmt.Println("> error <")
-			fmt.Println("\n> event_id BEFORE", event.Error.EventId)
-			fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
+			// fmt.Println("\n> event_id BEFORE", event.Error.EventId)
+			// fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
 
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
 			event.Error.setTimestamp()
 
-			fmt.Println("\n> event_id AFTER", event.Error.EventId)
-			fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
-			// requests = append(requests, Request{
-			// 	EventJson:     event,
-			// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-			// })
+			// fmt.Println("\n> event_id AFTER", event.Error.EventId)
+			// fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
 		}
 		if event.Kind == "transaction" {
 			fmt.Println("> transaction <")
-			// event.Transaction.eventIds()
+
+			// TODO 11:23a****** MAY SOLVE IT!!!!
+			event.Transaction.eventId()
+
 			// event.Transaction.setReleases()
 			// event.Transaction.setUsers()
 			// event.Transaction.setTimestamps()
