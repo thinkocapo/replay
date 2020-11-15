@@ -29,7 +29,7 @@ func NewRequest(event EventJson) *Request {
 	}
 	if event.Kind == "transaction" {
 		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform)
-
+		// fmt.Printf("****** event.Transaction %s ******", event.Transaction)
 		bodyBytes, errBodyBytes := json.Marshal(event.Transaction)
 		if errBodyBytes != nil {
 			fmt.Println(errBodyBytes)
