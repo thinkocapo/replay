@@ -130,6 +130,9 @@ type EventJson struct {
 	TypeSwitch `json:"type"`
 	*Error
 	*Transaction
+
+	// TODO 6:12p YES so can call request.send()
+	// *Request
 }
 
 func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
@@ -150,6 +153,22 @@ func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
 	}
 }
 
+func (eventJson *EventJson) send() error {
+	// TODO make a Request using event and `dsnToStoreEndpoint(projectDSNs, event.Error.Platform)``,
+	// Kine -> error
+	// event.Error in the Request...
+	// Kind -> transaction
+	// event.Transaction in the Request
+
+	// request = Request{
+	// 	EventJson:     event,
+	// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+	// })
+
+	// request.send()
+
+}
+
 type Event struct {
 	Platform string            `json:"platform"`
 	Kind     string            `json:"kind"`
@@ -160,11 +179,11 @@ type Event struct {
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
-func dsnToStoreEndpoint(projectDSNs map[string]*DSN, platform string) string {
+func dsnToStoreEndpoint(projectDSNs map[string]*DSN, projectPlatform string) string {
 	// var storeEndpoint string
-	if platform == "javascript" {
+	if projectPlatform == "javascript" {
 		return projectDSNs["javascript"].storeEndpoint()
-	} else if platform == "python" {
+	} else if projectPlatform == "python" {
 		return projectDSNs["python"].storeEndpoint()
 	} else {
 		log.Fatal("platform type not supported")

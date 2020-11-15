@@ -53,14 +53,11 @@ func readJsons(ignore bool) string {
 		if err != nil {
 			log.Fatalln("NewReader:", err)
 		}
-		byteValue, _ := ioutil.ReadAll(rc) // jsonFile
-		// defer jsonFile.Close()
-		// event := make([]EventJson, 0)
+		byteValue, _ := ioutil.ReadAll(rc)
 		var event EventJson
-		if err := json.Unmarshal(byteValue, &event); err != nil { // TODO float64 vs int64
+		if err := json.Unmarshal(byteValue, &event); err != nil {
 			panic(err)
 		}
-		// fmt.Printf("\n> > > > > > >  EVENT > > > >  %+v \n", event)
 		events = append(events, event)
 	}
 
@@ -70,36 +67,47 @@ func readJsons(ignore bool) string {
 		// TODO match DSN here based on js vs python, call on EventJson?
 		if event.Kind == "error" {
 			fmt.Println("> error <")
-			// eventError := Error{event.EventId, event.Release, event.User, event.Timestamp, event.Platform}
-
 			fmt.Println("\n> event_id BEFORE", event.Error.EventId)
 			fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
+
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
 			event.Error.setTimestamp()
+
 			fmt.Println("\n> event_id AFTER", event.Error.EventId)
 			fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
-
 			requests = append(requests, Request{
 				EventJson:     event,
 				storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-				// sentryAuthKey:
 			})
 		}
 		if event.Kind == "transaction" {
 			fmt.Println("> transaction <")
-			// eventTransaction := Transaction{event.EventId, event.Release, event.User, event.Timestamp}
-			// eventTransaction.eventIds()
-			// eventTransaction.setReleases()
-			// eventTransaction.setUsers()
-			// eventTransaction.setTimestamps()
+			event.Transaction.eventIds()
+			event.Transaction.setReleases()
+			event.Transaction.setUsers()
+			event.Transaction.setTimestamps()
 
-			// eventTransaction.sentAt()
-			// eventTransaction.removeLengthField()
+			event.Transaction.sentAt()
+			event.Transaction.removeLengthField()
+
+			requests = append(requests, Request{
+				EventJson:     event,
+				storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+			})
 		}
+
+		// TODO 6:29P ****
+		// requests := newRequests(events)
+
+		// TODO can run once here `requests = append(requests, Request{` instead of inside Error as well as Transaction if-then block
 	}
 
+	// TODO - could take events[] from here and call event.send() on each...and in there do the request thing...?
+	// i.e. put the 'Request' as an embedded struct type on the EventJson ;)
+
+	// TODO requests.send()
 	sendRequests(requests, ignore)
 	return "\n DONE \n"
 }

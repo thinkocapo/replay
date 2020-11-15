@@ -13,7 +13,7 @@ import (
 /*
 Post-Ingestion from https://sentry.io/api/0/projects/<org>/<project>/events/<event_id>/json/
 Either don't sound needed or give 'Discarded unknown attribute'
-skip _meta, _metrics, errors, location, title
+skip: dist, datetime, _meta, _metrics, errors, location, title
 */
 type Error struct {
 	EventId   string                 `json:"event_id"`
@@ -23,10 +23,8 @@ type Error struct {
 	Type      string                 `json:"type"`
 	Platform  string                 `json:"platform"`
 
-	Project int `json:"project"`
-	// Dist     string `json:"dist"`
-	Message string `json:"message"`
-	// Datetime string `json:"datetime"`
+	Project         int                    `json:"project"`
+	Message         string                 `json:"message"`
 	Tags            [][]string             `json:"tags"`
 	Breadcrumbs     map[string]interface{} `json:"breadcrumbs"`
 	Contexts        map[string]interface{} `json:"contexts"`

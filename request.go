@@ -66,3 +66,12 @@ func sendRequests(requests []Request, ignore bool) bool {
 	}
 	return true
 }
+
+// TODO rename file to requests.send() ?
+// has access to event and storeEndpoint, so could do call dsnToStoreEndpoint() from here...
+// iterates through `for event := range requests.events`
+// request = Request{
+// 	EventJson:     event,
+// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+// })
+//request.send()
