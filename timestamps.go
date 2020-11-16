@@ -31,7 +31,7 @@ TRANSACTIONS. body.contexts.trace.span_id is the Parent Trace. start/end here is
 To see a full span `firstSpan := body["spans"].([]interface{})[0].(map[string]interface{})``
 7 decimal places as the range sent by sdk's is 4 to 7
 https://www.epochconverter.com/
-Float form is like 1.5914674155654302e+09
+Float form is 1.5914674155654302e+09
 */
 
 // Errors

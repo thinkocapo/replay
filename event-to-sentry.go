@@ -32,12 +32,7 @@ var (
 	SENTRY_URL  string
 	exists      bool
 	projectDSNs map[string]*DSN
-	// traceIdMap0 map[string][]*Item
-	//traceIdMap map[string][]interface{}
-	traceIds []string
-
-	// traceIdMap2 map[string][]string
-	// traceIdMap := map[string][]*interface{}
+	traceIds    []string
 )
 
 type DSN struct {

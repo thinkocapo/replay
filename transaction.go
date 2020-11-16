@@ -169,10 +169,11 @@ func (t *Transaction) timestamps() {
 			var spanStartTimestamp, spanEndTimestamp decimal.Decimal
 			// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", span["start_timestamp"].(float64), span["start_timestamp"])
 			// fmt.Printf("\n> updatetimestamps SPAN       timestamp before %v (%T)\n", span["timestamp"].(float64), span["timestamp"])
-			st := fmt.Sprintf("%f", span["start_timestamp"].(float64))
-			s := fmt.Sprintf("%f", span["timestamp"].(float64))
-			fmt.Println("> st ", st)
-			fmt.Println("> s ", s)
+
+			// st := fmt.Sprintf("%f", span["start_timestamp"].(float64))
+			// s := fmt.Sprintf("%f", span["timestamp"].(float64))
+			// fmt.Println("> st ", st)
+			// fmt.Println("> s ", s)
 
 			if t.Platform == "python" {
 				// spanStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["start_timestamp"].(float64)))
@@ -209,8 +210,8 @@ func (t *Transaction) timestamps() {
 			span["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			span["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
 
-			fmt.Printf("\n> updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(span["start_timestamp"].(float64)), span["start_timestamp"])
-			fmt.Printf("\n> updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(span["timestamp"].(float64)), span["timestamp"])
+			// fmt.Printf("\n> updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(span["start_timestamp"].(float64)), span["start_timestamp"])
+			// fmt.Printf("\n> updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(span["timestamp"].(float64)), span["timestamp"])
 		}
 	}
 }

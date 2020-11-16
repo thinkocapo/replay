@@ -96,6 +96,13 @@ func readJsons(ignore bool) string {
 		}
 	}
 
+	// TODO 8:13p
+	// events.traceIds ||
+	// mapTraceIds()
+	getTraceIds(events)
+	// events = setTraceIds(events, traceIds)
+	updateTraceIds(events)
+
 	// TODO double check it's object was updated reference `fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)`
 	requests := Requests{events}
 	requests.send()
