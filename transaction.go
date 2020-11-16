@@ -53,32 +53,8 @@ type Transaction struct {
 }
 
 func (t *Transaction) eventId() {
-
-	// if _, ok := t.EventId; !ok {
-	// 	log.Print("no event_id on object from DB")
-	// }
-
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	t.EventId = uuid4
-	// fmt.Println("\n******** event_id updated *********", t.EventId)
-
-	// LOOKING like only 1 event_id in the *transctino.json file ;)
-	/*
-		func eventIds(envelopeItems []interface{}) []interface{} {
-			var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
-			for _, item := range envelopeItems {
-				eventId := item.(map[string]interface{})["event_id"]
-				if eventId != nil {
-					fmt.Println("\n> event_id eventIds", uuid4)
-					item.(map[string]interface{})["event_id"] = uuid4
-				}
-			}
-			return envelopeItems
-		}*/
-
-	// 1 find where in the event-1-*transaction.json's there are eventId's
-	// 2 update each
-
 }
 
 // setting here, and tag may get value from it?
@@ -108,31 +84,12 @@ func (t *Transaction) user() {
 }
 
 func (t *Transaction) timestamps() {
-	/*unixTimestamp := fmt.Sprint(time.Now().Unix())
-	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
-	// fmt.Print("> decimalTimestamp\n", decimalTimestamp)
-	if err1 != nil {
-		log.Fatal(err1)
-	}
-	timestamp, err2 := decimalTimestamp.Round(7).Float64()
-	if err2 == false {
-		log.Fatal(err2)
-	}
-	t.Timestamp = timestamp*/
-
 	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) ", t.Start_timestamp, t.Start_timestamp)
 	// fmt.Printf("\n> updateTimestamps PARENT       timestamp before %v (%T) \n", t.Timestamp, t.Timestamp)
 
 	if t.Timestamp != 0 && t.Start_timestamp != 0 {
 		var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 		if t.Platform == "python" {
-			// parentStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Start_timestamp))
-			// parentEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Timestamp))
-			// parentStartTime := fmt.Sprint(parentStart.UnixNano())
-			// parentEndTime := fmt.Sprint(parentEnd.UnixNano())
-			// parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
-			// parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
-
 			parentStartTimestamp = decimal.NewFromFloat(t.Start_timestamp)
 			parentEndTimestamp = decimal.NewFromFloat(t.Timestamp)
 		}
@@ -169,21 +126,7 @@ func (t *Transaction) timestamps() {
 			// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", span["start_timestamp"].(float64), span["start_timestamp"])
 			// fmt.Printf("\n> updatetimestamps SPAN       timestamp before %v (%T)\n", span["timestamp"].(float64), span["timestamp"])
 
-			// st := fmt.Sprintf("%f", span["start_timestamp"].(float64))
-			// s := fmt.Sprintf("%f", span["timestamp"].(float64))
-			// fmt.Println("> st ", st)
-			// fmt.Println("> s ", s)
-
 			if t.Platform == "python" {
-				// spanStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["start_timestamp"].(float64)))
-				// spanEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["timestamp"].(float64)))
-				// fmt.Println("> spanStart", spanStart)
-				// fmt.Println("> spanEnd", spanEnd)
-				// spanStartTime := fmt.Sprint(spanStart.UnixNano())
-				// spanEndTime := fmt.Sprint(spanEnd.UnixNano())
-				// spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
-				// spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
-
 				spanStartTimestamp = decimal.NewFromFloat(span["start_timestamp"].(float64))
 				spanEndTimestamp = decimal.NewFromFloat(span["timestamp"].(float64))
 			}

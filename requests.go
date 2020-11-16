@@ -10,8 +10,3 @@ func (r *Requests) send() {
 		request.send()
 	}
 }
-
-// Don't need because can `requests := Requests{events}``
-// func NewRequests(events []EventJson) Requests {
-// 	return Requests{events}
-// }
