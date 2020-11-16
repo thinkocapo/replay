@@ -27,50 +27,25 @@ SDK's create events and `python/proxy.py` intercepts "undertakes" the events on 
 
 1. Enter your DSN's in `.env`  
 ```
-// for the Tool Store data set
 DSN_JAVASCRIPT_SAAS=
 DSN_PYTHON_SAAS=
-
-or
-
-// for the Gateway/Microservices/Celery dataset
-DSN_PYTHON_GATEWAY=
-DSN_PYTHON_DJANGO=
-DSN_PYTHON_CELERY=
-
-// set this here as your default or pass it at runtime using --db
-SQLITE=
-JSON=?
 ```
-
-2. `pip3 install -r ./python/requirements.txt` for the proxy  
-3.
-
-```
-go build -o bin/event-to-sentry-<name> *.go
-
-// for Tool Store data set (javascrip, pythont, errors+transactions)
-go build -o bin/event-to-sentry-toolstore
-
-// for Gateway/Microservices/Celery dataset (python transactions)
-go build -o bin/event-to-sentry-tracing-example *.go
-```
-
-Note - Transactions are not supported if using DSN's from `getsentry/onpremise` as of 07/08/20
 
 ## Run Locally
-`go build -o bin/sdk-upgrade *.go && ./bin/sdk-upgrade -i`
+```
+go build -o bin/event-to-sentry *.go && ./bin/event-to-sentry -i
+go build -o bin/event-to-sentry *.go && ./bin/event-to-sentry
+```
 
 ```
-./bin/event-to-sentry-<name>
-./bin/event-to-sentry
-./bin/event-to-sentry --id=<id>
 ./bin/event-to-sentry --id=<id> -i
 ./bin/event-to-sentry --all
 ```
-or use `--js` `--py` to pass DSN's when running the executable  
+
+or use `--js` `--py` to pass DSN's when running the executable????  
 `--db` if passing a .json stored locally, otherwise it will use what's in .env for `JSON`. But right now, reads from Cloud Storage **only**  
 ```
+??????
 ./bin/event-to-sentry --all --db=am-transactions-timeout-sqlite.db
 ./bin/event-to-sentry --all --db=<path_to_.db> --js=<javascripti_DSN> --py=<python_DSN>
 ```
@@ -168,56 +143,6 @@ https://cloud.google.com/functions/docs/quickstart#whats-next
 https://cloud.google.com/functions/docs/writing/specifying-dependencies-go  
 "go mod tidy"
 
-## Demo Automation - Mobile
-#### Compute Engine VM
-
-Select MicroT2 w/ Ubuntu 16.04LTS
-
-1. launch SSH
-
-2. Generate SSH key 
-https://docs.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
-
-3. 
-touch ~/.ssh/config  
-```
-Host *
-  IgnoreUnknown AddKeysToAgent,UseKeychain
-  AddKeysToAgent yes
-  UseKeychain yes
-```
-
-`ssh-add -k ~/.ssh/id_rsa` don't use -K, use -k
-
-4. Add new SSH Key to your Github Account online  
-https://docs.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account
-
-5. `git clone git@github.com:thinkocapo/SessionDataGenerator.git`
-
-6. `apt-get install openjdk-8-jdk`
-DO NOT install JRE or any 'headless' marked version because that's the JRE
-
-7. 
-```
-sudo apt-get update
-sudo apt-get install openjdk-8-jdk
-
-you@<vm_name>:~$ which java
-/usr/bin/java
-
-you@<vm_name>:~$ java -version
-openjdk version "1.8.0_265"
-OpenJDK Runtime Environment (build 1.8.0_265-8u265-b01-0ubuntu2~16.04-b01)
-OpenJDK 64-Bit Server VM (build 25.265-b01, mixed mode)
-```
-402 MB used
-
-https://www.linode.com/docs/development/java/install-java-on-ubuntu-16-04/ (2019)
-
-8. `cd SessionDataGenerator && ./gradlew run`
-let it run to completion even if says 0%, IDLE, then re-run and should work
-
-
 ## Notes
 
 #### database
@@ -254,41 +179,8 @@ Google Cloud SDK 303.0.0
 initialize your file.json to an empty array [] because it gets appended to
 
 ## Todo
-DONE saas it
-DONE sentry-cli integration w/ source maps
-DONE timestamps,
-    w/ randomizations
-    - js /toolstores Resources appear too early, and 'toolsreceived' didn't line up. But may poor looking Tx's/spans w/out undertaker as well.
-    - js checkout 'processing shopping cart result' appears both early and late
-    - py get_tools 'connect to db' overlaps 'run query', 'format results' can appear early
-    - py checkout GOOD
-    w/out randomization SELECTED
 
-DONE event-to-sentry.go w/ Cloud Storage for the json
-DONE event-to-sentry.go in Cloud Function
-DONE cloud scheduler the Cloud Function (undo ignore-event-to-sentry.go)
-
-DONE sentry-cli release-configuration.sh
-DONE sentry-cli CalVer releases in shell script
-DONE sentry-cli in crontab (weekly monday mornings so starts tomorrow)
-
-- Clock drift bring 10 days back 
-    - dbl-check what datetime.now() in a /tmp/script.go gives you
-    - run locally ignore-event-tosentry.go and see what timestamps read as...
-    
 - Big data set (min.100)
-
-- MOBILE start w/ ComputeEnginer VM (ubuntu)
-
-#### future
-- Compute Enginer VM for sentry-cli automation and SDG
+- MOBILE start w/ ComputeEnginer VM (ubuntu). mobile envelopes and sessions
 - Cronjob for 5,000/hr (3.6million for 30 days)
 - Page Navigation in the 100-1,000 sized data set.
-
-Refactor:  
-Item interface{} as Item struct? Timestamp type for start_timestamp/timestamp.
-
-Test Mobile Envelopes 
-Test Mobile Sessions
-
-./go.mod, ./api/go.mod  
