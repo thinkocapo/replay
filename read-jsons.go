@@ -75,7 +75,7 @@ func readJsons(ignore bool) string {
 	for _, event := range events {
 		// TODO match DSN here based on js vs python, call on EventJson?
 		if event.Kind == "error" {
-			fmt.Println("> error <")
+			// fmt.Println("> error <")
 			// fmt.Println("\n> event_id BEFORE", event.Error.EventId)
 			// fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
 			event.Error.eventId()
@@ -86,13 +86,13 @@ func readJsons(ignore bool) string {
 			// fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
 		}
 		if event.Kind == "transaction" {
-			fmt.Println("> transaction <")
+			fmt.Println("\n> transaction <")
 
 			event.Transaction.eventId()
 			event.Transaction.release()
 			event.Transaction.user()
 			event.Transaction.timestamps()
-			event.Transaction.traceIds()
+			// event.Transaction.traceIds()
 		}
 	}
 

@@ -42,6 +42,8 @@ type Error struct {
 	Request         map[string]interface{} `json:"request"`
 	Sdk             map[string]interface{} `json:"sdk"`
 	Version         string                 `json:"version"`
+
+	// TODO extra (additional information)
 }
 
 func (e *Error) eventId() {
@@ -79,15 +81,15 @@ func (e *Error) user() {
 }
 
 func (e *Error) timestamp() {
-	timestamp := fmt.Sprint(time.Now().Unix())
-	timestampDecimal, err1 := decimal.NewFromString(timestamp[:10] + "." + timestamp[10:])
-	// fmt.Print("> timestampDecimal\n", timestampDecimal)
+	unixTimestamp := fmt.Sprint(time.Now().Unix())
+	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
+	// fmt.Print("> decimalTimestamp\n", decimalTimestamp)
 	if err1 != nil {
 		log.Fatal(err1)
 	}
-	timestampFinal, err2 := timestampDecimal.Round(7).Float64()
+	timestamp, err2 := decimalTimestamp.Round(7).Float64()
 	if err2 == false {
 		log.Fatal(err2)
 	}
-	e.Timestamp = timestampFinal
+	e.Timestamp = timestamp
 }

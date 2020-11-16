@@ -47,8 +47,9 @@ type Transaction struct {
 	Spans []map[string]interface{} `json:"spans"`
 
 	Start_timestamp float64 `json:"start_timestamp"`
-	// Title           string  `json:"title"` 'discarded attribute'
-	Transaction string `json:"transaction"`
+	Transaction     string  `json:"transaction"`
+
+	// TODO measurements, extra
 }
 
 func (t *Transaction) eventId() {
@@ -119,15 +120,22 @@ func (t *Transaction) timestamps() {
 	}
 	t.Timestamp = timestamp*/
 
+	// fmt.Printf("\n> updateTimestamps PARENT start_timestamp before %v (%T) ", t.Start_timestamp, t.Start_timestamp)
+	// fmt.Printf("\n> updateTimestamps PARENT       timestamp before %v (%T) \n", t.Timestamp, t.Timestamp)
+
 	if t.Timestamp != 0 && t.Start_timestamp != 0 {
 		var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 		if t.Platform == "python" {
-			parentStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Start_timestamp))
-			parentEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Timestamp))
-			parentStartTime := fmt.Sprint(parentStart.UnixNano())
-			parentEndTime := fmt.Sprint(parentEnd.UnixNano())
-			parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
-			parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
+			fmt.Print("**** I'M PYTHON ****")
+			// parentStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Start_timestamp))
+			// parentEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Timestamp))
+			// parentStartTime := fmt.Sprint(parentStart.UnixNano())
+			// parentEndTime := fmt.Sprint(parentEnd.UnixNano())
+			// parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
+			// parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
+
+			parentStartTimestamp = decimal.NewFromFloat(t.Start_timestamp)
+			parentEndTimestamp = decimal.NewFromFloat(t.Timestamp)
 		}
 		if t.Platform == "javascript" {
 			parentStartTimestamp = decimal.NewFromFloat(t.Start_timestamp)
@@ -153,16 +161,31 @@ func (t *Transaction) timestamps() {
 		t.Start_timestamp, _ = newParentStartTimestamp.Round(7).Float64()
 		t.Timestamp, _ = newParentEndTimestamp.Round(7).Float64()
 
+		// fmt.Printf("> updateTimestamps PARENT start_timestamp after %v (%T) \n", decimal.NewFromFloat(t.Start_timestamp), t.Start_timestamp)
+		// fmt.Printf("> updateTimestamps PARENT       timestamp after %v (%T) \n", decimal.NewFromFloat(t.Timestamp), t.Timestamp)
+
 		// SPANS
 		for _, span := range t.Spans {
 			var spanStartTimestamp, spanEndTimestamp decimal.Decimal
+			// fmt.Printf("\n> updatetimestamps SPAN start_timestamp before %v (%T)", span["start_timestamp"].(float64), span["start_timestamp"])
+			// fmt.Printf("\n> updatetimestamps SPAN       timestamp before %v (%T)\n", span["timestamp"].(float64), span["timestamp"])
+			st := fmt.Sprintf("%f", span["start_timestamp"].(float64))
+			s := fmt.Sprintf("%f", span["timestamp"].(float64))
+			fmt.Println("> st ", st)
+			fmt.Println("> s ", s)
+
 			if t.Platform == "python" {
-				spanStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["start_timestamp"]))
-				spanEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["timestamp"]))
-				spanStartTime := fmt.Sprint(spanStart.UnixNano())
-				spanEndTime := fmt.Sprint(spanEnd.UnixNano())
-				spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
-				spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
+				// spanStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["start_timestamp"].(float64)))
+				// spanEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["timestamp"].(float64)))
+				// fmt.Println("> spanStart", spanStart)
+				// fmt.Println("> spanEnd", spanEnd)
+				// spanStartTime := fmt.Sprint(spanStart.UnixNano())
+				// spanEndTime := fmt.Sprint(spanEnd.UnixNano())
+				// spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
+				// spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
+
+				spanStartTimestamp = decimal.NewFromFloat(span["start_timestamp"].(float64))
+				spanEndTimestamp = decimal.NewFromFloat(span["timestamp"].(float64))
 			}
 			if t.Platform == "javascript" {
 				spanStartTimestamp = decimal.NewFromFloat(span["start_timestamp"].(float64))
@@ -185,6 +208,9 @@ func (t *Transaction) timestamps() {
 
 			span["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			span["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
+
+			fmt.Printf("\n> updatetimestamps SPAN start_timestamp after %v (%T)", decimal.NewFromFloat(span["start_timestamp"].(float64)), span["start_timestamp"])
+			fmt.Printf("\n> updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(span["timestamp"].(float64)), span["timestamp"])
 		}
 	}
 }
