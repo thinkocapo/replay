@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Transaction struct {
@@ -57,7 +59,7 @@ func (t *Transaction) eventId() {
 
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	t.EventId = uuid4
-	fmt.Println("\n******** event_id updated *********", t.EventId)
+	// fmt.Println("\n******** event_id updated *********", t.EventId)
 
 	// LOOKING like only 1 event_id in the *transctino.json file ;)
 	/*
@@ -102,6 +104,93 @@ func (t *Transaction) user() {
 	t.User = make(map[string]interface{})
 	user := t.User
 	user["email"] = createUser()
+}
+
+func (t *Transaction) timestamps() {
+	/*unixTimestamp := fmt.Sprint(time.Now().Unix())
+	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
+	// fmt.Print("> decimalTimestamp\n", decimalTimestamp)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	timestamp, err2 := decimalTimestamp.Round(7).Float64()
+	if err2 == false {
+		log.Fatal(err2)
+	}
+	t.Timestamp = timestamp*/
+
+	if t.Timestamp != 0 && t.Start_timestamp != 0 {
+		var parentStartTimestamp, parentEndTimestamp decimal.Decimal
+		if t.Platform == "python" {
+			parentStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Start_timestamp))
+			parentEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Timestamp))
+			parentStartTime := fmt.Sprint(parentStart.UnixNano())
+			parentEndTime := fmt.Sprint(parentEnd.UnixNano())
+			parentStartTimestamp, _ = decimal.NewFromString(parentStartTime[:10] + "." + parentStartTime[10:])
+			parentEndTimestamp, _ = decimal.NewFromString(parentEndTime[:10] + "." + parentEndTime[10:])
+		}
+		if t.Platform == "javascript" {
+			parentStartTimestamp = decimal.NewFromFloat(t.Start_timestamp)
+			parentEndTimestamp = decimal.NewFromFloat(t.Timestamp)
+		}
+
+		// TRACE PARENT
+		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
+		rand.Seed(time.Now().UnixNano())
+		percentage := 0.01 + rand.Float64()*(0.20-0.01)
+		rate := decimal.NewFromFloat(percentage)
+		parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+
+		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+
+		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
+
+		if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
+			fmt.Print("\nFALSE - parent BOTH", newParentEndTimestamp.Sub(newParentStartTimestamp))
+		}
+
+		t.Start_timestamp, _ = newParentStartTimestamp.Round(7).Float64()
+		t.Timestamp, _ = newParentEndTimestamp.Round(7).Float64()
+
+		// SPANS
+		for _, span := range t.Spans {
+			var spanStartTimestamp, spanEndTimestamp decimal.Decimal
+			if t.Platform == "python" {
+				spanStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["start_timestamp"]))
+				spanEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", span["timestamp"]))
+				spanStartTime := fmt.Sprint(spanStart.UnixNano())
+				spanEndTime := fmt.Sprint(spanEnd.UnixNano())
+				spanStartTimestamp, _ = decimal.NewFromString(spanStartTime[:10] + "." + spanStartTime[10:])
+				spanEndTimestamp, _ = decimal.NewFromString(spanEndTime[:10] + "." + spanEndTime[10:])
+			}
+			if t.Platform == "javascript" {
+				spanStartTimestamp = decimal.NewFromFloat(span["start_timestamp"].(float64))
+				spanEndTimestamp = decimal.NewFromFloat(span["timestamp"].(float64))
+			}
+			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
+			spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+
+			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
+			spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+
+			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
+			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+
+			if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
+				fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+			}
+
+			span["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
+			span["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
+		}
+	}
+}
+
+func (t *Transaction) traceIds() {
+
 }
 
 // not seeing 'sent_at sentAt' property on post-ingest transaction (it was on the pre-ingest tx), so not defining func (t *Transaction) sentAt()

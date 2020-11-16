@@ -46,6 +46,16 @@ func readJsons(ignore bool) string {
 		printObj(obj)
 	}
 
+	// TODO events.go could manage reading from storage. or like:
+	/*
+		storageClient := StorageClient(os.Getenv("BUCKET")) <-- is the init
+		//or
+		storageClient.init(os.Getenv("BUCKET"))
+		storageClient.query("event") .prefixQuery("event") .queryBucket .bucketQuery() .bucketSet()
+		storageClient.listBucketContents() .getBucket()
+		events := storageClient.getFiles() .bucketFiles()
+	*/
+
 	// Read each file's content
 	var events []EventJson
 	for _, fileName := range fileNames {
@@ -68,12 +78,10 @@ func readJsons(ignore bool) string {
 			fmt.Println("> error <")
 			// fmt.Println("\n> event_id BEFORE", event.Error.EventId)
 			// fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
-
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
-			event.Error.setTimestamp()
-
+			event.Error.timestamp()
 			// fmt.Println("\n> event_id AFTER", event.Error.EventId)
 			// fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
 		}
@@ -83,9 +91,8 @@ func readJsons(ignore bool) string {
 			event.Transaction.eventId()
 			event.Transaction.release()
 			event.Transaction.user()
-
-			// TODO
-			// event.Transaction.setTimestamps()
+			event.Transaction.timestamps()
+			event.Transaction.traceIds()
 		}
 	}
 

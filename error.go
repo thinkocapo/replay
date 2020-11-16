@@ -78,7 +78,7 @@ func (e *Error) user() {
 	user["email"] = createUser()
 }
 
-func (e *Error) setTimestamp() {
+func (e *Error) timestamp() {
 	timestamp := fmt.Sprint(time.Now().Unix())
 	timestampDecimal, err1 := decimal.NewFromString(timestamp[:10] + "." + timestamp[10:])
 	// fmt.Print("> timestampDecimal\n", timestampDecimal)
