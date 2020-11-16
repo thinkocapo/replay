@@ -198,10 +198,9 @@ func updateTraceIds(events []EventJson) {
 							// TODO then should check if length is gt 0
 							// if len(spans.([]interface{})) > 0 {
 							for _, value := range spans {
-								fmt.Println("\n> SPAN Transaction trace_id BEFORE ", value["trace_id"])
+								// fmt.Println("\n> SPAN Transaction trace_id BEFORE ", value["trace_id"])
 								value["trace_id"] = NEW_TRACE_ID
-								// fmt.Println("> SPAN Transaction trace_id AFTER", item.(map[string]interface{})["spans"].([]interface{})[0].(map[string]interface{})["trace_id"])
-								fmt.Println("> SPAN Transaction trace_id AFTER", event.Transaction.Spans[0]["trace_id"])
+								// fmt.Println("> SPAN Transaction trace_id AFTER", event.Transaction.Spans[0]["trace_id"])
 							}
 							// }
 						}

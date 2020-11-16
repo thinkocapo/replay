@@ -42,8 +42,7 @@ type Error struct {
 	Request         map[string]interface{} `json:"request"`
 	Sdk             map[string]interface{} `json:"sdk"`
 	Version         string                 `json:"version"`
-
-	// TODO extra (additional information)
+	Extra           map[string]interface{} `json:"extra"`
 }
 
 func (e *Error) eventId() {

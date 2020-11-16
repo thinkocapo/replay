@@ -32,7 +32,7 @@ func readJsons(ignore bool) string {
 	bucketHandle := client.Bucket(bucketName)
 	// lists the contents of a bucket in Google Cloud Storage.
 	var fileNames []string
-	query := &storage.Query{Prefix: "event"}
+	query := &storage.Query{Prefix: "eventtest"}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
@@ -65,7 +65,7 @@ func readJsons(ignore bool) string {
 		}
 		byteValue, _ := ioutil.ReadAll(rc)
 		var event EventJson
-		// UnmarshalJSON overriden in error.go
+		// The EventJson's UnmarshalJSON overriden in event-to-sentry.go (soon EventJson.go)
 		if err := json.Unmarshal(byteValue, &event); err != nil {
 			panic(err)
 		}
@@ -73,34 +73,21 @@ func readJsons(ignore bool) string {
 	}
 
 	for _, event := range events {
-		// TODO match DSN here based on js vs python, call on EventJson?
 		if event.Kind == "error" {
-			// fmt.Println("> error <")
-			// fmt.Println("\n> event_id BEFORE", event.Error.EventId)
-			// fmt.Println("\n> timestamp BEFORE", event.Error.Timestamp)
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
 			event.Error.timestamp()
-			// fmt.Println("\n> event_id AFTER", event.Error.EventId)
-			// fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)
 		}
 		if event.Kind == "transaction" {
-			fmt.Println("\n> transaction <")
-
 			event.Transaction.eventId()
 			event.Transaction.release()
 			event.Transaction.user()
 			event.Transaction.timestamps()
-			// event.Transaction.traceIds()
 		}
 	}
 
-	// TODO 8:13p
-	// events.traceIds ||
-	// mapTraceIds()
 	getTraceIds(events)
-	// events = setTraceIds(events, traceIds)
 	updateTraceIds(events)
 
 	// TODO double check it's object was updated reference `fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)`
@@ -124,10 +111,3 @@ func printObj(obj *storage.ObjectAttrs) {
 	// fmt.Printf("MediaLink: %q, ", obj.MediaLink)
 	// fmt.Printf("StorageClass: %q, ", obj.StorageClass)
 }
-
-// sendRequests(requests, ignore) // deprecate
-
-// requests = append(requests, Request{
-// 	EventJson:     event,
-// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-// })

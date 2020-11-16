@@ -113,16 +113,11 @@ func (d DSN) envelopeEndpoint() string {
 	return fullurl
 }
 
-// TODO put EventJson to its own eventjson.go already!
+// TODO put EventJson to its own eventjson.go
 type TypeSwitch struct {
 	Kind string `json:"type"`
 }
 type EventJson struct {
-	// EventId    string                 `json:"event_id"`
-	// Release    string                 `json:"release"`
-	// User       map[string]interface{} `json:"user"`
-	// Timestamp  float64                `json:"timestamp"`
-	// Platform   string                 `json:"platform"`
 	TypeSwitch `json:"type"`
 	*Error
 	*Transaction
@@ -143,22 +138,6 @@ func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unrecognized type value %q", eventJson.Kind)
 	}
 }
-
-// DONT NEED ANYMORE?
-// func (eventJson *EventJson) send() error {
-// TODO make a Request using event and `dsnToStoreEndpoint(projectDSNs, event.Error.Platform)``,
-// Kine -> error
-// event.Error in the Request...
-// Kind -> transaction
-// event.Transaction in the Request
-
-// request = Request{
-// 	EventJson:     event,
-// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-// })
-
-// request.send()
-// }
 
 type Event struct {
 	Platform string            `json:"platform"`
@@ -208,52 +187,15 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
-// type Envelope struct {
-// 	items []interface{}
-// }
-
-// type Item map[string]interface{}
-
-// type Timestamp time.Time
 type Timestamp struct {
 	time.Time
 	rfc3339 bool
 }
 
-// type Item struct {
-// 	Timestamp Timestamp `json:"timestamp,omitempty"`
-// 	// Timestamp time.Time `json:"timestamp,omitempty"`
-
-// 	Event_id string `json:"event_id,omitempty"`
-// 	Sent_at  string `json:"sent_at,omitempty"`
-
-// 	Length       int    `json:"length,omitempty"`
-// 	Type         string `json:"type,omitempty"`
-// 	Content_type string `json:"content_type,omitempty"`
-
-// 	Start_timestamp string                 `json:"start_timestamp,omitempty"`
-// 	Transaction     string                 `json:"transaction,omitempty"`
-// 	Server_name     string                 `json:"server_name,omitempty"`
-// 	Tags            map[string]interface{} `json:"tags,omitempty"`
-// 	Contexts        map[string]interface{} `json:"contexts,omitempty"`
-
-// 	Extra       map[string]interface{} `json:"extra,omitempty"`
-// 	Request     map[string]interface{} `json:"request,omitempty"`
-// 	Environment string                 `json:"environment,omitempty"`
-// 	Platform    string                 `json:"platform,omitempty"`
-// 	// Todo spans []
-// 	Sdk  map[string]interface{} `json:"sdk,omitempty"`
-// 	User map[string]interface{} `json:"user,omitempty"`
-// }
-
-// TODO need an ItemFinal that has unified timestamp?
-
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
-
-	//traceIdMap = make(map[string][]interface{})
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today

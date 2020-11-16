@@ -49,7 +49,7 @@ type Transaction struct {
 	Start_timestamp float64 `json:"start_timestamp"`
 	Transaction     string  `json:"transaction"`
 
-	// TODO measurements, extra
+	Measurements map[string]interface{} `json:"measurements"`
 }
 
 func (t *Transaction) eventId() {
@@ -126,7 +126,6 @@ func (t *Transaction) timestamps() {
 	if t.Timestamp != 0 && t.Start_timestamp != 0 {
 		var parentStartTimestamp, parentEndTimestamp decimal.Decimal
 		if t.Platform == "python" {
-			fmt.Print("**** I'M PYTHON ****")
 			// parentStart, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Start_timestamp))
 			// parentEnd, _ := time.Parse(time.RFC3339Nano, fmt.Sprintf("%f", t.Timestamp))
 			// parentStartTime := fmt.Sprint(parentStart.UnixNano())
@@ -214,10 +213,6 @@ func (t *Transaction) timestamps() {
 			// fmt.Printf("\n> updatetimestamps SPAN       timestamp after %v (%T)\n", decimal.NewFromFloat(span["timestamp"].(float64)), span["timestamp"])
 		}
 	}
-}
-
-func (t *Transaction) traceIds() {
-
 }
 
 // not seeing 'sent_at sentAt' property on post-ingest transaction (it was on the pre-ingest tx), so not defining func (t *Transaction) sentAt()
