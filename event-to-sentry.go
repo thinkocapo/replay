@@ -32,12 +32,7 @@ var (
 	SENTRY_URL  string
 	exists      bool
 	projectDSNs map[string]*DSN
-	// traceIdMap0 map[string][]*Item
-	//traceIdMap map[string][]interface{}
-	traceIds []string
-
-	// traceIdMap2 map[string][]string
-	// traceIdMap := map[string][]*interface{}
+	traceIds    []string
 )
 
 type DSN struct {
@@ -94,6 +89,7 @@ func (d DSN) storeEndpoint() string {
 	if strings.Contains(d.host, "ingest.sentry.io") {
 		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
+		// fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:])
 	}
 	if d.host == "localhost:9000" {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
@@ -117,6 +113,32 @@ func (d DSN) envelopeEndpoint() string {
 	return fullurl
 }
 
+// TODO put EventJson to its own eventjson.go
+type TypeSwitch struct {
+	Kind string `json:"type"`
+}
+type EventJson struct {
+	TypeSwitch `json:"type"`
+	*Error
+	*Transaction
+}
+
+func (eventJson *EventJson) UnmarshalJSON(data []byte) error {
+	if err := json.Unmarshal(data, &eventJson.TypeSwitch); err != nil {
+		return err
+	}
+	switch eventJson.Kind {
+	case "error":
+		eventJson.Error = &Error{}
+		return json.Unmarshal(data, eventJson.Error)
+	case "transaction":
+		eventJson.Transaction = &Transaction{}
+		return json.Unmarshal(data, eventJson.Transaction)
+	default:
+		return fmt.Errorf("unrecognized type value %q", eventJson.Kind)
+	}
+}
+
 type Event struct {
 	Platform string            `json:"platform"`
 	Kind     string            `json:"kind"`
@@ -127,7 +149,17 @@ type Event struct {
 func (e Event) String() string {
 	return fmt.Sprintf("\n Event { Platform: %s, Type: %s }\n", e.Platform, e.Kind) // index somehow?
 }
-
+func dsnToStoreEndpoint(projectDSNs map[string]*DSN, projectPlatform string) string {
+	// var storeEndpoint string
+	if projectPlatform == "javascript" {
+		return projectDSNs["javascript"].storeEndpoint()
+	} else if projectPlatform == "python" {
+		return projectDSNs["python"].storeEndpoint()
+	} else {
+		log.Fatal("platform type not supported")
+	}
+	return ""
+}
 func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 
 	platform := event.Platform
@@ -155,52 +187,15 @@ func matchDSN(projectDSNs map[string]*DSN, event Event) string {
 	return storeEndpoint
 }
 
-// type Envelope struct {
-// 	items []interface{}
-// }
-
-// type Item map[string]interface{}
-
-// type Timestamp time.Time
 type Timestamp struct {
 	time.Time
 	rfc3339 bool
 }
 
-type Item struct {
-	Timestamp Timestamp `json:"timestamp,omitempty"`
-	// Timestamp time.Time `json:"timestamp,omitempty"`
-
-	Event_id string `json:"event_id,omitempty"`
-	Sent_at  string `json:"sent_at,omitempty"`
-
-	Length       int    `json:"length,omitempty"`
-	Type         string `json:"type,omitempty"`
-	Content_type string `json:"content_type,omitempty"`
-
-	Start_timestamp string                 `json:"start_timestamp,omitempty"`
-	Transaction     string                 `json:"transaction,omitempty"`
-	Server_name     string                 `json:"server_name,omitempty"`
-	Tags            map[string]interface{} `json:"tags,omitempty"`
-	Contexts        map[string]interface{} `json:"contexts,omitempty"`
-
-	Extra       map[string]interface{} `json:"extra,omitempty"`
-	Request     map[string]interface{} `json:"request,omitempty"`
-	Environment string                 `json:"environment,omitempty"`
-	Platform    string                 `json:"platform,omitempty"`
-	// Todo spans []
-	Sdk  map[string]interface{} `json:"sdk,omitempty"`
-	User map[string]interface{} `json:"user,omitempty"`
-}
-
-// TODO need an ItemFinal that has unified timestamp?
-
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
-
-	//traceIdMap = make(map[string][]interface{})
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
 	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
@@ -235,9 +230,12 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
+	readJsons(*ignore)
+	return
+
 	// CLOUD STORAGE
 	bucket := os.Getenv("BUCKET")
-	object := "npm-sentry-tracing.json"
+	object := database
 	fmt.Println("DATASET object", object)
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -277,8 +275,9 @@ func main() {
 				platform:      event.Platform,
 				eventHeaders:  event.Headers,
 				storeEndpoint: storeEndpoint,
-				bodyError:     bodyError,
-				bodyEncoder:   bodyEncoder,
+
+				bodyError:   bodyError,
+				bodyEncoder: bodyEncoder,
 			})
 
 		} else if event.Kind == "transaction" {
@@ -292,10 +291,11 @@ func main() {
 			getEnvelopeTraceIds(envelopeItems)
 
 			requests = append(requests, Transport{
-				kind:            event.Kind,
-				platform:        event.Platform,
-				eventHeaders:    event.Headers,
-				storeEndpoint:   storeEndpoint,
+				kind:          event.Kind,
+				platform:      event.Platform,
+				eventHeaders:  event.Headers,
+				storeEndpoint: storeEndpoint,
+
 				envelopeItems:   envelopeItems,
 				envelopeEncoder: envelopeEncoder,
 			})

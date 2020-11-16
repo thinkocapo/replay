@@ -179,10 +179,10 @@ def save_envelope():
         for key in ['Accept-Encoding','Content-Length','Content-Type','User-Agent']:
             request_headers[key] = request.headers.get(key)
         body = request.data.decode("utf-8")
-
+    
     print(type(json.dumps(body)))
-
-    o = {
+    
+    event = {
         'platform': event_platform,
         'kind': event_type,
         'headers': request_headers,
@@ -193,11 +193,14 @@ def save_envelope():
         with open(JSON) as file:
             current_data = json.load(file)
         with open(JSON, 'w') as file:
-            current_data.append(o)
+            current_data.append(event)
             json.dump(current_data, file)
 
     except Exception as exception:
         print("LOCAL EXCEPTION", exception)
+        print("LOCAL EXCEPTION event_platform:", event_platform)
+        print("LOCAL EXCEPTION event_type:", event_type)
+        
     return "success"
 
 
