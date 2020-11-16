@@ -80,33 +80,21 @@ func readJsons(ignore bool) string {
 		if event.Kind == "transaction" {
 			fmt.Println("> transaction <")
 
-			// TODO 11:23a****** MAY SOLVE IT!!!!
 			event.Transaction.eventId()
+			event.Transaction.release()
+			event.Transaction.user()
 
-			// event.Transaction.setReleases()
-			// event.Transaction.setUsers()
+			// TODO
 			// event.Transaction.setTimestamps()
-
-			// event.Transaction.sentAt()
-			// event.Transaction.removeLengthField()
-
-			// requests = append(requests, Request{
-			// 	EventJson:     event,
-			// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
-			// })
 		}
-
-		// TODO can run once here `requests = append(requests, Request{` instead of inside Error as well as Transaction if-then block
 	}
-
-	// i.e. put the 'Request' as an embedded struct type on the EventJson ;)??
 
 	// TODO double check it's object was updated reference `fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)`
 	requests := Requests{events}
 	requests.send()
 
 	return "\n DONE \n"
-	// sendRequests(requests, ignore) // deprecate
+
 }
 
 func printObj(obj *storage.ObjectAttrs) {
@@ -122,3 +110,10 @@ func printObj(obj *storage.ObjectAttrs) {
 	// fmt.Printf("MediaLink: %q, ", obj.MediaLink)
 	// fmt.Printf("StorageClass: %q, ", obj.StorageClass)
 }
+
+// sendRequests(requests, ignore) // deprecate
+
+// requests = append(requests, Request{
+// 	EventJson:     event,
+// 	storeEndpoint: dsnToStoreEndpoint(projectDSNs, event.Error.Platform),
+// })

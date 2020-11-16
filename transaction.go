@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -76,3 +77,32 @@ func (t *Transaction) eventId() {
 	// 2 update each
 
 }
+
+// setting here, and tag may get value from it?
+func (t *Transaction) release() {
+	date := time.Now()
+	month := date.Month()
+	day := date.Day()
+	var week int
+	switch {
+	case day <= 7:
+		week = 1
+	case day >= 8 && day <= 14:
+		week = 2
+	case day >= 15 && day <= 21:
+		week = 3
+	case day >= 22:
+		week = 4
+	}
+	release := fmt.Sprint(int(month), ".", week)
+	t.Release = release
+}
+
+func (t *Transaction) user() {
+	t.User = make(map[string]interface{})
+	user := t.User
+	user["email"] = createUser()
+}
+
+// not seeing 'sent_at sentAt' property on post-ingest transaction (it was on the pre-ingest tx), so not defining func (t *Transaction) sentAt()
+// not seeing 'length        ' property on post-ingest transaction (it was on the pre-ingest tx), so not defining func (t *Transaction) sentAt()
