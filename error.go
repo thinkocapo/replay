@@ -79,6 +79,16 @@ func (e *Error) user() {
 	user["email"] = createUser()
 }
 
+/*
+PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
+JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
+PARENT TRACE - Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
+TRANSACTIONS. body.contexts.trace.span_id is the Parent Trace. start/end here is same as the sdk's start_timestamp/timestamp, and start_timestamp is only present in transactions
+To see a full span `firstSpan := body["spans"].([]interface{})[0].(map[string]interface{})``
+7 decimal places as the range sent by sdk's is 4 to 7
+https://www.epochconverter.com/
+Float form is 1.5914674155654302e+09
+*/
 func (e *Error) timestamp() {
 	unixTimestamp := fmt.Sprint(time.Now().Unix())
 	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
