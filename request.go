@@ -10,13 +10,14 @@ import (
 	"time"
 )
 
-// TODO consider making EventJson.Dsn Request.DSN and then call DSN.dsnToStoreEndpoint here
+// TODO consider making Event.Dsn and then call DSN.dsnToStoreEndpoint here
+// should be no Request.DSN because Request only wants Request.storeEndpoint
 type Request struct {
 	Payload       []byte
 	StoreEndpoint string
 }
 
-func NewRequest(event EventJson) *Request {
+func NewRequest(event Event) *Request {
 	r := new(Request)
 	if event.Kind == "error" {
 		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Error.Platform)

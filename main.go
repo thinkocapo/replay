@@ -70,7 +70,7 @@ type DemoAutomation struct {
 	ctx                   context.Context
 	bucketHandle          *storage.BucketHandle // `client.Bucket(bucketName)` for setting this
 	bucketHandleFileNames []string              // `query := &storage.Query{Prefix: "eventtest"}` for setting this
-	// TODO consider `events []EventJson` ?
+	// TODO consider `events []Event` ?
 	// TODO consider setDsns...
 }
 
@@ -120,15 +120,16 @@ func main() {
 	*/
 
 	// Read each file's content
-	var events []EventJson
+	var events []Event
 	for _, fileName := range fileNames {
 		rc, err := bucketHandle.Object(fileName).NewReader(ctx)
 		if err != nil {
 			log.Fatalln("NewReader:", err)
 		}
 		byteValue, _ := ioutil.ReadAll(rc)
-		var event EventJson
-		// The EventJson's UnmarshalJSON overriden in event-to-sentry.go (soon EventJson.go)
+
+		// The Event's UnmarshalJSON overriden in Event.go
+		var event Event
 		if err := json.Unmarshal(byteValue, &event); err != nil {
 			panic(err)
 		}

@@ -19,7 +19,7 @@ func createUser() string {
 	return fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 }
 
-func getTraceIds(events []EventJson) {
+func getTraceIds(events []Event) {
 	// var traceIds []string
 	for _, event := range events {
 		var contexts map[string]interface{}
@@ -60,7 +60,7 @@ func undertake(body map[string]interface{}) {
 	tags["undertaker"] = "h4ckweek"
 }
 
-func updateTraceIds(events []EventJson) {
+func updateTraceIds(events []Event) {
 	for _, TRACE_ID := range traceIds {
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 		NEW_TRACE_ID := uuid4
