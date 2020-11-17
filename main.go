@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+
 	// "encoding/json"
 	"flag"
 
@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 
-	"cloud.google.com/go/storage"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	// "google.golang.org/api/iterator"
@@ -25,15 +24,9 @@ var (
 	db     *string // or similar could be for dynamically handling the 'prefix' for Bucket
 	js     *string
 	py     *string
-	// dsn         DSN
-	SENTRY_URL  string
+	// SENTRY_URL  string
 	projectDSNs map[string]*DSN
 	traceIds    []string
-
-	// TESTING...
-	client       *storage.Client
-	ctx          context.Context
-	bucketHandle *storage.BucketHandle
 )
 
 func init() {
@@ -59,24 +52,28 @@ func init() {
 	}
 }
 
+const ERROR = "error"
+const TRANSACTION = "transaction"
+
 func main() {
 
 	demoAutomation := DemoAutomation{}
 
-	events := demoAutomation.getEvents() // configureDsns() too ?
+	events := demoAutomation.getEvents()
 
 	for _, event := range events {
-		if event.Kind == "error" {
+		if event.Kind == ERROR { // TODO ERROR const
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
 			event.Error.timestamp()
 		}
-		if event.Kind == "transaction" {
+		if event.Kind == "transaction" { // TODO TRANSACTION const
 			event.Transaction.eventId()
 			event.Transaction.release()
 			event.Transaction.user()
 			event.Transaction.timestamps()
+			// TODO .measurements()
 		}
 	}
 
@@ -90,56 +87,5 @@ func main() {
 }
 
 // demoAutomation.init()
-
-// // 1 ctx, client
-// ctx := context.Background()
-// client, err := storage.NewClient(ctx)
-// if err != nil {
-// 	log.Fatalln("storage.NewClient:", err)
-// }
-// defer client.Close()
-// ctx, cancel := context.WithTimeout(ctx, time.Second*50)
-// defer cancel()
-
-// // 2 bucket handle
-// bucketName := os.Getenv("BUCKET")
-// bucketHandle := client.Bucket(bucketName)
-
-// lists the contents of a bucket in Google Cloud Storage.
-// demoAutomation.getFileNames()
-
-// var fileNames []string
-// query := &storage.Query{Prefix: "eventtest"}
-// it := demoAutomation.BucketHandle.Objects(demoAutomation.Ctx, query)
-// // it := bucketHandle.Objects(ctx, query)
-// for {
-// 	obj, err := it.Next()
-// 	if err == iterator.Done {
-// 		break
-// 	}
-// 	if err != nil {
-// 		log.Fatalln("listBucket: unable to list bucket", err)
-// 	}
-// 	fileNames = append(fileNames, obj.Name)
-// 	printObj(obj)
-// }
-
-// Read each file's content
-// var events []Event
-// for _, fileName := range fileNames {
-// 	rc, err := demoAutomation.BucketHandle.Object(fileName).NewReader(demoAutomation.Ctx)
-// 	// rc, err := bucketHandle.Object(fileName).NewReader(ctx)
-// 	if err != nil {
-// 		log.Fatalln("NewReader:", err)
-// 	}
-// 	byteValue, _ := ioutil.ReadAll(rc)
-
-// 	// The Event's UnmarshalJSON overriden in Event.go
-// 	var event Event
-// 	if err := json.Unmarshal(byteValue, &event); err != nil {
-// 		panic(err)
-// 	}
-// 	events = append(events, event)
-// }
 
 // TODO double check it's object was updated reference `fmt.Println("\n> timestamp AFTER", event.Error.Timestamp)`

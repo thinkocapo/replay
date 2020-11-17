@@ -23,10 +23,10 @@ func getTraceIds(events []Event) {
 	// var traceIds []string
 	for _, event := range events {
 		var contexts map[string]interface{}
-		if event.Kind == "error" {
+		if event.Kind == ERROR {
 			contexts = event.Error.Contexts
 		}
-		if event.Kind == "transaction" {
+		if event.Kind == TRANSACTION {
 			contexts = event.Transaction.Contexts
 		}
 		if contexts != nil {
@@ -66,7 +66,7 @@ func updateTraceIds(events []Event) {
 		NEW_TRACE_ID := uuid4
 
 		for _, event := range events {
-			if event.Kind == "error" {
+			if event.Kind == ERROR {
 				contexts := event.Error.Contexts
 				if contexts != nil {
 					trace := contexts["trace"]
@@ -77,7 +77,7 @@ func updateTraceIds(events []Event) {
 					}
 				}
 			}
-			if event.Kind == "transaction" {
+			if event.Kind == TRANSACTION {
 				contexts := event.Transaction.Contexts
 				if contexts != nil {
 					trace := contexts["trace"]

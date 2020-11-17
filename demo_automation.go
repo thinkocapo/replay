@@ -26,6 +26,7 @@ import (
 	events := demoAutomation.getFiles() .bucketFiles()
 */
 
+// TODO could take care of DSN's still?
 type DemoAutomation struct {
 	Client       *storage.Client
 	Ctx          context.Context
@@ -35,8 +36,9 @@ type DemoAutomation struct {
 	// TODO consider setDsns... for projectDSNs
 }
 
+// TODO Constructor that configures DSN's
+
 func (d *DemoAutomation) getEvents() []Event {
-	fmt.Print("111111")
 	// 1 Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -77,7 +79,7 @@ func (d *DemoAutomation) getEvents() []Event {
 		}
 		byteValue, _ := ioutil.ReadAll(rc)
 
-		// The Event's UnmarshalJSON overriden in Event.go
+		// Dev Note - The Event's UnmarshalJSON method is overriden in Event.go
 		var event Event
 		if err := json.Unmarshal(byteValue, &event); err != nil {
 			panic(err)

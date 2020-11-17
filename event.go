@@ -20,10 +20,10 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch event.Kind {
-	case "error":
+	case ERROR:
 		event.Error = &Error{}
 		return json.Unmarshal(data, event.Error)
-	case "transaction":
+	case TRANSACTION:
 		event.Transaction = &Transaction{}
 		return json.Unmarshal(data, event.Transaction)
 	default:

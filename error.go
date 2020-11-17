@@ -73,9 +73,10 @@ func (e *Error) release() {
 	e.Release = release
 }
 
+// TODO sync same user across all errors+tx's in the dataset
 func (e *Error) user() {
 	e.User = make(map[string]interface{})
-	user := e.User //.(map[string]interface{})
+	user := e.User
 	user["email"] = createUser()
 }
 

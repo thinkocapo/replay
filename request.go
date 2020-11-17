@@ -19,7 +19,7 @@ type Request struct {
 
 func NewRequest(event Event) *Request {
 	r := new(Request)
-	if event.Kind == "error" {
+	if event.Kind == ERROR {
 		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Error.Platform)
 
 		bodyBytes, errBodyBytes := json.Marshal(event.Error)
@@ -28,7 +28,7 @@ func NewRequest(event Event) *Request {
 		}
 		r.Payload = bodyBytes
 	}
-	if event.Kind == "transaction" {
+	if event.Kind == TRANSACTION {
 		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform)
 		bodyBytes, errBodyBytes := json.Marshal(event.Transaction)
 		if errBodyBytes != nil {
