@@ -53,6 +53,7 @@ func (r Request) send() bool {
 	fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
+		var httpClient = &http.Client{}
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil {
 			log.Fatal(requestErr)

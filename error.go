@@ -45,6 +45,8 @@ type Error struct {
 	Extra           map[string]interface{} `json:"extra"`
 }
 
+const ERROR = "error"
+
 func (e *Error) eventId() {
 	// if _, ok := e.EventId; !ok {
 	// 	log.Print("no event_id on object from DB")

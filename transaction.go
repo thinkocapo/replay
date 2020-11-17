@@ -52,6 +52,8 @@ type Transaction struct {
 	Measurements map[string]interface{} `json:"measurements"`
 }
 
+const TRANSACTION = "transaction"
+
 func (t *Transaction) eventId() {
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	t.EventId = uuid4
