@@ -7,11 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 )
 
-// Should not be Event.Dsn because it's the 'client' that has the dsn, and handles thrown error/exception
-// should be no Request.DSN because Request only wants Request.storeEndpoint
 type Request struct {
 	Payload       []byte
 	StoreEndpoint string
@@ -19,26 +16,25 @@ type Request struct {
 
 func NewRequest(event Event) *Request {
 	r := new(Request)
-	if event.Kind == ERROR {
-		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Error.Platform)
 
-		bodyBytes, errBodyBytes := json.Marshal(event.Error)
-		if errBodyBytes != nil {
-			fmt.Println(errBodyBytes)
-		}
-		r.Payload = bodyBytes
+	var bodyBytes []byte
+	var err error
+	if event.Kind == ERROR {
+		bodyBytes, err = json.Marshal(event.Error)
 	}
 	if event.Kind == TRANSACTION {
-		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform)
-		bodyBytes, errBodyBytes := json.Marshal(event.Transaction)
-		if errBodyBytes != nil {
-			fmt.Println(errBodyBytes)
-		}
-		r.Payload = bodyBytes
+		bodyBytes, err = json.Marshal(event.Transaction)
 	}
-	// TODO move `r.Payload = bodyBytes` to down here
-	// TODO check if either Payload or StoreEndpoint are nil
-	// log.Fatal("unrecognized event.Kind", event.Kind)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	r.Payload = bodyBytes
+	r.StoreEndpoint = event.DSN.storeEndpoint()
+
+	if r.StoreEndpoint == "" || r.Payload == nil {
+		fmt.Println("something was nil")
+	}
 	return r
 }
 
@@ -65,15 +61,6 @@ func (r Request) send() bool {
 		fmt.Printf("> KIND|RESPONSE: %s \n", string(responseData))
 	} else {
 		fmt.Print("> event IGNORED \n")
-	}
-	return true
-}
-
-// DEPRECATING...
-func sendRequests(requests []Request) bool {
-	for _, request := range requests {
-		request.send()
-		time.Sleep(750 * time.Millisecond)
 	}
 	return true
 }

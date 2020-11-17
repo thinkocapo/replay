@@ -31,9 +31,9 @@ type Error struct {
 	Culprit         string                 `json:"culprit"`
 	Environment     string                 `json:"environment"`
 	Exception       map[string]interface{} `json:"exception"`
-	Fingerprint     []string               `json:"fingerprint"`     // nothing new but also no processing error warnings
-	Grouping_config map[string]interface{} `json:"grouping_config"` // nothing new but also no processing error warnings
-	Hashes          []string               `json:"hashes"`          // nothing new but also no processing error warnings
+	Fingerprint     []string               `json:"fingerprint"`
+	Grouping_config map[string]interface{} `json:"grouping_config"`
+	Hashes          []string               `json:"hashes"`
 	Key_id          string                 `json:"key_id"`
 	Level           string                 `json:"level"`
 	Logger          string                 `json:"logger"`
@@ -48,9 +48,6 @@ type Error struct {
 const ERROR = "error"
 
 func (e *Error) eventId() {
-	// if _, ok := e.EventId; !ok {
-	// 	log.Print("no event_id on object from DB")
-	// }
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	e.EventId = uuid4
 }
@@ -95,7 +92,6 @@ Float form is 1.5914674155654302e+09
 func (e *Error) timestamp() {
 	unixTimestamp := fmt.Sprint(time.Now().Unix())
 	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
-	// fmt.Print("> decimalTimestamp\n", decimalTimestamp)
 	if err1 != nil {
 		log.Fatal(err1)
 	}

@@ -14,10 +14,10 @@ type DSN struct {
 	projectId string
 }
 
-func parseDSN(rawurl string) *DSN {
+func NewDSN(rawurl string) *DSN {
 	fmt.Println("> rawlurl", rawurl)
 
-	// TODO support for http vs. https 7: vs 8:
+	// still need support for http vs. https 7: vs 8:
 	key := strings.Split(rawurl, "@")[0][7:]
 
 	uri, err := url.Parse(rawurl)
@@ -59,7 +59,7 @@ func parseDSN(rawurl string) *DSN {
 func (d DSN) storeEndpoint() string {
 	var fullurl string
 	if strings.Contains(d.host, "ingest.sentry.io") {
-		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
+		// [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
 		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
 		// fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:])
 	}
@@ -84,16 +84,4 @@ func (d DSN) envelopeEndpoint() string {
 		log.Fatal("problem with fullurl")
 	}
 	return fullurl
-}
-
-// TODO - could return an error instead
-func dsnToStoreEndpoint(projectDSNs map[string]*DSN, projectPlatform string) string {
-	if projectPlatform == "javascript" {
-		return projectDSNs["javascript"].storeEndpoint()
-	} else if projectPlatform == "python" {
-		return projectDSNs["python"].storeEndpoint()
-	} else {
-		log.Fatal("platform type not supported")
-	}
-	return ""
 }

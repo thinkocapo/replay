@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 )
 
 type TypeSwitch struct {
@@ -13,6 +14,7 @@ type Event struct {
 	TypeSwitch `json:"type"`
 	*Error
 	*Transaction
+	*DSN
 }
 
 func (event *Event) UnmarshalJSON(data []byte) error {
@@ -28,5 +30,20 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		return json.Unmarshal(data, event.Transaction)
 	default:
 		return fmt.Errorf("unrecognized type value %q", event.Kind)
+	}
+}
+
+func (event *Event) setDsn() {
+	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
+		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	}
+	if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
+		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	}
+	if event.Kind == ERROR && event.Error.Platform == JAVASCRIPT {
+		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+	}
+	if event.Kind == ERROR && event.Error.Platform == PYTHON {
+		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	}
 }

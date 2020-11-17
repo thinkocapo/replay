@@ -20,7 +20,6 @@ func createUser() string {
 }
 
 func getTraceIds(events []Event) {
-	// var traceIds []string
 	for _, event := range events {
 		var contexts map[string]interface{}
 		if event.Kind == ERROR {
@@ -30,12 +29,10 @@ func getTraceIds(events []Event) {
 			contexts = event.Transaction.Contexts
 		}
 		if contexts != nil {
-			// fmt.Println("> getTraceIds context != nil")
 			if _, found := contexts["trace"]; found {
 				trace := contexts["trace"]
 				trace_id := trace.(map[string]interface{})["trace_id"].(string)
 				if trace_id != "" {
-					// fmt.Println("> getTraceIds trace_id != nil")
 					matched := false
 					for _, value := range traceIds {
 						if trace_id == value {
@@ -85,10 +82,9 @@ func updateTraceIds(events []Event) {
 						trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
 						//fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
 
-						// TODO should check if 'Spans' field exists. it may have been set to 0 if nothing was unmarshal'd to it
+						// should check if 'Spans' field exists. it may have been set to 0 if nothing was unmarshal'd to it
 						if len(event.Transaction.Spans) > 0 {
 							spans := event.Transaction.Spans
-							// TODO then should check if length is gt 0
 							// if len(spans.([]interface{})) > 0 {
 							for _, value := range spans {
 								// fmt.Println("\n> SPAN Transaction trace_id BEFORE ", value["trace_id"])
