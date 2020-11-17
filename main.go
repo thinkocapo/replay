@@ -8,9 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -35,96 +33,6 @@ var (
 	projectDSNs map[string]*DSN
 	traceIds    []string
 )
-
-type DSN struct {
-	host      string
-	rawurl    string
-	key       string
-	projectId string
-}
-
-func parseDSN(rawurl string) *DSN {
-	fmt.Println("> rawlurl", rawurl)
-
-	// TODO support for http vs. https 7: vs 8:
-	key := strings.Split(rawurl, "@")[0][7:]
-
-	uri, err := url.Parse(rawurl)
-	if err != nil {
-		panic(err)
-	}
-	idx := strings.LastIndex(uri.Path, "/")
-	if idx == -1 {
-		log.Fatal("missing projectId in dsn")
-	}
-	projectId := uri.Path[idx+1:]
-
-	var host string
-	if strings.Contains(rawurl, "ingest.sentry.io") {
-		// TODO slice the o87286 dynamically
-		host = "o87286.ingest.sentry.io"
-	}
-	if strings.Contains(rawurl, "@localhost:") {
-		host = "localhost:9000"
-	}
-	if host == "" {
-		log.Fatal("missing host")
-	}
-	// if len(key) < 31 || len(key) > 32 {
-	// 	log.Fatal("bad key length")
-	// }
-	if projectId == "" {
-		log.Fatal("missing project Id")
-	}
-	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
-	return &DSN{
-		host,
-		rawurl,
-		key,
-		projectId,
-	}
-}
-
-func (d DSN) storeEndpoint() string {
-	var fullurl string
-	if strings.Contains(d.host, "ingest.sentry.io") {
-		// TODO [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
-		// fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:])
-	}
-	if d.host == "localhost:9000" {
-		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
-	}
-	if fullurl == "" {
-		log.Fatal("problem with fullurl")
-	}
-	return fullurl
-}
-func (d DSN) envelopeEndpoint() string {
-	var fullurl string
-	if strings.Contains(d.host, "ingest.sentry.io") {
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key[1:], "&sentry_version=7")
-	}
-	if d.host == "localhost:9000" {
-		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
-	}
-	if fullurl == "" {
-		log.Fatal("problem with fullurl")
-	}
-	return fullurl
-}
-
-// TODO - could return an error instead
-func dsnToStoreEndpoint(projectDSNs map[string]*DSN, projectPlatform string) string {
-	if projectPlatform == "javascript" {
-		return projectDSNs["javascript"].storeEndpoint()
-	} else if projectPlatform == "python" {
-		return projectDSNs["python"].storeEndpoint()
-	} else {
-		log.Fatal("platform type not supported")
-	}
-	return ""
-}
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -163,6 +71,7 @@ type DemoAutomation struct {
 	bucketHandle          *storage.BucketHandle // `client.Bucket(bucketName)` for setting this
 	bucketHandleFileNames []string              // `query := &storage.Query{Prefix: "eventtest"}` for setting this
 	// TODO consider `events []EventJson` ?
+	// TODO consider setDsns...
 }
 
 // TODO METHODS
@@ -254,13 +163,6 @@ func main() {
 func printObj(obj *storage.ObjectAttrs) {
 	fmt.Printf("filename: /%v/%v \n", obj.Bucket, obj.Name)
 	// fmt.Printf("ContentType: %q, ", obj.ContentType)
-	// fmt.Printf("ACL: %#v, ", obj.ACL)
 	// fmt.Printf("Owner: %v, ", obj.Owner)
-	// fmt.Printf("ContentEncoding: %q, ", obj.ContentEncoding)
 	// fmt.Printf("Size: %v, ", obj.Size)
-	// fmt.Printf("MD5: %q, ", obj.MD5)
-	// fmt.Printf("CRC32C: %q, ", obj.CRC32C)
-	// fmt.Printf("Metadata: %#v, ", obj.Metadata)
-	// fmt.Printf("MediaLink: %q, ", obj.MediaLink)
-	// fmt.Printf("StorageClass: %q, ", obj.StorageClass)
 }
