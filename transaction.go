@@ -57,7 +57,7 @@ func (t *Transaction) eventId() {
 	t.EventId = uuid4
 }
 
-// setting here, and tag may get value from it?
+// setting here, and tag gets value from it?
 func (t *Transaction) release() {
 	date := time.Now()
 	month := date.Month()

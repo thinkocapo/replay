@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// TODO consider making Event.Dsn and then call DSN.dsnToStoreEndpoint here
+// Should not be Event.Dsn because it's the 'client' that has the dsn, and handles thrown error/exception
 // should be no Request.DSN because Request only wants Request.storeEndpoint
 type Request struct {
 	Payload       []byte
