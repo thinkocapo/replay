@@ -1,6 +1,5 @@
-<!-- ![The Undertaker](./img/undertaker-1.png) -->
 # The Undertaker
-The Undertaker is an event traffic replay service. Re(p)lay
+The Undertaker is an event traffic replay service.
 
 ## Why?  
 `main.go` takes a bunch of JSON events, modifies them, and sends them up to Sentry. No SDK involved.
