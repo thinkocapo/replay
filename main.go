@@ -36,11 +36,6 @@ var (
 	traceIds    []string
 )
 
-type Timestamp struct {
-	time.Time
-	rfc3339 bool
-}
-
 type DSN struct {
 	host      string
 	rawurl    string
@@ -137,13 +132,14 @@ func init() {
 	}
 
 	all = flag.Bool("all", false, "send all events. default is send latest event")
-	id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
+	// id = flag.String("id", "", "id of event in sqlite database") // 08/27 non-functional today
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
-	db = flag.String("db", "", "database.json")
+	// db = flag.String("db", "", "database.json")
 	js = flag.String("js", "", "javascript DSN")
 	py = flag.String("py", "", "python DSN")
 	flag.Parse()
 
+	// TODO demoAutomation.Dsns.configure() or demoAutomation.configureDsns()
 	projectDSNs = make(map[string]*DSN)
 	projectDSNs["javascript"] = parseDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	if *js != "" {
@@ -154,14 +150,27 @@ func init() {
 		projectDSNs["python"] = parseDSN(*py)
 	}
 
-	if *db == "" {
-		database = os.Getenv("JSON")
-	} else {
-		database = *db
-	}
+	// if *db == "" {
+	// 	database = os.Getenv("JSON")
+	// } else {
+	// 	database = *db
+	// }
 }
 
+type DemoAutomation struct {
+	client                *storage.Client
+	ctx                   context.Context
+	bucketHandle          *storage.BucketHandle // `client.Bucket(bucketName)` for setting this
+	bucketHandleFileNames []string              // `query := &storage.Query{Prefix: "eventtest"}` for setting this
+	// TODO consider `events []EventJson` ?
+}
+
+// TODO METHODS
+// Constructor/Init for DemoAutomation
+// then can call demoAutomation.client() demoAutomation.bucketHandle.Objects()
+
 func main() {
+	// TODO da | demoAutomation
 
 	bucketName := os.Getenv("BUCKET")
 	// Initialize/Connect the Client
@@ -195,10 +204,10 @@ func main() {
 	/*
 		storageClient := StorageClient(os.Getenv("BUCKET")) <-- is the init
 		//or
-		storageClient.init(os.Getenv("BUCKET"))
-		storageClient.query("event") .prefixQuery("event") .queryBucket .bucketQuery() .bucketSet()
-		storageClient.listBucketContents() .getBucket()
-		events := storageClient.getFiles() .bucketFiles()
+		demoAutomation.init(os.Getenv("BUCKET"))
+		demoAutomation.query("event") .prefixQuery("event") .queryBucket .bucketQuery() .bucketSet()
+		demoAutomation.listBucketContents() .getBucket()
+		events := demoAutomation.getFiles() .bucketFiles()
 	*/
 
 	// Read each file's content

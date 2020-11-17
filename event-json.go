@@ -8,6 +8,8 @@ import (
 type TypeSwitch struct {
 	Kind string `json:"type"`
 }
+
+// TODO Event instead of EventJson?
 type EventJson struct {
 	TypeSwitch `json:"type"`
 	*Error

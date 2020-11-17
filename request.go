@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// TODO consider making EventJson.Dsn Request.DSN and then call DSN.dsnToStoreEndpoint here
 type Request struct {
 	Payload       []byte
 	StoreEndpoint string
