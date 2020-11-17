@@ -1,66 +1,102 @@
 package main
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"math/rand"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-func decodeGzip(bodyBytesInput []byte) (bodyBytesOutput []byte) {
-	bodyReader, err := gzip.NewReader(bytes.NewReader(bodyBytesInput))
-	if err != nil {
-		fmt.Println(err)
+func createUser() string {
+	rand.Seed(time.Now().UnixNano())
+	alpha := strings.Split("abcdefghijklmnopqrstuvwxyz", "")[rand.Intn(9)]
+	var alphanumeric string
+	for i := 0; i < 3; i++ {
+		alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
 	}
-	bodyBytesOutput, err = ioutil.ReadAll(bodyReader)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return
+	return fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
 }
 
-func encodeGzip(b []byte) bytes.Buffer {
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
-	w.Write(b)
-	w.Close()
-	// return buf.Bytes()
-	return buf
-}
-
-func marshalJSON(body map[string]interface{}) []byte {
-	bodyBytes, errBodyBytes := json.Marshal(body)
-	if errBodyBytes != nil {
-		fmt.Println(errBodyBytes)
+func getTraceIds(events []Event) {
+	for _, event := range events {
+		var contexts map[string]interface{}
+		if event.Kind == ERROR {
+			contexts = event.Error.Contexts
+		}
+		if event.Kind == TRANSACTION {
+			contexts = event.Transaction.Contexts
+		}
+		if contexts != nil {
+			if _, found := contexts["trace"]; found {
+				trace := contexts["trace"]
+				trace_id := trace.(map[string]interface{})["trace_id"].(string)
+				if trace_id != "" {
+					matched := false
+					for _, value := range traceIds {
+						if trace_id == value {
+							matched = true
+						}
+					}
+					if !matched {
+						traceIds = append(traceIds, trace_id)
+					}
+				}
+			}
+		}
 	}
-	return bodyBytes
+	fmt.Println("> getTraceids traceIds", traceIds)
 }
 
-func marshalJSONItem(item interface{}) []byte {
-	//fmt.Println("\n > marshalJSONItem BEFORE", item) // {2b7e81ebe33349cda2a77f04c30e8174 2020-08-29T05:43:31.286573Z}
-	itemBytes, errItemBytes := json.Marshal(item)
-	if errItemBytes != nil {
-		fmt.Println(errItemBytes)
+func undertake(body map[string]interface{}) {
+	if body["tags"] == nil {
+		body["tags"] = make(map[string]interface{})
 	}
-	//fmt.Println("\n > marshalJSONItem ", string(itemBytes)) // {"event_id":"2b7e81ebe33349cda2a77f04c30e8174","sent_at":"2020-08-29T05:43:31.286573Z"}
-	return itemBytes
+	tags := body["tags"].(map[string]interface{})
+	tags["undertaker"] = "h4ckweek"
 }
 
-func unmarshalJSON(bytes []byte) map[string]interface{} {
-	var _interface map[string]interface{}
-	if err := json.Unmarshal(bytes, &_interface); err != nil {
-		panic(err)
+func updateTraceIds(events []Event) {
+	for _, TRACE_ID := range traceIds {
+		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
+		NEW_TRACE_ID := uuid4
+
+		for _, event := range events {
+			if event.Kind == ERROR {
+				contexts := event.Error.Contexts
+				if contexts != nil {
+					trace := contexts["trace"]
+					if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
+						// fmt.Println("\n> MATCHED Error trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
+						trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+						// fmt.Println("> MATCHED Error trace_id AFTER", transport.bodyError["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+					}
+				}
+			}
+			if event.Kind == TRANSACTION {
+				contexts := event.Transaction.Contexts
+				if contexts != nil {
+					trace := contexts["trace"]
+					if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
+						trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+						//fmt.Println(">   MATCHED Transaction trace_id AFTER", item.(map[string]interface{})["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+
+						// should check if 'Spans' field exists. it may have been set to 0 if nothing was unmarshal'd to it
+						if len(event.Transaction.Spans) > 0 {
+							spans := event.Transaction.Spans
+							// if len(spans.([]interface{})) > 0 {
+							for _, value := range spans {
+								// fmt.Println("\n> SPAN Transaction trace_id BEFORE ", value["trace_id"])
+								value["trace_id"] = NEW_TRACE_ID
+								// fmt.Println("> SPAN Transaction trace_id AFTER", event.Transaction.Spans[0]["trace_id"])
+							}
+							// }
+						}
+					}
+				}
+			}
+		}
+
 	}
-	return _interface
 }
-
-// func unmarshalJSONItem(item string) Item {
-// 	var _interface Item
-// 	if err := json.Unmarshal([]byte(item), &_interface); err != nil {
-// 		panic(err)
-// 	}
-// 	return _interface
-// 	// return Item{id: "test"} // wouldn't work
-// }
-

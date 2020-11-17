@@ -31,9 +31,9 @@ type Error struct {
 	Culprit         string                 `json:"culprit"`
 	Environment     string                 `json:"environment"`
 	Exception       map[string]interface{} `json:"exception"`
-	Fingerprint     []string               `json:"fingerprint"`     // nothing new but also no processing error warnings
-	Grouping_config map[string]interface{} `json:"grouping_config"` // nothing new but also no processing error warnings
-	Hashes          []string               `json:"hashes"`          // nothing new but also no processing error warnings
+	Fingerprint     []string               `json:"fingerprint"`
+	Grouping_config map[string]interface{} `json:"grouping_config"`
+	Hashes          []string               `json:"hashes"`
 	Key_id          string                 `json:"key_id"`
 	Level           string                 `json:"level"`
 	Logger          string                 `json:"logger"`
@@ -45,10 +45,9 @@ type Error struct {
 	Extra           map[string]interface{} `json:"extra"`
 }
 
+const ERROR = "error"
+
 func (e *Error) eventId() {
-	// if _, ok := e.EventId; !ok {
-	// 	log.Print("no event_id on object from DB")
-	// }
 	var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
 	e.EventId = uuid4
 }
@@ -73,16 +72,26 @@ func (e *Error) release() {
 	e.Release = release
 }
 
+// TODO sync same user across all errors+tx's in the dataset
 func (e *Error) user() {
 	e.User = make(map[string]interface{})
-	user := e.User //.(map[string]interface{})
+	user := e.User
 	user["email"] = createUser()
 }
 
+/*
+PYTHON timestamp format is 2020-06-06T04:54:56.636664Z RFC3339Nano
+JAVASCRIPT timestamp format is 1591419091.4805 to 1591419092.000035
+PARENT TRACE - Adjust the parentDifference/spanDifference between .01 and .2 (1% and 20% difference) so the 'end timestamp's always shift the same amount (no gaps at the end)
+TRANSACTIONS. body.contexts.trace.span_id is the Parent Trace. start/end here is same as the sdk's start_timestamp/timestamp, and start_timestamp is only present in transactions
+To see a full span `firstSpan := body["spans"].([]interface{})[0].(map[string]interface{})``
+7 decimal places as the range sent by sdk's is 4 to 7
+https://www.epochconverter.com/
+Float form is 1.5914674155654302e+09
+*/
 func (e *Error) timestamp() {
 	unixTimestamp := fmt.Sprint(time.Now().Unix())
 	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
-	// fmt.Print("> decimalTimestamp\n", decimalTimestamp)
 	if err1 != nil {
 		log.Fatal(err1)
 	}

@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 )
 
 type Request struct {
@@ -15,28 +14,27 @@ type Request struct {
 	StoreEndpoint string
 }
 
-func NewRequest(event EventJson) *Request {
+func NewRequest(event Event) *Request {
 	r := new(Request)
-	if event.Kind == "error" {
-		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Error.Platform)
 
-		bodyBytes, errBodyBytes := json.Marshal(event.Error)
-		if errBodyBytes != nil {
-			fmt.Println(errBodyBytes)
-		}
-		r.Payload = bodyBytes
+	var bodyBytes []byte
+	var err error
+	if event.Kind == ERROR {
+		bodyBytes, err = json.Marshal(event.Error)
 	}
-	if event.Kind == "transaction" {
-		r.StoreEndpoint = dsnToStoreEndpoint(projectDSNs, event.Transaction.Platform)
-		bodyBytes, errBodyBytes := json.Marshal(event.Transaction)
-		if errBodyBytes != nil {
-			fmt.Println(errBodyBytes)
-		}
-		r.Payload = bodyBytes
+	if event.Kind == TRANSACTION {
+		bodyBytes, err = json.Marshal(event.Transaction)
 	}
-	// TODO move `r.Payload = bodyBytes` to down here
-	// TODO check if either Payload or StoreEndpoint are nil
-	// log.Fatal("unrecognized event.Kind", event.Kind)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	r.Payload = bodyBytes
+	r.StoreEndpoint = event.DSN.storeEndpoint()
+
+	if r.StoreEndpoint == "" || r.Payload == nil {
+		fmt.Println("something was nil")
+	}
 	return r
 }
 
@@ -51,6 +49,7 @@ func (r Request) send() bool {
 	fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
+		var httpClient = &http.Client{}
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil {
 			log.Fatal(requestErr)
@@ -62,15 +61,6 @@ func (r Request) send() bool {
 		fmt.Printf("> KIND|RESPONSE: %s \n", string(responseData))
 	} else {
 		fmt.Print("> event IGNORED \n")
-	}
-	return true
-}
-
-// DEPRECATING...
-func sendRequests(requests []Request) bool {
-	for _, request := range requests {
-		request.send()
-		time.Sleep(750 * time.Millisecond)
 	}
 	return true
 }

@@ -1,19 +1,5 @@
 all:
-	go build -o bin/event-to-sentry *.go
+	go build -o bin/main *.go && ./bin/main
 
-proxy:
-	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run -p 3001
-proxyhttps:
-	FLASK_APP=./python/proxy.py FLASK_ENV=development flask run --cert=adhoc -p 3001
-
-eventsentry:
-	go run event-to-sentry.go
-eventsentrypy:
-	python3 event-to-sentry.py
-
-createdb:
-	python3 test/create-db.py
-removedb:
-	python3 test/remove-db.py
-testdb:
-	python3 test/db.py
+i:
+	go build -o bin/main *.go && ./bin/main -i

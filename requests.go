@@ -1,7 +1,7 @@
 package main
 
 type Requests struct {
-	events []EventJson
+	events []Event
 }
 
 func (r *Requests) send() {
