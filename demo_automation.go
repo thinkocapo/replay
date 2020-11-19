@@ -34,11 +34,12 @@ func (d *DemoAutomation) getEvents() []Event {
 	bucketHandle := client.Bucket(bucketName)
 
 	var fileNames []string
-	query := &storage.Query{Prefix: "eventtest"}
+	query := &storage.Query{Prefix: "eeeventtest"}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
 		if err == iterator.Done {
+			sentry.captureException(err)
 			break
 		}
 		if err != nil {
