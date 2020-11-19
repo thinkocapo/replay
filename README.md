@@ -12,7 +12,7 @@ DSN_JAVASCRIPT_SAAS=
 DSN_PYTHON_SAAS=
 ```
 
-## Run Locally
+## Run
 1. `make` or `go build -o bin/main *.go && ./bin/main`
 2. Look for your events in Sentry
 
