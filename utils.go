@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 )
 
@@ -47,6 +50,23 @@ func getTraceIds(events []Event) {
 		}
 	}
 	fmt.Println("> getTraceids traceIds", traceIds)
+}
+
+func initializeSentry() {
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn:         os.Getenv("SENTRY"),
+		Environment: os.Getenv("ENVIRONMENT"),
+		Release:     time.Now().Month().String(),
+		Debug:       true,
+	})
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
+	}
+	hostName, _ := os.Hostname()
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetUser(sentry.User{Username: hostName})
+	})
+	defer sentry.Flush(2 * time.Second)
 }
 
 func undertake(body map[string]interface{}) {

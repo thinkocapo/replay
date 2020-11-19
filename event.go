@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type TypeSwitch struct {
@@ -29,6 +31,7 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		event.Transaction = &Transaction{}
 		return json.Unmarshal(data, event.Transaction)
 	default:
+		sentry.CaptureMessage("unrecognized type value " + event.Kind)
 		return fmt.Errorf("unrecognized type value %q", event.Kind)
 	}
 }

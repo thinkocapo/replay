@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/getsentry/sentry-go"
 	"google.golang.org/api/iterator"
 )
 
@@ -23,6 +24,7 @@ func (d *DemoAutomation) getEvents() []Event {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
+		sentry.CaptureException(err)
 		log.Fatalln("storage.NewClient:", err)
 	}
 	defer client.Close()
@@ -34,15 +36,16 @@ func (d *DemoAutomation) getEvents() []Event {
 	bucketHandle := client.Bucket(bucketName)
 
 	var fileNames []string
-	query := &storage.Query{Prefix: "eeeventtest"}
+	query := &storage.Query{Prefix: "eventtest"}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
 		if err == iterator.Done {
-			sentry.captureException(err)
+			sentry.CaptureMessage(fmt.Sprintf("finished retrieving %v file names", len(fileNames)))
 			break
 		}
 		if err != nil {
+			sentry.CaptureException(err)
 			log.Fatalln("listBucket: unable to list bucket", err)
 		}
 		fileNames = append(fileNames, obj.Name)
@@ -54,6 +57,7 @@ func (d *DemoAutomation) getEvents() []Event {
 	for _, fileName := range fileNames {
 		rc, err := bucketHandle.Object(fileName).NewReader(ctx)
 		if err != nil {
+			sentry.CaptureException(err)
 			log.Fatalln("NewReader:", err)
 		}
 		byteValue, _ := ioutil.ReadAll(rc)
@@ -61,6 +65,7 @@ func (d *DemoAutomation) getEvents() []Event {
 		// Dev Note - The Event's UnmarshalJSON method is overriden in Event.go
 		var event Event
 		if err := json.Unmarshal(byteValue, &event); err != nil {
+			sentry.CaptureException(err)
 			panic(err)
 		}
 		event.setDsn()
