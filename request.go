@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,7 +37,8 @@ func NewRequest(event Event) *Request {
 	r.StoreEndpoint = event.DSN.storeEndpoint()
 
 	if r.StoreEndpoint == "" || r.Payload == nil {
-		fmt.Println("something was nil")
+		sentry.CaptureException(errors.New("missing StoreEndpoint or Payload"))
+		log.Fatal("missing StoreEndpoint or Payload")
 	}
 	return r
 }

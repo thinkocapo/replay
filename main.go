@@ -17,6 +17,7 @@ var (
 )
 
 func init() {
+	initializeSentry()
 
 	if err := godotenv.Load(); err != nil {
 		sentry.CaptureMessage("No .env file found")
@@ -25,8 +26,6 @@ func init() {
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
-	initializeSentry()
-
 }
 
 func main() {

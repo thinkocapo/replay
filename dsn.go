@@ -71,17 +71,3 @@ func (d DSN) storeEndpoint() string {
 	}
 	return fullurl
 }
-
-func (d DSN) envelopeEndpoint() string {
-	var fullurl string
-	if strings.Contains(d.host, "ingest.sentry.io") {
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key[1:], "&sentry_version=7")
-	}
-	if d.host == "localhost:9000" {
-		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/envelope/?sentry_key=", d.key, "&sentry_version=7")
-	}
-	if fullurl == "" {
-		log.Fatal("problem with fullurl")
-	}
-	return fullurl
-}
