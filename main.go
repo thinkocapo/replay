@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -16,15 +17,21 @@ var (
 )
 
 func init() {
+
 	if err := godotenv.Load(); err != nil {
+		sentry.CaptureMessage("No .env file found")
 		log.Print("No .env file found")
 	}
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
+	initializeSentry()
+
 }
 
 func main() {
+	sentry.CaptureMessage("job started")
+
 	demoAutomation := DemoAutomation{}
 
 	events := demoAutomation.getEvents()

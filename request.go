@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type Request struct {
@@ -26,6 +28,7 @@ func NewRequest(event Event) *Request {
 		bodyBytes, err = json.Marshal(event.Transaction)
 	}
 	if err != nil {
+		sentry.CaptureException(err)
 		fmt.Println(err)
 	}
 
@@ -52,10 +55,12 @@ func (r Request) send() bool {
 		var httpClient = &http.Client{}
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil {
+			sentry.CaptureException(requestErr)
 			log.Fatal(requestErr)
 		}
 		responseData, responseDataErr := ioutil.ReadAll(response.Body)
 		if responseDataErr != nil {
+			sentry.CaptureException(responseDataErr)
 			log.Fatal(responseDataErr)
 		}
 		fmt.Printf("> KIND|RESPONSE: %s \n", string(responseData))
