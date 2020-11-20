@@ -12,7 +12,6 @@ import (
 var (
 	all      *bool
 	ignore   *bool
-	DSNs     map[string]*DSN
 	traceIds []string
 )
 
