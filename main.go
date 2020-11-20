@@ -16,13 +16,11 @@ var (
 )
 
 func init() {
-	initializeSentry()
-	sentry.CaptureMessage("job started")
-
 	if err := godotenv.Load(); err != nil {
-		sentry.CaptureException(err)
 		log.Print("No .env file found")
 	}
+	initializeSentry()
+	sentry.CaptureMessage("job started")
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
