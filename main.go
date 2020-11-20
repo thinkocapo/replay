@@ -18,9 +18,10 @@ var (
 
 func init() {
 	initializeSentry()
+	sentry.CaptureMessage("job started")
 
 	if err := godotenv.Load(); err != nil {
-		sentry.CaptureMessage("No .env file found")
+		sentry.CaptureException(err)
 		log.Print("No .env file found")
 	}
 
@@ -29,8 +30,6 @@ func init() {
 }
 
 func main() {
-	sentry.CaptureMessage("job started")
-
 	demoAutomation := DemoAutomation{}
 
 	events := demoAutomation.getEvents()
