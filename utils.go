@@ -62,7 +62,6 @@ func initializeSentry() {
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-	// hostName, _ := os.Hostname()
 	if hostName, _ := os.Hostname(); hostName != "" {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetUser(sentry.User{Username: hostName})

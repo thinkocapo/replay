@@ -41,7 +41,7 @@ func main() {
 			event.Error.user()
 			event.Error.timestamp()
 		}
-		if event.Kind == "transaction" {
+		if event.Kind == TRANSACTION {
 			event.Transaction.eventId()
 			event.Transaction.release()
 			event.Transaction.user()
