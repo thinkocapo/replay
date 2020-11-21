@@ -52,7 +52,7 @@ func NewDSN(rawurl string) *DSN {
 		sentry.CaptureMessage("missing project Id")
 		log.Fatal("missing project Id")
 	}
-	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
+	// fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,
