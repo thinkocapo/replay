@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type DSN struct {
@@ -26,6 +28,7 @@ func NewDSN(rawurl string) *DSN {
 	}
 	idx := strings.LastIndex(uri.Path, "/")
 	if idx == -1 {
+		sentry.CaptureMessage("missing projectId in dsn")
 		log.Fatal("missing projectId in dsn")
 	}
 	projectId := uri.Path[idx+1:]
@@ -39,12 +42,14 @@ func NewDSN(rawurl string) *DSN {
 		host = "localhost:9000"
 	}
 	if host == "" {
+		sentry.CaptureMessage("missing host")
 		log.Fatal("missing host")
 	}
 	// if len(key) < 31 || len(key) > 32 {
 	// 	log.Fatal("bad key length")
 	// }
 	if projectId == "" {
+		sentry.CaptureMessage("missing project Id")
 		log.Fatal("missing project Id")
 	}
 	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
@@ -67,7 +72,8 @@ func (d DSN) storeEndpoint() string {
 		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
 	}
 	if fullurl == "" {
-		log.Fatal("problem with fullurl")
+		sentry.CaptureMessage("missing fullurl")
+		log.Fatal("missing fullurl")
 	}
 	return fullurl
 }

@@ -46,6 +46,7 @@ func NewRequest(event Event) *Request {
 func (r Request) send() bool {
 	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
 	if errNewRequest != nil {
+		sentry.CaptureException(errNewRequest)
 		log.Fatalln(errNewRequest)
 	}
 

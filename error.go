@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
@@ -93,10 +94,12 @@ func (e *Error) timestamp() {
 	unixTimestamp := fmt.Sprint(time.Now().Unix())
 	decimalTimestamp, err1 := decimal.NewFromString(unixTimestamp[:10] + "." + unixTimestamp[10:])
 	if err1 != nil {
+		sentry.CaptureException(err1)
 		log.Fatal(err1)
 	}
 	timestamp, err2 := decimalTimestamp.Round(7).Float64()
 	if err2 == false {
+		// sentry.CaptureException(err2)
 		log.Fatal(err2)
 	}
 	e.Timestamp = timestamp
