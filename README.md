@@ -17,9 +17,11 @@ DSN_PYTHON_SAAS=
 2. Look for your events in Sentry
 
 ## Notes
--i is for ignoring the http call to Sentry
+`-i` is for ignoring the http call to Sentry  
+
+`prefix` of the files  
 ```
-go build -o bin/main *.go && ./bin/main -i
+go build -o bin/main *.go && ./bin/main <prefix> -i
 ```
 install Google Cloud SDK 303.0.0  
 https://develop.sentry.dev/sdk/store

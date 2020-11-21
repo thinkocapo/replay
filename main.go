@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
@@ -13,6 +14,7 @@ var (
 	all      *bool
 	ignore   *bool
 	traceIds []string
+	prefix   string
 )
 
 func init() {
@@ -24,12 +26,14 @@ func init() {
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
+
+	prefix = os.Args[1]
 }
 
 func main() {
 	demoAutomation := DemoAutomation{}
 
-	events := demoAutomation.getEvents()
+	events := demoAutomation.getEvents(prefix)
 
 	for _, event := range events {
 		if event.Kind == ERROR {
