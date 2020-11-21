@@ -24,13 +24,13 @@ type Error struct {
 	Type      string                 `json:"type"`
 	Platform  string                 `json:"platform"`
 
-	Project         int                    `json:"project"`
-	Message         string                 `json:"message"`
-	Tags            [][]string             `json:"tags"`
-	Breadcrumbs     map[string]interface{} `json:"breadcrumbs"`
-	Contexts        map[string]interface{} `json:"contexts"`
-	Culprit         string                 `json:"culprit"`
-	Environment     string                 `json:"environment"`
+	Project     int                    `json:"project"`
+	Message     string                 `json:"message"`
+	Tags        [][]string             `json:"tags"`
+	Breadcrumbs map[string]interface{} `json:"breadcrumbs"`
+	Contexts    map[string]interface{} `json:"contexts"`
+	Culprit     string                 `json:"culprit"`
+	// Environment     string                 `json:"environment"`
 	Exception       map[string]interface{} `json:"exception"`
 	Fingerprint     []string               `json:"fingerprint"`
 	Grouping_config map[string]interface{} `json:"grouping_config"`
@@ -44,9 +44,7 @@ type Error struct {
 	Sdk             map[string]interface{} `json:"sdk"`
 	Version         string                 `json:"version"`
 	Extra           map[string]interface{} `json:"extra"`
-
-	// Title string `json:"title"`
-	Modules map[string]interface{} `json:"modules"`
+	Modules         map[string]interface{} `json:"modules"`
 }
 
 const ERROR = "error"
