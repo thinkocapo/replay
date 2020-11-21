@@ -22,7 +22,7 @@ func NewRequest(event Event) *Request {
 
 	var bodyBytes []byte
 	var err error
-	if event.Kind == ERROR {
+	if event.Kind == ERROR || event.Kind == DEFAULT {
 		bodyBytes, err = json.Marshal(event.Error)
 	}
 	if event.Kind == TRANSACTION {

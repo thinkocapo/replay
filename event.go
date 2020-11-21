@@ -19,6 +19,8 @@ type Event struct {
 	*DSN
 }
 
+const DEFAULT = "default"
+
 func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
@@ -30,6 +32,9 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	case TRANSACTION:
 		event.Transaction = &Transaction{}
 		return json.Unmarshal(data, event.Transaction)
+	case DEFAULT:
+		event.Error = &Error{}
+		return json.Unmarshal(data, event.Error)
 	default:
 		sentry.CaptureMessage("unrecognized type value " + event.Kind)
 		return fmt.Errorf("unrecognized type value %q", event.Kind)
@@ -43,10 +48,10 @@ func (event *Event) setDsn() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	}
-	if event.Kind == ERROR && event.Error.Platform == JAVASCRIPT {
+	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
 	}
-	if event.Kind == ERROR && event.Error.Platform == PYTHON {
+	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	}
 }

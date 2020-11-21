@@ -36,7 +36,7 @@ func (d *DemoAutomation) getEvents(prefix string) []Event {
 	bucketHandle := client.Bucket(bucketName)
 
 	var fileNames []string
-	fmt.Println("***** PREFIX IS ***", prefix)
+
 	query := &storage.Query{Prefix: prefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {

@@ -44,6 +44,9 @@ type Error struct {
 	Sdk             map[string]interface{} `json:"sdk"`
 	Version         string                 `json:"version"`
 	Extra           map[string]interface{} `json:"extra"`
+
+	// Title string `json:"title"`
+	Modules map[string]interface{} `json:"modules"`
 }
 
 const ERROR = "error"

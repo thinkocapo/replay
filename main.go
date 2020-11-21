@@ -27,6 +27,7 @@ func init() {
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
 
+	// prefix of files to read
 	prefix = os.Args[1]
 }
 
@@ -36,7 +37,7 @@ func main() {
 	events := demoAutomation.getEvents(prefix)
 
 	for _, event := range events {
-		if event.Kind == ERROR {
+		if event.Kind == ERROR || event.Kind == DEFAULT {
 			event.Error.eventId()
 			event.Error.release()
 			event.Error.user()
