@@ -17,8 +17,6 @@ type DSN struct {
 }
 
 func NewDSN(rawurl string) *DSN {
-	fmt.Println("> rawlurl", rawurl)
-
 	// still need support for http vs. https 7: vs 8:
 	key := strings.Split(rawurl, "@")[0][7:]
 
@@ -52,7 +50,6 @@ func NewDSN(rawurl string) *DSN {
 		sentry.CaptureMessage("missing project Id")
 		log.Fatal("missing project Id")
 	}
-	fmt.Printf("> DSN { host: %s, projectId: %s }\n", host, projectId)
 	return &DSN{
 		host,
 		rawurl,

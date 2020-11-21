@@ -88,10 +88,13 @@ func updateTraceIds(events []Event) {
 				contexts := event.Error.Contexts
 				if contexts != nil {
 					trace := contexts["trace"]
-					if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
-						// fmt.Println("\n> MATCHED Error trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
-						trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
-						// fmt.Println("> MATCHED Error trace_id AFTER", transport.bodyError["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+					if trace != nil { // need this or else kind:default's error out
+
+						if TRACE_ID == trace.(map[string]interface{})["trace_id"] {
+							// fmt.Println("\n> MATCHED Error trace_id BEFORE", trace.(map[string]interface{})["trace_id"])
+							trace.(map[string]interface{})["trace_id"] = NEW_TRACE_ID
+							// fmt.Println("> MATCHED Error trace_id AFTER", transport.bodyError["contexts"].(map[string]interface{})["trace"].(map[string]interface{})["trace_id"].(string))
+						}
 					}
 				}
 			}

@@ -19,7 +19,7 @@ type DemoAutomation struct{}
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
 
-func (d *DemoAutomation) getEvents() []Event {
+func (d *DemoAutomation) getEvents(prefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -36,7 +36,8 @@ func (d *DemoAutomation) getEvents() []Event {
 	bucketHandle := client.Bucket(bucketName)
 
 	var fileNames []string
-	query := &storage.Query{Prefix: "eventtest"}
+
+	query := &storage.Query{Prefix: prefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
