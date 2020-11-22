@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -18,6 +19,58 @@ type DemoAutomation struct{}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
+
+func (d *DemoAutomation) downloadEvents() []Event {
+	org := os.Getenv("ORG")
+	var eventIds []string
+
+	// Call Sentry w/ 24HrPeriod events with Projects selected
+	endpoint := "https://sentry.io/api/0/organizations/testorg-az/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=50&query="
+	request, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		sentry.CaptureException(err)
+		log.Fatalln(err)
+	}
+	request.Header.Set("content-type", "application/json")
+	var httpClient = &http.Client{}
+	response, requestErr := httpClient.Do(request)
+	if requestErr != nil {
+		sentry.CaptureException(requestErr)
+		log.Fatal(requestErr)
+	}
+	body, errResponse := ioutil.ReadAll(response.Body)
+	if errResponse != nil {
+		sentry.CaptureException(errResponse)
+		log.Fatal(errResponse)
+	}
+
+	// TODO
+	var q Query
+	err = json.Unmarshal(body, &q)
+	// responseData []byte into []interface{} (only need eventId, no need to Type check everything)
+	for _, event := range responseData {
+		eventId := event.(map[string]interface{})["eventId"]
+		eventIds = append(eventIds, eventId)
+	}
+
+	for _, id := range eventIds {
+		// 2. Call JSON URL for each
+		// http https://sentry.io/api/0/projects/testorg-az/will-frontend-react/events/e65817084e5b4af19fe3005d7c536e84/json/
+
+		// 3.
+		byteValue, _ := ioutil.ReadAll(somethingThatReadSentry)
+		var event Event
+		if err := json.Unmarshal(byteValue, &event); err != nil {
+			sentry.CaptureException(err)
+			panic(err)
+		}
+		event.setDsn()
+		events = append(events, event)
+	}
+
+	var events []Event
+	return events
+}
 
 func (d *DemoAutomation) getEvents(prefix string) []Event {
 	// Initialize/Connect the Client
