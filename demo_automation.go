@@ -29,7 +29,8 @@ func (d *DemoAutomation) downloadEvents() []Event {
 
 	// Call Sentry w/ 24HrPeriod events with Projects selected
 	// TODO could get pg 2 after
-	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
+	// endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
+	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 
@@ -52,13 +53,13 @@ func (d *DemoAutomation) downloadEvents() []Event {
 	json.Unmarshal(body, &discover)
 	eventMinis := discover.Data
 	for _, e := range eventMinis {
-		// eventId := event.(map[string]interface{})["eventId"]
+		// TODO 10:50p need `project` as well for passing into query...
 		eventIds = append(eventIds, e["id"].(string))
 	}
-	fmt.Println("\n> > > > > > > > # eventIds > > > > > > > >", len(eventIds))
+	fmt.Println("\n> > > > > > > > # eventIds > > > > > > > >", eventIds)
 
 	for _, id := range eventIds {
-		// 	// TODO Call JSON URL for each
+		// TODO - need right project name here
 		endpoint2 := fmt.Sprint("https://sentry.io/api/0/projects/", org, "/will-frontend-react/events/", id, "/json/")
 		request2, _ := http.NewRequest("GET", endpoint2, nil)
 
@@ -73,13 +74,20 @@ func (d *DemoAutomation) downloadEvents() []Event {
 		}
 		body2, errResponse2 := ioutil.ReadAll(response2.Body)
 		if errResponse2 != nil {
+			// TODO - could already be a bad response, if wrong project name requested
 			sentry.CaptureException(errResponse2)
 			log.Fatal(errResponse2)
 		}
 
 		var event Event
 		// TODO - may need to eliminate first 2 lines which are comments
-		json.Unmarshal(body2, &event)
+		fmt.Println("\n> > > > > > > > id", id)
+		// json.Unmarshal(body2, &event)
+		if err2 := json.Unmarshal(body2, &event); err2 != nil {
+			fmt.Println("****err2", err2)
+			sentry.CaptureException(err2)
+			panic(err2)
+		}
 		event.setDsn()
 		events = append(events, event)
 

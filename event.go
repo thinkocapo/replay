@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/getsentry/sentry-go"
 )
 
 type TypeSwitch struct {
@@ -25,6 +23,10 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
 	}
+	if event.Kind == "" {
+		fmt.Println(" * * * * ** * * NOTHING....", event)
+		// TODO - sentry,
+	}
 	switch event.Kind {
 	case ERROR:
 		event.Error = &Error{}
@@ -36,8 +38,10 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		event.Error = &Error{}
 		return json.Unmarshal(data, event.Error)
 	default:
-		sentry.CaptureMessage("unrecognized type value " + event.Kind)
-		return fmt.Errorf("unrecognized type value %q", event.Kind)
+		event.Error = &Error{}
+		return json.Unmarshal(data, event.Error)
+		// sentry.CaptureMessage("unrecognized type value " + event.Kind)
+		// return fmt.Errorf("unrecognized type value %q", event.Kind)
 	}
 	return nil // TODO test
 }
@@ -45,14 +49,14 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 func (event *Event) setDsn() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	}
-	if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	}
-	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	}
-	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	} else {
+		fmt.Println("XXXXXXXXXX", event.Kind)
 	}
+	// TODO 7:41p add else condition
 }
