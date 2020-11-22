@@ -39,6 +39,7 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		sentry.CaptureMessage("unrecognized type value " + event.Kind)
 		return fmt.Errorf("unrecognized type value %q", event.Kind)
 	}
+	return nil // TODO test
 }
 
 func (event *Event) setDsn() {

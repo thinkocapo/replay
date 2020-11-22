@@ -20,6 +20,7 @@ type DemoAutomation struct{}
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
 
+// download the events from Sentry
 func (d *DemoAutomation) downloadEvents() []Event {
 	org := os.Getenv("ORG")
 	var eventIds []string
@@ -48,8 +49,8 @@ func (d *DemoAutomation) downloadEvents() []Event {
 	var q Query
 	err = json.Unmarshal(body, &q)
 	// responseData []byte into []interface{} (only need eventId, no need to Type check everything)
-	for _, event := range responseData {
-		eventId := event.(map[string]interface{})["eventId"]
+	for _, eventId := range q {
+		// eventId := event.(map[string]interface{})["eventId"]
 		eventIds = append(eventIds, eventId)
 	}
 
@@ -72,6 +73,7 @@ func (d *DemoAutomation) downloadEvents() []Event {
 	return events
 }
 
+// get the events from GCS
 func (d *DemoAutomation) getEvents(prefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
