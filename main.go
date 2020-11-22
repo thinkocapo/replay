@@ -34,6 +34,9 @@ func init() {
 func main() {
 	demoAutomation := DemoAutomation{}
 
+	events1 := demoAutomation.downloadEvents()
+	println("> END", len(events1))
+	return
 	events := demoAutomation.getEvents(prefix)
 
 	for _, event := range events {

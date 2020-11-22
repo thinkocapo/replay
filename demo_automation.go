@@ -24,15 +24,23 @@ const PYTHON = "python"
 func (d *DemoAutomation) downloadEvents() []Event {
 	org := os.Getenv("ORG")
 	var eventIds []string
+	var events []Event
 
 	// Call Sentry w/ 24HrPeriod events with Projects selected
-	endpoint := "https://sentry.io/api/0/organizations/testorg-az/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=50&query="
+	// endpoint := "https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=50&query="
+	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=50&query=")
+	// endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=2&query=")
+
+	fmt.Println("> > > > > > >> endpoint > > > > >", endpoint)
 	request, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		sentry.CaptureException(err)
 		log.Fatalln(err)
 	}
 	request.Header.Set("content-type", "application/json")
+	BEARER_SENTRY_AUTH_TOKEN := fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN"))
+	fmt.Println("> > > > > BEARER_SENTRY_AUTH_TOKEN > > > > >", BEARER_SENTRY_AUTH_TOKEN)
+	request.Header.Set("Authorization", BEARER_SENTRY_AUTH_TOKEN)
 	var httpClient = &http.Client{}
 	response, requestErr := httpClient.Do(request)
 	if requestErr != nil {
@@ -45,31 +53,31 @@ func (d *DemoAutomation) downloadEvents() []Event {
 		log.Fatal(errResponse)
 	}
 
-	// TODO
-	var q Query
-	err = json.Unmarshal(body, &q)
+	var discover Discover
+	err = json.Unmarshal(body, &discover)
+	eventMinis := discover.Data
 	// responseData []byte into []interface{} (only need eventId, no need to Type check everything)
-	for _, eventId := range q {
+	for _, e := range eventMinis {
 		// eventId := event.(map[string]interface{})["eventId"]
-		eventIds = append(eventIds, eventId)
+		eventIds = append(eventIds, e["id"].(string))
 	}
+	fmt.Println("\n> > > > > > > > eventIds > > > > > > > >", eventIds)
 
-	for _, id := range eventIds {
-		// 2. Call JSON URL for each
-		// http https://sentry.io/api/0/projects/testorg-az/will-frontend-react/events/e65817084e5b4af19fe3005d7c536e84/json/
+	// for _, id := range eventIds {
+	// 	// TODO Call JSON URL for each
+	// 	// http https://sentry.io/api/0/projects/testorg-az/will-frontend-react/events/e65817084e5b4af19fe3005d7c536e84/json/
 
-		// 3.
-		byteValue, _ := ioutil.ReadAll(somethingThatReadSentry)
-		var event Event
-		if err := json.Unmarshal(byteValue, &event); err != nil {
-			sentry.CaptureException(err)
-			panic(err)
-		}
-		event.setDsn()
-		events = append(events, event)
-	}
+	// 	// TODO
+	// 	byteValue, _ := ioutil.ReadAll(somethingThatReadSentry)
+	// 	var event Event
+	// 	if err := json.Unmarshal(byteValue, &event); err != nil {
+	// 		sentry.CaptureException(err)
+	// 		panic(err)
+	// 	}
+	// 	event.setDsn()
+	// 	events = append(events, event)
+	// }
 
-	var events []Event
 	return events
 }
 
