@@ -16,6 +16,10 @@ import (
 )
 
 type DemoAutomation struct{}
+type EventMini struct {
+	Id      string
+	Project string
+}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
@@ -23,13 +27,11 @@ const PYTHON = "python"
 // download the events from Sentry
 func (d *DemoAutomation) downloadEvents() []Event {
 	org := os.Getenv("ORG")
-	var eventIds []string
 	var events []Event
-	n := 10
+	n := 20
 
 	// Call Sentry w/ 24HrPeriod events with Projects selected
 	// TODO could get pg 2 after
-	// endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5260888&project=1428657&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
 	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
@@ -51,16 +53,20 @@ func (d *DemoAutomation) downloadEvents() []Event {
 
 	var discover Discover
 	json.Unmarshal(body, &discover)
-	eventMinis := discover.Data
-	for _, e := range eventMinis {
-		// TODO 10:50p need `project` as well for passing into query...
-		eventIds = append(eventIds, e["id"].(string))
+	// 1 eventMinis := discover.parseEventMinis()
+	data := discover.Data
+	var eventMinis []EventMini
+	fmt.Println("> # Discover events retrieved:", len(data))
+	for _, e := range data {
+		fmt.Println(e["event.type"].(string))
+		eventMini := EventMini{e["id"].(string), e["project"].(string)}
+		eventMinis = append(eventMinis, eventMini)
 	}
-	fmt.Println("\n> > > > > > > > # eventIds > > > > > > > >", eventIds)
 
-	for _, id := range eventIds {
-		// TODO - need right project name here
-		endpoint2 := fmt.Sprint("https://sentry.io/api/0/projects/", org, "/will-frontend-react/events/", id, "/json/")
+	// or
+	// 2 for _, eventthing := discover.Data YES!
+	for _, e := range eventMinis {
+		endpoint2 := fmt.Sprint("https://sentry.io/api/0/projects/", org, "/", e.Project, "/events/", e.Id, "/json/")
 		request2, _ := http.NewRequest("GET", endpoint2, nil)
 
 		request2.Header.Set("content-type", "application/json")
@@ -80,8 +86,6 @@ func (d *DemoAutomation) downloadEvents() []Event {
 		}
 
 		var event Event
-		// TODO - may need to eliminate first 2 lines which are comments
-		fmt.Println("\n> > > > > > > > id", id)
 		// json.Unmarshal(body2, &event)
 		if err2 := json.Unmarshal(body2, &event); err2 != nil {
 			fmt.Println("****err2", err2)
@@ -90,15 +94,6 @@ func (d *DemoAutomation) downloadEvents() []Event {
 		}
 		event.setDsn()
 		events = append(events, event)
-
-		// 	byteValue, _ := ioutil.ReadAll(somethingThatReadSentry)
-		// 	var event Event
-		// 	if err := json.Unmarshal(byteValue, &event); err != nil {
-		// 		sentry.CaptureException(err)
-		// 		panic(err)
-		// 	}
-		// 	event.setDsn()
-		// 	events = append(events, event)
 	}
 
 	return events

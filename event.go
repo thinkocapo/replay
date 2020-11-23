@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type TypeSwitch struct {
@@ -24,8 +27,9 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if event.Kind == "" {
-		fmt.Println(" * * * * ** * * NOTHING....", event)
-		// TODO - sentry,
+		// TODO handle
+		sentry.CaptureMessage("no event.Kind set")
+		log.Fatal("no event.Kind set")
 	}
 	switch event.Kind {
 	case ERROR:
@@ -38,12 +42,9 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		event.Error = &Error{}
 		return json.Unmarshal(data, event.Error)
 	default:
-		event.Error = &Error{}
-		return json.Unmarshal(data, event.Error)
-		// sentry.CaptureMessage("unrecognized type value " + event.Kind)
-		// return fmt.Errorf("unrecognized type value %q", event.Kind)
+		sentry.CaptureMessage("unrecognized type value " + event.Kind)
+		return fmt.Errorf("unrecognized type value %q", event.Kind)
 	}
-	return nil // TODO test
 }
 
 func (event *Event) setDsn() {
