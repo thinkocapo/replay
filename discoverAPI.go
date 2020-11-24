@@ -13,15 +13,8 @@ import (
 )
 
 type DiscoverAPI struct {
-	// OG
-	// Data []map[string]interface{} `json:"data"`
-
 	Data     []EventMetadata
 	endpoint string
-
-	// or
-	// query string
-	// params string
 }
 
 type EventMetadata struct {
@@ -35,16 +28,13 @@ type EventMetadata struct {
 func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	org := os.Getenv("ORG")
 
-	// DEPRECATE don't need all these extra columns
-	// endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=" + strconv.Itoa(n) + "&query="
-
-	// OG, Still has Project IDs
-	// endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=" + strconv.Itoa(n) + "&query="
-
-	// ATTEMPT no project ids
 	query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
-	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
-	fmt.Println("> > ENDPOINT", endpoint)
+
+	// with 0 project names specified
+	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+
+	// with 2 project names specified
+	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
@@ -65,17 +55,20 @@ func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	json.Unmarshal(body, &d)
 
 	fmt.Println("> Data []EventMetadata  length:", len(d.Data))
+	for _, e := range d.Data {
+		fmt.Print("> > Project", e.Project)
+	}
 	return d.Data
 
-	// TODO for .execute()
+	// for .execute()
 	// return d
 }
 
-func (d DiscoverAPI) setPlatform(platform string) DiscoverAPI {
-	// TODO builder
-	// d.endpoint := query
-	return d
-}
+// func (d DiscoverAPI) setPlatform(platform string) DiscoverAPI {
+// 	// TODO builder
+// 	// d.endpoint := query
+// 	return d
+// }
 
 // DEPRECATE - Select Platform
 // func (d DiscoverAPI) platform(platform string) DiscoverAPI {
@@ -90,10 +83,10 @@ func (d DiscoverAPI) setPlatform(platform string) DiscoverAPI {
 // 	return d
 // }
 
-func (d DiscoverAPI) get() []EventMetadata {
-	return d.Data
-}
-
+// func (d DiscoverAPI) get() []EventMetadata {
+// 	return d.Data
 // }
-// idea
-// d.EventMetadatas = eventMetadatas
+
+// func (d DiscoverAPI) execute() {
+// //
+// }
