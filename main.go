@@ -37,7 +37,7 @@ func main() {
 	demoAutomation := DemoAutomation{}
 
 	events := demoAutomation.getEventsFromSentry()
-	println("demoAutomation total events downloaded:", len(events))
+	println("> demoAutomation events:", len(events))
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {

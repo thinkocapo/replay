@@ -11,21 +11,21 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-// Data is an array of events but not full events. It's an event w/ Id and Project name, like metadata
-type Discover struct {
+type DiscoverAPI struct {
 	Data []map[string]interface{} `json:"data"`
 }
 
 // IdProjectPair
 // EventIdProjectPair
-type EventMini struct {
+type EventMetadata struct {
 	Id      string
 	Project string
 }
 
-func (d Discover) latestEventList() []EventMini {
+// Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
+func (d DiscoverAPI) latestEventMetadata() []EventMetadata {
 	org := os.Getenv("ORG")
-	n := 15
+	n := 10
 
 	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
 	request, _ := http.NewRequest("GET", endpoint, nil)
@@ -45,12 +45,12 @@ func (d Discover) latestEventList() []EventMini {
 	}
 
 	json.Unmarshal(body, &d)
-	eventList := d.Data
+	eventMetadata := d.Data
 
-	var eventMinis []EventMini
-	for _, e := range eventList {
-		eventMini := EventMini{e["id"].(string), e["project"].(string)}
-		eventMinis = append(eventMinis, eventMini)
+	var eventMetadatas []EventMetadata
+	for _, e := range eventMetadata {
+		eventMetadata := EventMetadata{e["id"].(string), e["project"].(string)}
+		eventMetadatas = append(eventMetadatas, eventMetadata)
 	}
-	return eventMinis
+	return eventMetadatas
 }
