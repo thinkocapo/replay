@@ -57,7 +57,7 @@ func initializeSentry() {
 		Dsn:         os.Getenv("SENTRY"),
 		Environment: os.Getenv("ENVIRONMENT"),
 		Release:     time.Now().Month().String(),
-		Debug:       true,
+		// Debug:       true,
 	})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
