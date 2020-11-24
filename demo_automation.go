@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -15,10 +16,6 @@ import (
 )
 
 type DemoAutomation struct{}
-type EventMini struct {
-	Id      string
-	Project string
-}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
@@ -26,47 +23,18 @@ const PYTHON = "python"
 // download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
+	org := os.Getenv("ORG")
 
 	// Call Sentry w/ 24HrPeriod events with Projects selected
 	// TODO could get pg 2 after
 	discover := Discover{}
 	latestEventList := discover.latestEventList()
-	fmt.Println("latestEventList", latestEventList)
+	fmt.Println("latestEventList length:", len(latestEventList))
 
-	// endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
-	// request, _ := http.NewRequest("GET", endpoint, nil)
-	// request.Header.Set("content-type", "application/json")
-	// request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
-
-	// var httpClient = &http.Client{}
-	// response, requestErr := httpClient.Do(request)
-	// if requestErr != nil {
-	// 	sentry.CaptureException(requestErr)
-	// 	log.Fatal(requestErr)
-	// }
-	// body, errResponse := ioutil.ReadAll(response.Body)
-	// if errResponse != nil {
-	// 	sentry.CaptureException(errResponse)
-	// 	log.Fatal(errResponse)
-	// }
-	// json.Unmarshal(body, &discover)
-	// // 1 eventMinis := discover.parseEventMinis()
-	// data := discover.Data
-
-	// TODO - deprecate
-	// var eventMinis []EventMini
-	// for _, e := range data {
-	// 	fmt.Println(e["event.type"].(string))
-	// 	eventMini := EventMini{e["id"].(string), e["project"].(string)}
-	// 	eventMinis = append(eventMinis, eventMini)
-	// }
-
-	// TODO
-	// for _, eventMini := range eventList
-	/*for _, e := range eventMinis { // EventClient? // jsonClient // eventJson static method?
+	for _, e := range latestEventList {
 		endpoint2 := fmt.Sprint("https://sentry.io/api/0/projects/", org, "/", e.Project, "/events/", e.Id, "/json/")
-		request2, _ := http.NewRequest("GET", endpoint2, nil)
 
+		request2, _ := http.NewRequest("GET", endpoint2, nil)
 		request2.Header.Set("content-type", "application/json")
 		request2.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
 
@@ -74,7 +42,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 		response2, requestErr2 := httpClient.Do(request2)
 		if requestErr2 != nil {
 			sentry.CaptureException(requestErr2)
-			log.Fatal(requestErr)
+			log.Fatal(requestErr2)
 		}
 		body2, errResponse2 := ioutil.ReadAll(response2.Body)
 		if errResponse2 != nil {
@@ -93,7 +61,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 		event.setDsn()
 		events = append(events, event)
 	}
-	*/
+
 	return events
 }
 

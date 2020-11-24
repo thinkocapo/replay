@@ -11,11 +11,19 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+// Data is an array of events but not full events. It's an event w/ Id and Project name, like metadata
 type Discover struct {
 	Data []map[string]interface{} `json:"data"`
 }
 
-func (d Discover) latestEventList() string {
+// IdProjectPair
+// EventIdProjectPair
+type EventMini struct {
+	Id      string
+	Project string
+}
+
+func (d Discover) latestEventList() []EventMini {
 	org := os.Getenv("ORG")
 	n := 15
 
@@ -37,11 +45,12 @@ func (d Discover) latestEventList() string {
 	}
 
 	json.Unmarshal(body, &d)
-	// 1 eventMinis := discover.parseEventMinis()
-	// eventList := d.Data
-	fmt.Println("* * * ** * * len(d.Data) * * * * *", len(d.Data))
+	eventList := d.Data
 
-	// ...
-
-	return "testing"
+	var eventMinis []EventMini
+	for _, e := range eventList {
+		eventMini := EventMini{e["id"].(string), e["project"].(string)}
+		eventMinis = append(eventMinis, eventMini)
+	}
+	return eventMinis
 }
