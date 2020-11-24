@@ -16,13 +16,18 @@ type DiscoverAPI struct {
 	// OG
 	// Data []map[string]interface{} `json:"data"`
 
-	Data []EventMetadata
+	Data     []EventMetadata
+	endpoint string
+
+	// or
+	// query string
+	// params string
 }
 
 type EventMetadata struct {
 	Id       string
 	Project  string
-	Platform string
+	Platform string // `json:"platform.name"`
 }
 
 // Events from last 24HrPeriod events for selected Projects
@@ -30,10 +35,16 @@ type EventMetadata struct {
 func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	org := os.Getenv("ORG")
 
-	// don't need all these extra columns
+	// DEPRECATE don't need all these extra columns
 	// endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=" + strconv.Itoa(n) + "&query="
 
-	endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=" + strconv.Itoa(n) + "&query="
+	// OG, Still has Project IDs
+	// endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=" + strconv.Itoa(n) + "&query="
+
+	// ATTEMPT no project ids
+	query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
+	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+	fmt.Println("> > ENDPOINT", endpoint)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
@@ -55,10 +66,33 @@ func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 
 	fmt.Println("> Data []EventMetadata  length:", len(d.Data))
 	return d.Data
+
+	// TODO for .execute()
+	// return d
 }
 
-// idea
-// func (d *DiscoverAPI) UnmarshalJSON(data []byte) error {
+func (d DiscoverAPI) setPlatform(platform string) DiscoverAPI {
+	// TODO builder
+	// d.endpoint := query
+	return d
+}
+
+// DEPRECATE - Select Platform
+// func (d DiscoverAPI) platform(platform string) DiscoverAPI {
+// 	fmt.Print("> SELECTIT len(Data)", len(d.Data))
+// 	for _, eventMetadata := range d.Data {
+// 		if eventMetadata.Platform != platform {
+// 			fmt.Println("> > platform was", eventMetadata.Platform)
+// 		} else {
+// 			fmt.Println("> > platform is", eventMetadata.Platform)
+// 		}
+// 	}
+// 	return d
+// }
+
+func (d DiscoverAPI) get() []EventMetadata {
+	return d.Data
+}
 
 // }
 // idea
