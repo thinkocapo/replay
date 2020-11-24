@@ -25,11 +25,10 @@ func init() {
 	sentry.CaptureMessage("job started")
 
 	// TODO - check for all needed .env vars
-
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
 
-	// filePrefix of files to read
+	// Prefix of files to read, if reading from GCS
 	filePrefix = os.Args[1]
 }
 
@@ -37,7 +36,6 @@ func main() {
 	demoAutomation := DemoAutomation{}
 
 	events := demoAutomation.getEventsFromSentry()
-	println("> demoAutomation events:", len(events))
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
