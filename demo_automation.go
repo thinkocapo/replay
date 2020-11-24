@@ -19,21 +19,18 @@ type DemoAutomation struct{}
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
 
-// download the events from Sentry
+// Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
-
-	// Call Sentry w/ 24HrPeriod events with Projects selected - TODO could get pg 2 after?
-	discoverAPI := DiscoverAPI{} // DiscoverAPI
-	eventMetadata := discoverAPI.latestEventMetadata()
-	fmt.Println("> eventMetadata length:", len(eventMetadata))
+	discoverAPI := DiscoverAPI{}
+	eventMetadata := discoverAPI.latestEventMetadata(25)
 
 	eventsAPI := EventsAPI{}
 	events := eventsAPI.getEvents(eventMetadata)
-	fmt.Println("> events        length:", len(events))
 
 	return events
 }
 
+// Get the events from Google Cloud Storage
 func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
