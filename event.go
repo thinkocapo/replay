@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -27,7 +28,6 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if event.Kind == "" {
-		// TODO handle
 		sentry.CaptureMessage("no event.Kind set")
 		log.Fatal("no event.Kind set")
 	}
@@ -57,7 +57,7 @@ func (event *Event) setDsn() {
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
 	} else {
-		fmt.Println("XXXXXXXXXX", event.Kind)
+		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
+		log.Fatal("event.Kind and type not recognized " + event.Kind)
 	}
-	// TODO 7:41p add else condition
 }

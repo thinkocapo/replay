@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -25,7 +26,8 @@ type EventMetadata struct {
 func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	org := os.Getenv("ORG")
 
-	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
+	endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=" + strconv.Itoa(n) + "&query="
+
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
 	request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))

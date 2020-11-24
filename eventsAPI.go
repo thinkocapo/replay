@@ -18,30 +18,28 @@ func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
 	var events []Event
 
 	for _, e := range eventMetadata {
-		endpoint2 := fmt.Sprint("https://sentry.io/api/0/projects/", org, "/", e.Project, "/events/", e.Id, "/json/")
+		endpoint := "https://sentry.io/api/0/projects/" + org + "/" + e.Project + "/events/" + e.Id + "/json/"
 
-		request2, _ := http.NewRequest("GET", endpoint2, nil)
-		request2.Header.Set("content-type", "application/json")
-		request2.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
+		request, _ := http.NewRequest("GET", endpoint, nil)
+		request.Header.Set("content-type", "application/json")
+		request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
 
 		var httpClient = &http.Client{}
-		response2, requestErr2 := httpClient.Do(request2)
-		if requestErr2 != nil {
-			sentry.CaptureException(requestErr2)
-			log.Fatal(requestErr2)
+		response, err := httpClient.Do(request)
+		if err != nil {
+			sentry.CaptureException(err)
+			log.Fatal(err)
 		}
-		body2, errResponse2 := ioutil.ReadAll(response2.Body)
-		if errResponse2 != nil {
-			// TODO - could already be a bad response, if wrong project name requested
-			sentry.CaptureException(errResponse2)
-			log.Fatal(errResponse2)
+		body2, errResponse := ioutil.ReadAll(response.Body)
+		if errResponse != nil {
+			sentry.CaptureException(errResponse)
+			log.Fatal(errResponse)
 		}
 
 		var event Event
-		// json.Unmarshal(body2, &event)
-		if err2 := json.Unmarshal(body2, &event); err2 != nil {
-			sentry.CaptureException(err2)
-			panic(err2)
+		if errUnmarshal := json.Unmarshal(body2, &event); errUnmarshal != nil {
+			sentry.CaptureException(errUnmarshal)
+			panic(errUnmarshal)
 		}
 		event.setDsn()
 		events = append(events, event)

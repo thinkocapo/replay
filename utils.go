@@ -19,7 +19,7 @@ func createUser() string {
 	for i := 0; i < 3; i++ {
 		alphanumeric += strings.Split("abcdefghijklmnopqrstuvwxyz0123456789", "")[rand.Intn(35)]
 	}
-	return fmt.Sprint(alpha, alphanumeric, "@yahoo.com")
+	return fmt.Sprintf("%v%v@yahoo.com", alpha, alphanumeric)
 }
 
 func getTraceIds(events []Event) {
