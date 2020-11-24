@@ -23,7 +23,13 @@ const PYTHON = "python"
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	discoverAPI := DiscoverAPI{}
 	eventMetadata := discoverAPI.latestEventMetadata(25)
+	// eventMetadata = select(eventMetadata, [JAVASCRIPT, PYTHON])
 
+	/*
+		Chaining
+		eventMetadata :=
+			discoverAPI.latestEventMetadata(25).select([JAVASCRIPT, PYTHON]).get()
+	*/
 	eventsAPI := EventsAPI{}
 	events := eventsAPI.getEvents(eventMetadata)
 

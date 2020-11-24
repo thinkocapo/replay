@@ -11,7 +11,9 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-type EventsAPI struct{}
+type EventsAPI struct {
+	events []Event
+}
 
 func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
 	org := os.Getenv("ORG")
