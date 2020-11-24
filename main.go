@@ -36,13 +36,8 @@ func init() {
 func main() {
 	demoAutomation := DemoAutomation{}
 
-	// getEventsFromSentry()
-	// getEventsFromGCS()
-
-	events := demoAutomation.downloadEvents()
+	events := demoAutomation.getEventsFromSentry()
 	println("demoAutomation total events downloaded:", len(events))
-
-	// events := demoAutomation.getEvents(filePrefix)
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
