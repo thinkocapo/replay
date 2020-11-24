@@ -15,6 +15,7 @@ import (
 type Request struct {
 	Payload       []byte
 	StoreEndpoint string
+	Kind          string
 }
 
 func NewRequest(event Event) *Request {
@@ -24,9 +25,11 @@ func NewRequest(event Event) *Request {
 	var err error
 	if event.Kind == ERROR || event.Kind == DEFAULT {
 		bodyBytes, err = json.Marshal(event.Error)
+		r.Kind = ERROR
 	}
 	if event.Kind == TRANSACTION {
 		bodyBytes, err = json.Marshal(event.Transaction)
+		r.Kind = TRANSACTION
 	}
 	if err != nil {
 		sentry.CaptureException(err)
@@ -66,7 +69,7 @@ func (r Request) send() bool {
 			sentry.CaptureException(responseDataErr)
 			log.Fatal(responseDataErr)
 		}
-		fmt.Printf("> KIND|RESPONSE: %s \n", string(responseData))
+		fmt.Printf("> Kind: %v | Response: %v \n", r.Kind, string(responseData))
 	} else {
 		fmt.Print("> event IGNORED \n")
 	}

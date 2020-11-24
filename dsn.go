@@ -59,14 +59,12 @@ func NewDSN(rawurl string) *DSN {
 }
 
 func (d DSN) storeEndpoint() string {
-	var fullurl string
-	if strings.Contains(d.host, "ingest.sentry.io") {
-		// [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996, which errors ""bad sentry DSN public key""
-		fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:], "&sentry_version=7")
-		// fullurl = fmt.Sprint("https://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key[1:])
-	}
+
+	// [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996
+	fullurl := fmt.Sprintf("https://%v/api/%v/store/?sentry_key=%v&sentry_version=7", d.host, d.projectId, d.key[1:])
+
 	if d.host == "localhost:9000" {
-		fullurl = fmt.Sprint("http://", d.host, "/api/", d.projectId, "/store/?sentry_key=", d.key, "&sentry_version=7")
+		fullurl = strings.Replace(fullurl, "http", "https", 1)
 	}
 	if fullurl == "" {
 		sentry.CaptureMessage("missing fullurl")

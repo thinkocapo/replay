@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/getsentry/sentry-go"
@@ -25,6 +27,10 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
 	}
+	if event.Kind == "" {
+		sentry.CaptureMessage("no event.Kind set")
+		log.Fatal("no event.Kind set")
+	}
 	switch event.Kind {
 	case ERROR:
 		event.Error = &Error{}
@@ -44,14 +50,14 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 func (event *Event) setDsn() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	}
-	if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
-	}
-	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
-	}
-	if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
+	} else {
+		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
+		log.Fatal("event.Kind and type not recognized " + event.Kind)
 	}
 }

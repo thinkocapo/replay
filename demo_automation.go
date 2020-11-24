@@ -19,7 +19,19 @@ type DemoAutomation struct{}
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
 
-func (d *DemoAutomation) getEvents(prefix string) []Event {
+// Download the events from Sentry
+func (d *DemoAutomation) getEventsFromSentry() []Event {
+	discoverAPI := DiscoverAPI{}
+	eventMetadata := discoverAPI.latestEventMetadata(25)
+
+	eventsAPI := EventsAPI{}
+	events := eventsAPI.getEvents(eventMetadata)
+
+	return events
+}
+
+// Get the events from Google Cloud Storage
+func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -37,7 +49,7 @@ func (d *DemoAutomation) getEvents(prefix string) []Event {
 
 	var fileNames []string
 
-	query := &storage.Query{Prefix: prefix}
+	query := &storage.Query{Prefix: filePrefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
