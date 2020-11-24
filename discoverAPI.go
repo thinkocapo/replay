@@ -15,17 +15,15 @@ type DiscoverAPI struct {
 	Data []map[string]interface{} `json:"data"`
 }
 
-// IdProjectPair
-// EventIdProjectPair
 type EventMetadata struct {
 	Id      string
 	Project string
 }
 
+// Events from last 24HrPeriod events for selected Projects
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
-func (d DiscoverAPI) latestEventMetadata() []EventMetadata {
+func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	org := os.Getenv("ORG")
-	n := 10
 
 	endpoint := fmt.Sprint("https://sentry.io/api/0/organizations/", org, "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=", n, "&query=")
 	request, _ := http.NewRequest("GET", endpoint, nil)
@@ -52,5 +50,6 @@ func (d DiscoverAPI) latestEventMetadata() []EventMetadata {
 		eventMetadata := EventMetadata{e["id"].(string), e["project"].(string)}
 		eventMetadatas = append(eventMetadatas, eventMetadata)
 	}
+	fmt.Println("> eventMetadata length:", len(eventMetadata))
 	return eventMetadatas
 }

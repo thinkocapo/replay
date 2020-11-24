@@ -46,5 +46,6 @@ func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
 		event.setDsn()
 		events = append(events, event)
 	}
+	fmt.Println("> events        length:", len(events))
 	return events
 }
