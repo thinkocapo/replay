@@ -12,8 +12,10 @@ type Requests struct {
 
 func (r *Requests) send() {
 	// TODO for _, org := range orgs{ }
+
 	for _, event := range r.events {
 		request := NewRequest(event)
+
 		// TODO for _, dsn := range destinations{ }
 		request.send()
 	}

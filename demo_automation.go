@@ -22,20 +22,11 @@ const PYTHON = "python"
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	discoverAPI := DiscoverAPI{}
-	// OG
 	eventMetadata := discoverAPI.latestEventMetadata(25)
 
-	// ATTEMPT1, but result doesn't have Platform property
-	// eventMetadata := discoverAPI.latestEventMetadata(25).platform(JAVASCRIPT).get()
+	// Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
+	// eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
 
-	// ATTEMPT2, Consider paramaterizing the platforms, but do really need this?
-	// eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // TODO .execute()
-
-	/*
-		Chaining
-		eventMetadata :=
-			discoverAPI.latestEventMetadata(25).select([JAVASCRIPT, PYTHON]).get()
-	*/
 	eventsAPI := EventsAPI{}
 	events := eventsAPI.getEvents(eventMetadata)
 
