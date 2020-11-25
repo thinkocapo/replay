@@ -42,7 +42,7 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 			sentry.CaptureException(errUnmarshal)
 			panic(errUnmarshal)
 		}
-		event.setDsn()
+		event.setPlatform()
 		events = append(events, event)
 	}
 	fmt.Println("> Events []Event   length:", len(events))

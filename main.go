@@ -17,8 +17,6 @@ var (
 	traceIds   []string
 	filePrefix string
 	config     Config
-	// orgSources   []string
-	// destinations []string
 )
 
 func init() {
@@ -41,7 +39,6 @@ func init() {
 func main() {
 	demoAutomation := DemoAutomation{}
 	fmt.Println("DESTINATIONS", config.Destinations)
-	return
 	events := demoAutomation.getEventsFromSentry()
 
 	for _, event := range events {

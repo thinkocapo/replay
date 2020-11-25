@@ -16,26 +16,27 @@ type Requests struct {
 
 func (r *Requests) send() {
 	for _, event := range r.events {
-		// NEW
 		// fmt.Println("EVENT PLATFORM", event.Platform)
-		// switch event.Platform {
-		// case JAVASCRIPT:
-		// 	for _, dsn := range destinations.JAVASCRIPT {
-		// 		event.set(dsn)
-		// 		request := NewRequest(event)
-		// 		request.send()
-		// 	}
-		// case PYTHON:
-		// 	for _, dsn := range destinations.PYTHON {
-		// 		event.set(dsn)
-		// 		request := NewRequest(event)
-		// 		request.send()
-		// 	}
-		// }
+
+		switch event.Platform {
+		case JAVASCRIPT:
+			// CONSIDER should be a dsn, not a fullurl?
+			for _, fullurl := range config.Destinations.Javascript {
+				event.setDsn(fullurl)
+				request := NewRequest(event)
+				request.send()
+			}
+		case PYTHON:
+			for _, fullurl := range config.Destinations.Python {
+				event.setDsn(fullurl)
+				request := NewRequest(event)
+				request.send()
+			}
+		}
 
 		// OG
-		request := NewRequest(event)
-		request.send()
+		// request := NewRequest(event)
+		// request.send()
 	}
 	fmt.Printf("> DONE sending %v events", len(r.events))
 
