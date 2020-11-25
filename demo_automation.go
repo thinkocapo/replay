@@ -21,6 +21,7 @@ const PYTHON = "python"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
+	// TODO - need get from multiple orgs somehow?
 	discoverAPI := DiscoverAPI{}
 	eventMetadata := discoverAPI.latestEventMetadata(25)
 
