@@ -27,16 +27,21 @@ type EventMetadata struct {
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	// org := os.Getenv("ORG")
+	fmt.Println("> org", org)
 
-	query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
+	// query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
+	query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
+
+	// TEST
+	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform.name&sort=-event.type&per_page=25%v", org, query)
 
 	// with 0 project names specified
-	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
-	// with 2 project names specified da-flask da-react
-	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+	// with 2 project names specified da-flask da-react - NOT COMPATIBLE WITH PARAMETERIZED ORG
+	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
-	// with 1 project name specified da-react
+	// with 1 project name specified da-react - NOT COMPATIBLE WITH PARAMETERIZED ORG
 	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
@@ -57,12 +62,12 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 
 	json.Unmarshal(body, &d)
 
-	fmt.Println("> Data []EventMetadata  length:", len(d.Data))
+	fmt.Println("> Discover.Data length:", len(d.Data))
 
 	// TODO FOR TESTING the org filtering
-	for _, e := range d.Data {
-		fmt.Println("> Project", e.Project)
-	}
+	// for _, e := range d.Data {
+	// 	fmt.Println("> Project", e.Project)
+	// }
 	return d.Data
 }
 
