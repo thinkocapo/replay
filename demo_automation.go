@@ -45,17 +45,20 @@ const PYTHON = "python"
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
 	sources := readSources()
-	fmt.Printf("> sources length: %v \n", len(sources))
+	fmt.Printf("> SOURCES length: %v \n", len(sources))
+
+	discoverAPI := DiscoverAPI{}
+	eventsAPI := EventsAPI{}
 
 	for _, org := range sources {
-		discoverAPI := DiscoverAPI{}
 		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
-		eventsAPI := EventsAPI{}
+
 		_events := eventsAPI.getEvents(org, eventMetadata)
 		fmt.Println("> > ORG EVENTS", len(_events))
+
 		events = append(events, _events...)
 	}
-	fmt.Printf("> events length: %v \n", len(events))
+	fmt.Printf("> FINAL EVENTS length: %v \n", len(events))
 	return events
 
 	// OG

@@ -15,8 +15,7 @@ type EventsAPI struct {
 	events []Event
 }
 
-func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
-	org := os.Getenv("ORG")
+func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event {
 	var events []Event
 
 	for _, e := range eventMetadata {
