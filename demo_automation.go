@@ -29,7 +29,8 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 	eventsAPI := EventsAPI{}
 
 	for _, org := range config.Sources {
-		eventMetadata := discoverAPI.latestEventMetadata(org, 5)
+		// TODO, switch 'n' to ./cli flag
+		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
 		fmt.Printf("> %v Events length %v\n", org, len(_events))
@@ -90,7 +91,9 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 			sentry.CaptureException(err)
 			panic(err)
 		}
-		event.setDsn()
+
+		// TODO may be broken, now that setDsn changed.
+		event.setDsnGCS()
 		events = append(events, event)
 	}
 	return events
