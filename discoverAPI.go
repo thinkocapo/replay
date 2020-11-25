@@ -20,7 +20,7 @@ type DiscoverAPI struct {
 type EventMetadata struct {
 	Id       string
 	Project  string
-	Platform string // `json:"platform.name"`
+	Platform string
 }
 
 // Events from last 24HrPeriod events for selected Projects

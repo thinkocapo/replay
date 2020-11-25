@@ -8,15 +8,24 @@ import (
 
 type Requests struct {
 	events []Event
+	// TODO
+	// eventsJavascript []Event
+	// eventsPython []Event
+	// ^ this would simplify the below send() function
 }
 
 func (r *Requests) send() {
-	// TODO for _, org := range orgs{ }
-
 	for _, event := range r.events {
+		// switch event.Platform
+		// case JAVASCRIPT
+		// for _, dsn := range destinations.JAVASCRIPT
+		// event.set(dsn)
+		// request.send()
+		// case PYTHON
+		// for _, dsn := range destinations.PYTHON
+		// event.set(dsn)
+		// request.send()
 		request := NewRequest(event)
-
-		// TODO for _, dsn := range destinations{ }
 		request.send()
 	}
 	fmt.Printf("> DONE sending %v events", len(r.events))
@@ -24,17 +33,3 @@ func (r *Requests) send() {
 	// does not Capture, not sure why
 	sentry.CaptureMessage("finished sending all requests")
 }
-
-// TODO last
-// the fact that it does each destination one-by-one, gives each a little bit of a pause, like a Sleep Timeout, so no need to code a short Sleep Timeout
-// func (r *Requests) destinations() {
-// 	for envvarKey, envarValue in envarPairs {
-// 		switch envarKeys:
-// 		case DSN_JAVASCRIPT
-// 			// should be Private
-// 			// for python_destinations from YAML:
-// 				// destination()
-// 		case DSN_PYTHON
-// 	}
-
-// }

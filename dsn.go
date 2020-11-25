@@ -59,7 +59,6 @@ func NewDSN(rawurl string) *DSN {
 }
 
 func (d DSN) storeEndpoint() string {
-
 	// [1:] is for removing leading slash from sentry_key=/a971db611df44a6eaf8993d994db1996
 	fullurl := fmt.Sprintf("https://%v/api/%v/store/?sentry_key=%v&sentry_version=7", d.host, d.projectId, d.key[1:])
 
