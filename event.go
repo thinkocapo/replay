@@ -16,6 +16,7 @@ type TypeSwitch struct {
 
 type Event struct {
 	TypeSwitch `json:"type"`
+	Platform   string
 	*Error
 	*Transaction
 	*DSN
@@ -27,7 +28,9 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
 	}
+	// may not need
 	if event.Kind == "" {
+		fmt.Println("> event.Kind", event.Kind)
 		sentry.CaptureMessage("no event.Kind set")
 		log.Fatal("no event.Kind set")
 	}
@@ -47,15 +50,39 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (event *Event) setDsn() {
+func (event *Event) setPlatform() {
+	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
+		event.Platform = JAVASCRIPT
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
+		event.Platform = PYTHON
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+		event.Platform = JAVASCRIPT
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
+		event.Platform = PYTHON
+	} else {
+		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
+		log.Fatal("event.Kind and type not recognized " + event.Kind)
+	}
+}
+
+func (event *Event) setDsn(fullurl string) {
+	event.DSN = NewDSN(fullurl)
+	// TODO should null pointer reference check
+}
+
+func (event *Event) setDsnGCS() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+		event.Platform = JAVASCRIPT
 	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
+		event.Platform = PYTHON
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
+		event.Platform = JAVASCRIPT
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.DSN = NewDSN(os.Getenv("DSN_PYTHON_SAAS"))
+		event.Platform = PYTHON
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)

@@ -11,10 +11,11 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-type EventsAPI struct{}
+type EventsAPI struct {
+	// events []Event
+}
 
-func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
-	org := os.Getenv("ORG")
+func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event {
 	var events []Event
 
 	for _, e := range eventMetadata {
@@ -30,20 +31,20 @@ func (e EventsAPI) getEvents(eventMetadata []EventMetadata) []Event {
 			sentry.CaptureException(err)
 			log.Fatal(err)
 		}
-		body2, errResponse := ioutil.ReadAll(response.Body)
+		body, errResponse := ioutil.ReadAll(response.Body)
 		if errResponse != nil {
 			sentry.CaptureException(errResponse)
 			log.Fatal(errResponse)
 		}
 
 		var event Event
-		if errUnmarshal := json.Unmarshal(body2, &event); errUnmarshal != nil {
+		if errUnmarshal := json.Unmarshal(body, &event); errUnmarshal != nil {
 			sentry.CaptureException(errUnmarshal)
 			panic(errUnmarshal)
 		}
-		event.setDsn()
+		event.setPlatform()
 		events = append(events, event)
 	}
-	fmt.Println("> events        length:", len(events))
+	fmt.Println("> Events []Event   length:", len(events))
 	return events
 }

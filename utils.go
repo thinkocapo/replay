@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"gopkg.in/yaml.v2"
 )
 
 func createUser() string {
@@ -68,6 +70,28 @@ func initializeSentry() {
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
+}
+
+type Config struct {
+	Sources      []string
+	Destinations struct {
+		Javascript []string `yaml:"javascript"`
+		Python     []string `yaml:"python"`
+	}
+}
+
+func parseConfig() {
+	filename := "config.yml"
+	file, err := ioutil.ReadFile(filename)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
 }
 
 func undertake(body map[string]interface{}) {

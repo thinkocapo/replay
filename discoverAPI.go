@@ -13,30 +13,33 @@ import (
 )
 
 type DiscoverAPI struct {
-	Data []map[string]interface{} `json:"data"`
+	Data     []EventMetadata
+	endpoint string
 }
 
 type EventMetadata struct {
-	Id      string
-	Project string
+	Id       string
+	Project  string
+	Platform string
 }
 
 // Events from last 24HrPeriod events for selected Projects
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
-func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
-	org := os.Getenv("ORG")
+func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
+	query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
 
-	endpoint := "https://sentry.io/api/0/organizations/" + org + "/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=title&field=event.type&field=project&field=user.display&field=timestamp&sort=-timestamp&per_page=" + strconv.Itoa(n) + "&query="
+	// 0 project names specified
+	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
 	request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
 
 	var httpClient = &http.Client{}
-	response, requestErr := httpClient.Do(request)
-	if requestErr != nil {
-		sentry.CaptureException(requestErr)
-		log.Fatal(requestErr)
+	response, err := httpClient.Do(request)
+	if err != nil {
+		sentry.CaptureException(err)
+		log.Fatal(err)
 	}
 	body, errResponse := ioutil.ReadAll(response.Body)
 	if errResponse != nil {
@@ -45,13 +48,16 @@ func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	}
 
 	json.Unmarshal(body, &d)
-	eventMetadata := d.Data
 
-	var eventMetadatas []EventMetadata
-	for _, e := range eventMetadata {
-		eventMetadata := EventMetadata{e["id"].(string), e["project"].(string)}
-		eventMetadatas = append(eventMetadatas, eventMetadata)
+	fmt.Println("> Discover.Data length:", len(d.Data))
+
+	for _, e := range d.Data {
+		fmt.Println("> Project", e.Project)
 	}
-	fmt.Println("> eventMetadata length:", len(eventMetadata))
-	return eventMetadatas
+	return d.Data
 }
+
+// Consider
+// func (d DiscoverAPI) execute() {
+// //
+// }

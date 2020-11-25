@@ -21,12 +21,22 @@ const PYTHON = "python"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
+	var events []Event
+	// sources := readSources()
+	// fmt.Printf("> SOURCES length: %v \n", len(sources))
+
 	discoverAPI := DiscoverAPI{}
-	eventMetadata := discoverAPI.latestEventMetadata(25)
-
 	eventsAPI := EventsAPI{}
-	events := eventsAPI.getEvents(eventMetadata)
 
+	for _, org := range config.Sources {
+		// TODO, switch 'n' to ./cli flag
+		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		_events := eventsAPI.getEvents(org, eventMetadata)
+
+		fmt.Printf("> %v Events length %v\n", org, len(_events))
+		events = append(events, _events...)
+	}
+	fmt.Printf("> FINAL EVENTS length: %v \n", len(events))
 	return events
 }
 
@@ -81,7 +91,9 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 			sentry.CaptureException(err)
 			panic(err)
 		}
-		event.setDsn()
+
+		// TODO may be broken, now that setDsn changed.
+		event.setDsnGCS()
 		events = append(events, event)
 	}
 	return events
