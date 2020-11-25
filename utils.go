@@ -99,22 +99,6 @@ func parseConfig() {
 	}
 }
 
-// DEPRECATE
-// func readOrgSources() []string {
-// 	filename := "config.yml"
-// 	var config Config
-// 	file, err := ioutil.ReadFile(filename)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	err = yaml.Unmarshal(file, &config)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Printf("Value: %#v\n", config.Sources[0])
-// 	return config.Sources
-// }
-
 func undertake(body map[string]interface{}) {
 	if body["tags"] == nil {
 		body["tags"] = make(map[string]interface{})

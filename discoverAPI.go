@@ -58,19 +58,11 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 
 	fmt.Println("> Discover.Data length:", len(d.Data))
 
-	// TODO FOR TESTING the org filtering
-	// for _, e := range d.Data {
-	// 	fmt.Println("> Project", e.Project)
-	// }
+	for _, e := range d.Data {
+		fmt.Println("> Project", e.Project)
+	}
 	return d.Data
 }
-
-// Consider
-// func (d DiscoverAPI) setPlatform(platform string) DiscoverAPI {
-// 	// TODO builder
-// 	// d.endpoint := query
-// 	return d
-// }
 
 // Consider
 // func (d DiscoverAPI) execute() {

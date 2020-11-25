@@ -8,19 +8,20 @@ import (
 
 type Requests struct {
 	events []Event
-	// TODO
+	// CONSIDER
 	// eventsJavascript []Event
 	// eventsPython []Event
 	// ^ this would simplify the below send() function
 }
 
+// Doing each destination one-by-one, gives each org a rest before its API is called again, so don't insert a short Sleep Timeout yet
 func (r *Requests) send() {
 	for _, event := range r.events {
 		// fmt.Println("EVENT PLATFORM", event.Platform)
 
 		switch event.Platform {
 		case JAVASCRIPT:
-			// CONSIDER should be a dsn, not a fullurl?
+			// CONSIDER should be a dsn, not a fullurl
 			for _, fullurl := range config.Destinations.Javascript {
 				event.setDsn(fullurl)
 				request := NewRequest(event)

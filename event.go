@@ -28,7 +28,7 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
 	}
-	// TODO Consider deprecating
+	// may not need
 	if event.Kind == "" {
 		fmt.Println("> event.Kind", event.Kind)
 		sentry.CaptureMessage("no event.Kind set")
@@ -67,10 +67,7 @@ func (event *Event) setPlatform() {
 
 func (event *Event) setDsn(fullurl string) {
 	event.DSN = NewDSN(fullurl)
-	// } else {
-	// 	sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-	// 	log.Fatal("event.Kind and type not recognized " + event.Kind)
-	// }
+	// TODO should null pointer reference check
 }
 
 func (event *Event) setDsnGCS() {
@@ -91,22 +88,3 @@ func (event *Event) setDsnGCS() {
 		log.Fatal("event.Kind and type not recognized " + event.Kind)
 	}
 }
-
-//TODO - Destinations
-// only do if event.platform matches what platform:DSN is intended for
-// func (event *Event) setDsn(fullurl) {
-// 	dsn := NewDSN(fullurl)
-// }
-// or
-// func (event *Event) setDsn(dsn DSN) {
-
-// 	for envvarKey, envarValue in envarPairs {
-// 		switch envarKeys:
-// 		case DSN_JAVASCRIPT
-// 			// should be Private
-// 			// for python_destinations from YAML:
-// 				// destination()
-// 		case DSN_PYTHON
-// 	}
-
-// the fact that it does each destination one-by-one, gives each a little bit of a pause, like a Sleep Timeout, so no need to code a short Sleep Timeout

@@ -12,7 +12,7 @@ import (
 )
 
 type EventsAPI struct {
-	events []Event
+	// events []Event
 }
 
 func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event {
