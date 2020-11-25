@@ -49,3 +49,5 @@ sales*
 *.db
 
 *.sh
+*.yaml
+*.yml
