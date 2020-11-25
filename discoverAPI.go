@@ -27,16 +27,9 @@ type EventMetadata struct {
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
-	// query := "platform.name%3Apython"
 
-	// with 0 project names specified
+	// 0 project names specified
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
-
-	// with 2 project names specified da-flask da-react - NOT COMPATIBLE WITH PARAMETERIZED ORG
-	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
-
-	// with 1 project name specified da-react - NOT COMPATIBLE WITH PARAMETERIZED ORG
-	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")

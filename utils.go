@@ -72,10 +72,6 @@ func initializeSentry() {
 	defer sentry.Flush(2 * time.Second)
 }
 
-// CONSIDER could put this directly on as DemoAutomation.Sources DemoAutomation.Destinations
-// Update, No because Destinations go on as Requests.Destinations
-// So, Should consider putting to utils.go, or as its own config.go, but No, because DemoAutomation and Requests are 2 very separate areas of program
-// Starting to Conclud, leveraging them via utils/init function as Global vars may be wisest...
 type Config struct {
 	Sources      []string
 	Destinations struct {
@@ -84,7 +80,6 @@ type Config struct {
 	}
 }
 
-// https://sweetohm.net/article/go-yaml-parsers.en.html
 func parseConfig() {
 	filename := "config.yml"
 	file, err := ioutil.ReadFile(filename)
