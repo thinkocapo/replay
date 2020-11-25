@@ -78,9 +78,13 @@ func initializeSentry() {
 // Starting to Conclud, leveraging them via utils/init function as Global vars may be wisest...
 type Config struct {
 	Sources      []string
-	Destinations []string
+	Destinations struct {
+		Javascript []string `yaml:"javascript"`
+		Python     []string `yaml:"python"`
+	}
 }
 
+// https://sweetohm.net/article/go-yaml-parsers.en.html
 func parseConfig() {
 	filename := "config.yml"
 	file, err := ioutil.ReadFile(filename)
@@ -95,21 +99,21 @@ func parseConfig() {
 	}
 }
 
-// https://sweetohm.net/article/go-yaml-parsers.en.html
-func readOrgSources() []string {
-	filename := "config.yml"
-	var config Config
-	file, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Value: %#v\n", config.Sources[0])
-	return config.Sources
-}
+// DEPRECATE
+// func readOrgSources() []string {
+// 	filename := "config.yml"
+// 	var config Config
+// 	file, err := ioutil.ReadFile(filename)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	err = yaml.Unmarshal(file, &config)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Printf("Value: %#v\n", config.Sources[0])
+// 	return config.Sources
+// }
 
 func undertake(body map[string]interface{}) {
 	if body["tags"] == nil {
