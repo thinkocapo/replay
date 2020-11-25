@@ -28,7 +28,9 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &event.TypeSwitch); err != nil {
 		return err
 	}
+	// TODO Consider deprecating
 	if event.Kind == "" {
+		fmt.Println("> event.Kind", event.Kind)
 		sentry.CaptureMessage("no event.Kind set")
 		log.Fatal("no event.Kind set")
 	}
