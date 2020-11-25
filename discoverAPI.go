@@ -25,8 +25,8 @@ type EventMetadata struct {
 
 // Events from last 24HrPeriod events for selected Projects
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
-func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
-	org := os.Getenv("ORG")
+func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
+	// org := os.Getenv("ORG")
 
 	query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
 

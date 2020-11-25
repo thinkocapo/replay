@@ -21,17 +21,23 @@ const PYTHON = "python"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
-	// TODO - need get from multiple orgs somehow?
-	discoverAPI := DiscoverAPI{}
-	eventMetadata := discoverAPI.latestEventMetadata(25)
-
-	// Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
-	// eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
-
-	eventsAPI := EventsAPI{}
-	events := eventsAPI.getEvents(eventMetadata)
-
+	var events []Event
+	for _, org := range orgs {
+		discoverAPI := DiscoverAPI{}
+		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		eventsAPI := EventsAPI{}
+		_events := eventsAPI.getEvents(eventMetadata)
+		events = append(events, _events...)
+	}
 	return events
+	// OG
+	// discoverAPI := DiscoverAPI{}
+	// eventMetadata := discoverAPI.latestEventMetadata(25)
+	// // Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
+	// // eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
+	// eventsAPI := EventsAPI{}
+	// events := eventsAPI.getEvents(eventMetadata)
+	// return events
 }
 
 // Get the events from Google Cloud Storage
