@@ -22,6 +22,7 @@ type Config struct {
 	Destinations []string
 }
 
+// https://sweetohm.net/article/go-yaml-parsers.en.html
 func readSources() []string {
 	filename := "config.yml"
 	var config Config
@@ -42,27 +43,29 @@ const PYTHON = "python"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
-	// var events []Event
+	var events []Event
 	sources := readSources()
 	fmt.Printf("> sources length: %v \n", len(sources))
 
-	// for _, org := range orgs {
-	// 	discoverAPI := DiscoverAPI{}
-	// 	eventMetadata := discoverAPI.latestEventMetadata(org, 25)
-	// 	eventsAPI := EventsAPI{}
-	// 	_events := eventsAPI.getEvents(eventMetadata)
-	// 	events = append(events, _events...)
-	// }
-	// return events
+	for _, org := range sources {
+		discoverAPI := DiscoverAPI{}
+		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		eventsAPI := EventsAPI{}
+		_events := eventsAPI.getEvents(org, eventMetadata)
+		fmt.Println("> > ORG EVENTS", len(_events))
+		events = append(events, _events...)
+	}
+	fmt.Printf("> events length: %v \n", len(events))
+	return events
 
 	// OG
-	discoverAPI := DiscoverAPI{}
-	eventMetadata := discoverAPI.latestEventMetadata("testorg-az", 25)
-	// Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
-	// eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
-	eventsAPI := EventsAPI{}
-	events := eventsAPI.getEvents(eventMetadata)
-	return events
+	// discoverAPI := DiscoverAPI{}
+	// eventMetadata := discoverAPI.latestEventMetadata("testorg-az", 25)
+	// // Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
+	// // eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
+	// eventsAPI := EventsAPI{}
+	// events := eventsAPI.getEvents(eventMetadata)
+	// return events
 }
 
 // Get the events from Google Cloud Storage
