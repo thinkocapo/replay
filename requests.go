@@ -17,6 +17,7 @@ type Requests struct {
 func (r *Requests) send() {
 	for _, event := range r.events {
 		// NEW
+		// fmt.Println("EVENT PLATFORM", event.Platform)
 		// switch event.Platform {
 		// case JAVASCRIPT:
 		// 	for _, dsn := range destinations.JAVASCRIPT {

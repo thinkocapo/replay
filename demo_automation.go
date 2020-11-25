@@ -27,9 +27,9 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 
 	discoverAPI := DiscoverAPI{}
 	eventsAPI := EventsAPI{}
-	fmt.Println("> > > config.Sources", config.Sources)
+
 	for _, org := range config.Sources {
-		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		eventMetadata := discoverAPI.latestEventMetadata(org, 5)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
 		fmt.Printf("> %v Events length %v\n", org, len(_events))

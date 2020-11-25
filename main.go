@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -39,7 +40,8 @@ func init() {
 
 func main() {
 	demoAutomation := DemoAutomation{}
-
+	fmt.Println("DESTINATIONS", config.Destinations)
+	return
 	events := demoAutomation.getEventsFromSentry()
 
 	for _, event := range events {
