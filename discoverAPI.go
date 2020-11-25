@@ -31,10 +31,13 @@ func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 	query := "&query=platform.name%3Ajavascript+OR+platform.name%3Apython"
 
 	// with 0 project names specified
-	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
-	// with 2 project names specified
-	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+	// with 2 project names specified da-flask da-react
+	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5422148&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
+
+	// with 1 project name specified da-react
+	// endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&project=5427415&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
@@ -58,7 +61,7 @@ func (d DiscoverAPI) latestEventMetadata(n int) []EventMetadata {
 
 	// TODO FOR TESTING the org filtering
 	for _, e := range d.Data {
-		fmt.Print("> > Project", e.Project)
+		fmt.Println("> Project", e.Project)
 	}
 	return d.Data
 }
