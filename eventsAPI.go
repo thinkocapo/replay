@@ -31,20 +31,20 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 			sentry.CaptureException(err)
 			log.Fatal(err)
 		}
-		body2, errResponse := ioutil.ReadAll(response.Body)
+		body, errResponse := ioutil.ReadAll(response.Body)
 		if errResponse != nil {
 			sentry.CaptureException(errResponse)
 			log.Fatal(errResponse)
 		}
 
 		var event Event
-		if errUnmarshal := json.Unmarshal(body2, &event); errUnmarshal != nil {
+		if errUnmarshal := json.Unmarshal(body, &event); errUnmarshal != nil {
 			sentry.CaptureException(errUnmarshal)
 			panic(errUnmarshal)
 		}
 		event.setDsn()
 		events = append(events, event)
 	}
-	fmt.Println("> events        length:", len(events))
+	fmt.Println("> Events []Event   length:", len(events))
 	return events
 }

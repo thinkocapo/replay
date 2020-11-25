@@ -12,31 +12,9 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/getsentry/sentry-go"
 	"google.golang.org/api/iterator"
-	"gopkg.in/yaml.v2"
 )
 
 type DemoAutomation struct{}
-
-type Config struct {
-	Sources      []string
-	Destinations []string
-}
-
-// https://sweetohm.net/article/go-yaml-parsers.en.html
-func readSources() []string {
-	filename := "config.yml"
-	var config Config
-	file, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Value: %#v\n", config.Sources[0])
-	return config.Sources
-}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
@@ -44,31 +22,21 @@ const PYTHON = "python"
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
-	sources := readSources()
-	fmt.Printf("> SOURCES length: %v \n", len(sources))
+	// sources := readSources()
+	// fmt.Printf("> SOURCES length: %v \n", len(sources))
 
 	discoverAPI := DiscoverAPI{}
 	eventsAPI := EventsAPI{}
-
-	for _, org := range sources {
+	fmt.Println("> > > config.Sources", config.Sources)
+	for _, org := range config.Sources {
 		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
-
 		_events := eventsAPI.getEvents(org, eventMetadata)
-		fmt.Println("> > ORG EVENTS", len(_events))
 
+		fmt.Printf("> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
 	fmt.Printf("> FINAL EVENTS length: %v \n", len(events))
 	return events
-
-	// OG
-	// discoverAPI := DiscoverAPI{}
-	// eventMetadata := discoverAPI.latestEventMetadata("testorg-az", 25)
-	// // Consider paramaterizing the platforms, d.endpoint or d.query, as well as .execute()
-	// // eventMetadata := discoverAPI.setPlatform(JAVASCRIPT).latestEventMetadata(25) // .execute()
-	// eventsAPI := EventsAPI{}
-	// events := eventsAPI.getEvents(eventMetadata)
-	// return events
 }
 
 // Get the events from Google Cloud Storage

@@ -15,6 +15,9 @@ var (
 	ignore     *bool
 	traceIds   []string
 	filePrefix string
+	config     Config
+	// orgSources   []string
+	// destinations []string
 )
 
 func init() {
@@ -23,8 +26,10 @@ func init() {
 	}
 	initializeSentry()
 	sentry.CaptureMessage("job started")
-
-	// TODO - check for all needed .env vars
+	// TODO check for all other needed .env vars, besides config.yml
+	// CONSIDER put all config ^ to config.yml
+	// CONSIDER config() parseSourcesDestinations() parseConfig() parseConfigYml()
+	parseConfig()
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	flag.Parse()
 

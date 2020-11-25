@@ -16,15 +16,23 @@ type Requests struct {
 
 func (r *Requests) send() {
 	for _, event := range r.events {
-		// switch event.Platform
-		// case JAVASCRIPT
-		// for _, dsn := range destinations.JAVASCRIPT
-		// event.set(dsn)
-		// request.send()
-		// case PYTHON
-		// for _, dsn := range destinations.PYTHON
-		// event.set(dsn)
-		// request.send()
+		// NEW
+		// switch event.Platform {
+		// case JAVASCRIPT:
+		// 	for _, dsn := range destinations.JAVASCRIPT {
+		// 		event.set(dsn)
+		// 		request := NewRequest(event)
+		// 		request.send()
+		// 	}
+		// case PYTHON:
+		// 	for _, dsn := range destinations.PYTHON {
+		// 		event.set(dsn)
+		// 		request := NewRequest(event)
+		// 		request.send()
+		// 	}
+		// }
+
+		// OG
 		request := NewRequest(event)
 		request.send()
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"gopkg.in/yaml.v2"
 )
 
 func createUser() string {
@@ -68,6 +70,45 @@ func initializeSentry() {
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
+}
+
+// CONSIDER could put this directly on as DemoAutomation.Sources DemoAutomation.Destinations
+// Update, No because Destinations go on as Requests.Destinations
+// So, Should consider putting to utils.go, or as its own config.go, but No, because DemoAutomation and Requests are 2 very separate areas of program
+// Starting to Conclud, leveraging them via utils/init function as Global vars may be wisest...
+type Config struct {
+	Sources      []string
+	Destinations []string
+}
+
+func parseConfig() {
+	filename := "config.yml"
+	file, err := ioutil.ReadFile(filename)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
+}
+
+// https://sweetohm.net/article/go-yaml-parsers.en.html
+func readOrgSources() []string {
+	filename := "config.yml"
+	var config Config
+	file, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Value: %#v\n", config.Sources[0])
+	return config.Sources
 }
 
 func undertake(body map[string]interface{}) {
