@@ -30,7 +30,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 
 	for _, org := range config.Sources {
 		// TODO, switch 'n' to ./cli flag
-		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		eventMetadata := discoverAPI.latestEventMetadata(org, *n)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
 		fmt.Printf("> %v Events length %v\n", org, len(_events))
@@ -41,6 +41,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 }
 
 // Get the events from Google Cloud Storage
+// ./bin/main -i eventtest
 func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
@@ -72,7 +73,7 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 			log.Fatalln("listBucket: unable to list bucket", err)
 		}
 		fileNames = append(fileNames, obj.Name)
-		print(obj)
+		printObj(obj)
 	}
 
 	// Get the files
@@ -99,6 +100,6 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	return events
 }
 
-func print(obj *storage.ObjectAttrs) {
+func printObj(obj *storage.ObjectAttrs) {
 	fmt.Printf("filename: /%v/%v \n", obj.Bucket, obj.Name) // .ContentType .Owner .Size
 }

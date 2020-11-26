@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -27,10 +26,11 @@ func init() {
 	}
 	initializeSentry()
 	sentry.CaptureMessage("job started")
-	// TODO check for all other needed .env vars, besides config.yml
-	// CONSIDER put all config ^ to config.yml
+
 	ip()
+	parseEnv()
 	parseYaml()
+
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
 	flag.Parse()
@@ -42,7 +42,6 @@ func init() {
 
 func main() {
 	demoAutomation := DemoAutomation{}
-	fmt.Println("DESTINATIONS", config.Destinations)
 	events := demoAutomation.getEventsFromSentry()
 
 	for _, event := range events {
