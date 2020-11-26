@@ -50,6 +50,20 @@ func (event *Event) UnmarshalJSON(data []byte) error {
 	}
 }
 
+func (event *Event) getPlatform() string {
+	var platform string
+	if event.Kind == TRANSACTION {
+		platform = event.Transaction.Platform
+	}
+	if event.Kind == ERROR {
+		platform = event.Error.Platform
+	}
+	if event.Kind == DEFAULT {
+		platform = event.Error.Platform
+	}
+	return platform
+}
+
 func (event *Event) setPlatform() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.Platform = JAVASCRIPT
