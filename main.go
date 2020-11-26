@@ -19,7 +19,7 @@ var (
 	n             *int
 )
 
-// v1.0.0
+// v1.0.1
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
