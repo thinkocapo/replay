@@ -109,8 +109,10 @@ func parseEnv() {
 	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
 		msg = "no environment"
 	}
-	sentry.CaptureException(errors.New(msg))
-	log.Fatal(msg)
+	if msg != "" {
+		sentry.CaptureException(errors.New(msg))
+		log.Fatal(msg)
+	}
 }
 
 func parseYaml() {

@@ -8,10 +8,9 @@ import (
 
 type Requests struct {
 	events []Event
-	// CONSIDER
+	// Consider making a Constructor for these attrs, so can simplify send(). However loss of ordering of events.
 	// eventsJavascript []Event
 	// eventsPython []Event
-	// ^ this would simplify the below send() function
 }
 
 // Doing each destination one-by-one, gives each org a rest before its API is called again, so don't insert a short Sleep Timeout yet
@@ -21,21 +20,20 @@ func (r *Requests) send() {
 
 		switch event.Platform {
 		case JAVASCRIPT:
-			// CONSIDER should be a dsn, not a fullurl
-			for _, fullurl := range config.Destinations.Javascript {
-				event.setDsn(fullurl)
+			for _, dsn := range config.Destinations.Javascript {
+				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
 			}
 		case PYTHON:
-			for _, fullurl := range config.Destinations.Python {
-				event.setDsn(fullurl)
+			for _, dsn := range config.Destinations.Python {
+				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
 			}
 		}
 	}
-	fmt.Printf("> DONE sending %v events", len(r.events))
+	fmt.Printf("\n> DONE sending %v events", len(r.events))
 
 	// does not Capture, not sure why
 	sentry.CaptureMessage("finished sending all requests")

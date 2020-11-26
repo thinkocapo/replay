@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	all        *bool
-	ignore     *bool
-	traceIds   []string
-	filePrefix string
-	config     Config
-	n          *int
+	all           *bool
+	ignore        *bool
+	traceIds      []string
+	gcsFilePrefix string
+	config        Config
+	n             *int
 )
 
 func init() {
@@ -36,8 +36,7 @@ func init() {
 	flag.Parse()
 	print("n is", strconv.Itoa(*n))
 
-	// Prefix of files to read, if reading from GCS
-	filePrefix = os.Args[1]
+	gcsFilePrefix = os.Args[1]
 }
 
 func main() {

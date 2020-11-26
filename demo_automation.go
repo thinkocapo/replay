@@ -22,27 +22,23 @@ const PYTHON = "python"
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
-	// sources := readSources()
-	// fmt.Printf("> SOURCES length: %v \n", len(sources))
 
 	discoverAPI := DiscoverAPI{}
 	eventsAPI := EventsAPI{}
 
 	for _, org := range config.Sources {
-		// TODO, switch 'n' to ./cli flag
 		eventMetadata := discoverAPI.latestEventMetadata(org, *n)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
 		fmt.Printf("> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
-	fmt.Printf("> FINAL EVENTS length: %v \n", len(events))
+	fmt.Printf("\n> FINAL EVENTS length: %v \n", len(events))
 	return events
 }
 
-// Get the events from Google Cloud Storage
-// ./bin/main -i eventtest
-func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
+// Get the events from Google Cloud Storage via ./bin/main -i <prefix>
+func (d *DemoAutomation) getEventsFromGCS(gcsFilePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -60,7 +56,7 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 
 	var fileNames []string
 
-	query := &storage.Query{Prefix: filePrefix}
+	query := &storage.Query{Prefix: gcsFilePrefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
