@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -46,6 +47,10 @@ func NewDSN(rawurl string) *DSN {
 	// if len(key) < 31 || len(key) > 32 {
 	// 	log.Fatal("bad key length")
 	// }
+	if len(projectId) != 7 {
+		sentry.CaptureException(errors.New("bad project Id in dsn" + projectId))
+		log.Fatal("bad project Id in dsn")
+	}
 	if projectId == "" {
 		sentry.CaptureMessage("missing project Id")
 		log.Fatal("missing project Id")
