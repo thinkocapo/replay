@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -55,17 +56,16 @@ func getTraceIds(events []Event) {
 	fmt.Println("> getTraceids traceIds", traceIds)
 }
 
+// Capture errors when this runs in Prod on a VM (Compute Engine)
 func initializeSentry() {
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         os.Getenv("SENTRY"),
 		Environment: os.Getenv("ENVIRONMENT"),
 		Release:     time.Now().Month().String(),
-		// Debug:       true,
 	})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-	// print("IP is:", ip())
 	if hostName, _ := os.Hostname(); hostName != "" {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetUser(sentry.User{Username: hostName, IPAddress: ip()})
@@ -78,14 +78,15 @@ func ip() string {
 	url := "https://api.ipify.org?format=text"
 	resp, err := http.Get(url)
 	if err != nil {
+		sentry.CaptureException(err)
 		panic(err)
 	}
 	defer resp.Body.Close()
 	ip, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		sentry.CaptureException(err)
 		panic(err)
 	}
-	// fmt.Printf("My IP is:%s\n", ip)
 	return string(ip)
 }
 
@@ -95,6 +96,21 @@ type Config struct {
 		Javascript []string `yaml:"javascript"`
 		Python     []string `yaml:"python"`
 	}
+}
+
+func parseEnv() {
+	var msg string
+	if SENTRY_AUTH_TOKEN := os.Getenv("SENTRY_AUTH_TOKEN"); SENTRY_AUTH_TOKEN == "" {
+		msg = "no auth token"
+	}
+	if SENTRY := os.Getenv("SENTRY"); SENTRY == "" {
+		msg = "no sentry"
+	}
+	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
+		msg = "no environment"
+	}
+	sentry.CaptureException(errors.New(msg))
+	log.Fatal(msg)
 }
 
 func parseYaml() {
