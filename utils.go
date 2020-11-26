@@ -56,7 +56,6 @@ func getTraceIds(events []Event) {
 	fmt.Println("> getTraceids traceIds", traceIds)
 }
 
-// Capture errors when this runs in Prod on a VM (Compute Engine)
 func initializeSentry() {
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         os.Getenv("SENTRY"),

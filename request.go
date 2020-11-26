@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -47,6 +48,7 @@ func NewRequest(event Event) *Request {
 }
 
 func (r Request) send() bool {
+	time.Sleep(200 * time.Millisecond)
 	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
 	if errNewRequest != nil {
 		sentry.CaptureException(errNewRequest)

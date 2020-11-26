@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
 	"strconv"
 
 	"github.com/getsentry/sentry-go"
@@ -35,8 +34,6 @@ func init() {
 	n = flag.Int("n", 25, "default number of events to read from a source")
 	flag.Parse()
 	print("n is", strconv.Itoa(*n))
-
-	gcsFilePrefix = os.Args[1]
 }
 
 func main() {

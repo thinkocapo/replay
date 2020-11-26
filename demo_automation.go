@@ -37,7 +37,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 	return events
 }
 
-// Get the events from Google Cloud Storage via ./bin/main -i <prefix>
+// Get the events from Google Cloud Storage via ./bin/main -i <prefix> and gcsFilePrefix = os.Args[1]
 func (d *DemoAutomation) getEventsFromGCS(gcsFilePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
