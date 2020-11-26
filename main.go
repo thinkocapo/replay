@@ -19,6 +19,7 @@ var (
 	config     Config
 )
 
+// v1.0.0
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
