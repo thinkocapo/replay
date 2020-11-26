@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -64,12 +65,28 @@ func initializeSentry() {
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
+	// print("IP is:", ip())
 	if hostName, _ := os.Hostname(); hostName != "" {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetUser(sentry.User{Username: hostName})
+			scope.SetUser(sentry.User{Username: hostName, IPAddress: ip()})
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
+}
+
+func ip() string {
+	url := "https://api.ipify.org?format=text"
+	resp, err := http.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	ip, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	// fmt.Printf("My IP is:%s\n", ip)
+	return string(ip)
 }
 
 type Config struct {
@@ -80,8 +97,8 @@ type Config struct {
 	}
 }
 
-func parseConfig() {
-	filename := "config.yml"
+func parseYaml() {
+	filename := "config.yaml"
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -92,6 +109,10 @@ func parseConfig() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+}
+
+func print(arg1 string, arg2 string) {
+	fmt.Println(arg1, arg2)
 }
 
 func undertake(body map[string]interface{}) {
