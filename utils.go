@@ -94,6 +94,9 @@ type Config struct {
 	Destinations struct {
 		Javascript []string `yaml:"javascript"`
 		Python     []string `yaml:"python"`
+		Java       []string `yaml:"java"`
+		Ruby       []string `yaml:"ruby"`
+		Go         []string `yaml:"go"`
 	}
 }
 
