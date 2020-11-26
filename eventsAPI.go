@@ -45,6 +45,5 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		event.setPlatform()
 		events = append(events, event)
 	}
-	fmt.Println("> Events []Event   length:", len(events))
 	return events
 }

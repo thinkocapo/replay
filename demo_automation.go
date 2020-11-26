@@ -22,26 +22,23 @@ const PYTHON = "python"
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
-	// sources := readSources()
-	// fmt.Printf("> SOURCES length: %v \n", len(sources))
 
 	discoverAPI := DiscoverAPI{}
 	eventsAPI := EventsAPI{}
 
 	for _, org := range config.Sources {
-		// TODO, switch 'n' to ./cli flag
-		eventMetadata := discoverAPI.latestEventMetadata(org, 25)
+		eventMetadata := discoverAPI.latestEventMetadata(org, *n)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
 		fmt.Printf("> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
-	fmt.Printf("> FINAL EVENTS length: %v \n", len(events))
+	fmt.Printf("\n> FINAL EVENTS length: %v \n", len(events))
 	return events
 }
 
-// Get the events from Google Cloud Storage
-func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
+// Get the events from Google Cloud Storage via ./bin/main -i <prefix> and gcsFilePrefix = os.Args[1]
+func (d *DemoAutomation) getEventsFromGCS(gcsFilePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -59,7 +56,7 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 
 	var fileNames []string
 
-	query := &storage.Query{Prefix: filePrefix}
+	query := &storage.Query{Prefix: gcsFilePrefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
@@ -72,7 +69,7 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 			log.Fatalln("listBucket: unable to list bucket", err)
 		}
 		fileNames = append(fileNames, obj.Name)
-		print(obj)
+		printObj(obj)
 	}
 
 	// Get the files
@@ -99,6 +96,6 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	return events
 }
 
-func print(obj *storage.ObjectAttrs) {
+func printObj(obj *storage.ObjectAttrs) {
 	fmt.Printf("filename: /%v/%v \n", obj.Bucket, obj.Name) // .ContentType .Owner .Size
 }

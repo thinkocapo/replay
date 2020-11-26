@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -59,17 +61,32 @@ func initializeSentry() {
 		Dsn:         os.Getenv("SENTRY"),
 		Environment: os.Getenv("ENVIRONMENT"),
 		Release:     time.Now().Month().String(),
-		// Debug:       true,
 	})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
 	if hostName, _ := os.Hostname(); hostName != "" {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetUser(sentry.User{Username: hostName})
+			scope.SetUser(sentry.User{Username: hostName, IPAddress: ip()})
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
+}
+
+func ip() string {
+	url := "https://api.ipify.org?format=text"
+	resp, err := http.Get(url)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
+	defer resp.Body.Close()
+	ip, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		sentry.CaptureException(err)
+		panic(err)
+	}
+	return string(ip)
 }
 
 type Config struct {
@@ -80,8 +97,25 @@ type Config struct {
 	}
 }
 
-func parseConfig() {
-	filename := "config.yml"
+func parseEnv() {
+	var msg string
+	if SENTRY_AUTH_TOKEN := os.Getenv("SENTRY_AUTH_TOKEN"); SENTRY_AUTH_TOKEN == "" {
+		msg = "no auth token"
+	}
+	if SENTRY := os.Getenv("SENTRY"); SENTRY == "" {
+		msg = "no sentry"
+	}
+	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
+		msg = "no environment"
+	}
+	if msg != "" {
+		sentry.CaptureException(errors.New(msg))
+		log.Fatal(msg)
+	}
+}
+
+func parseYaml() {
+	filename := "config.yaml"
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -92,6 +126,10 @@ func parseConfig() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+}
+
+func print(arg1 string, arg2 string) {
+	fmt.Println(arg1, arg2)
 }
 
 func undertake(body map[string]interface{}) {

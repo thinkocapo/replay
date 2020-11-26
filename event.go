@@ -65,9 +65,12 @@ func (event *Event) setPlatform() {
 	}
 }
 
-func (event *Event) setDsn(fullurl string) {
-	event.DSN = NewDSN(fullurl)
-	// TODO should null pointer reference check
+func (event *Event) setDsn(dsn string) {
+	event.DSN = NewDSN(dsn)
+	if event.DSN == nil {
+		sentry.CaptureException(errors.New("null DSN"))
+		log.Fatal("null DSN")
+	}
 }
 
 func (event *Event) setDsnGCS() {

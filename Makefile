@@ -1,5 +1,5 @@
 all:
-	go build -o bin/main *.go && ./bin/main eventtest
+	go build -o bin/main *.go && ./bin/main -n 5
 
 i:
-	go build -o bin/main *.go && ./bin/main -i eventtest
+	go build -o bin/main *.go && ./bin/main -i -n 2
