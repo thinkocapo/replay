@@ -34,10 +34,6 @@ func (r *Requests) send() {
 				request.send()
 			}
 		}
-
-		// OG
-		// request := NewRequest(event)
-		// request.send()
 	}
 	fmt.Printf("> DONE sending %v events", len(r.events))
 
