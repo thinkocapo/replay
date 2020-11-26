@@ -26,7 +26,8 @@ type EventMetadata struct {
 // Events from last 24HrPeriod events for selected Projects
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
-	query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
+	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
+	query := "platform.name%3Aruby"
 
 	// 0 project names specified
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)

@@ -18,6 +18,9 @@ type DemoAutomation struct{}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
+const JAVA = "java"
+const RUBY = "ruby"
+const GO = "go"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
@@ -33,7 +36,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 		fmt.Printf("> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
-	fmt.Printf("\n> FINAL EVENTS length: %v \n", len(events))
+	fmt.Printf("\n> EVENTS from API: %v \n", len(events))
 	return events
 }
 

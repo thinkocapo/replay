@@ -59,7 +59,7 @@ func (r Request) send() {
 
 	request.Header.Set("content-type", "application/json")
 
-	fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
+	// fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
 		var httpClient = &http.Client{}

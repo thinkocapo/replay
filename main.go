@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -32,6 +33,7 @@ func init() {
 	parseYaml()
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
+	fmt.Println("*** IGNORE ****", *ignore)
 	n = flag.Int("n", 25, "default number of events to read from a source")
 	flag.Parse()
 	print("n is", strconv.Itoa(*n))
