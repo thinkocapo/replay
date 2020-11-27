@@ -91,6 +91,7 @@ func (event *Event) setDsnGCS() {
 	}
 }
 
+// TODO Do Not Repeat Yourself
 func (event *Event) setPlatform() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.Platform = JAVASCRIPT
@@ -98,12 +99,20 @@ func (event *Event) setPlatform() {
 		event.Platform = PYTHON
 	} else if event.Kind == TRANSACTION && event.Transaction.Platform == JAVA {
 		event.Platform = JAVA
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == RUBY {
+		event.Platform = RUBY
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == GO {
+		event.Platform = GO
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.Platform = JAVASCRIPT
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
 		event.Platform = PYTHON
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVA {
 		event.Platform = JAVA
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUBY {
+		event.Platform = RUBY
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == GO {
+		event.Platform = GO
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)

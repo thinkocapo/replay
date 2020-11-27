@@ -45,9 +45,24 @@ func (r *Requests) send() {
 				request.send()
 				counter++
 			}
+		case RUBY:
+			for _, dsn := range config.Destinations.Ruby {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+				counter++
+			}
+		case GO:
+			for _, dsn := range config.Destinations.Go {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+				counter++
+				// TODO move counter to global so reqeust.go can use it...
+			}
 		default:
 			sentry.CaptureMessage("unsupported event platform: " + event.Platform)
-			fmt.Printf("unrecognized Platform %v", event.Platform)
+			fmt.Printf("\nunrecognized Platform %v\n", event.Platform)
 		}
 	}
 	fmt.Printf("\n> TOTAL sent: %v", counter)
