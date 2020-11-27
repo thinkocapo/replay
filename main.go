@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"strconv"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
@@ -35,8 +34,6 @@ func init() {
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
 	flag.Parse()
-
-	print("n is", strconv.Itoa(*n))
 }
 
 func main() {

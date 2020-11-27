@@ -35,7 +35,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 		eventMetadata := discoverAPI.latestEventMetadata(org, *n)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
-		fmt.Printf("> %v Events length %v\n", org, len(_events))
+		fmt.Printf("\n> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
 	fmt.Printf("\n> EVENTS from API: %v \n", len(events))

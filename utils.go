@@ -150,10 +150,6 @@ func undertakeOG(body map[string]interface{}) {
 	tags["undertaker"] = "h4ckweek"
 }
 
-// func undertake(event Event) {
-// 	event.tagIt
-// }
-
 func updateTraceIds(events []Event) {
 	for _, TRACE_ID := range traceIds {
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")

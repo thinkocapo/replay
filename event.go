@@ -143,7 +143,7 @@ func (e Event) undertake() {
 			e.Transaction.Tags = make([][]string, 0)
 		}
 		tagItem := []string{"replay", user.Username}
-		e.Transaction.Tags = append(e.Error.Tags, tagItem)
+		e.Transaction.Tags = append(e.Transaction.Tags, tagItem)
 	}
 	// could do the following, but then have to define same method in each
 	// e.Error.undertake()
