@@ -65,10 +65,6 @@ func (event *Event) getPlatform() string {
 	return platform
 }
 
-// func (event *Event) getKind() string {
-
-// }
-
 func (event *Event) setDsn(dsn string) {
 	event.DSN = NewDSN(dsn)
 	if event.DSN == nil {

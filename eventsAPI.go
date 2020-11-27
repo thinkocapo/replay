@@ -11,16 +11,13 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-type EventsAPI struct {
-	// events []Event
-}
+type EventsAPI struct{}
 
 func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event {
 	var events []Event
 
 	for _, e := range eventMetadata {
 		if e.Project == os.Getenv("SKIP") {
-			fmt.Println("skipping...", e.Project)
 			continue
 		}
 
@@ -63,8 +60,6 @@ func sanitize(_events []Event) []Event {
 	for _, event := range _events {
 		if hasOrgTag(event) == false {
 			events = append(events, event)
-		} else {
-			fmt.Println("\n > has org!!")
 		}
 	}
 	return events
@@ -81,7 +76,7 @@ func hasOrgTag(event Event) bool {
 
 	for _, tag := range tags {
 		if tag[0] == "organization" {
-			fmt.Println("\n> has org tag!")
+			fmt.Println("\n> has organization tag")
 			return true
 		}
 	}
