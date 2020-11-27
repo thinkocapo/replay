@@ -21,6 +21,8 @@ const PYTHON = "python"
 const JAVA = "java"
 const RUBY = "ruby"
 const GO = "go"
+const PHP = "php"
+const NODE = "node"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {

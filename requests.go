@@ -6,10 +6,6 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-var (
-	counter int
-)
-
 type Requests struct {
 	events []Event
 	// Consider making a Constructor for these attrs, so can simplify send(). However loss of ordering of events.
@@ -29,36 +25,42 @@ func (r *Requests) send() {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
-				counter++
 			}
 		case PYTHON:
 			for _, dsn := range config.Destinations.Python {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
-				counter++
 			}
 		case JAVA:
 			for _, dsn := range config.Destinations.Java {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
-				counter++
 			}
 		case RUBY:
 			for _, dsn := range config.Destinations.Ruby {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
-				counter++
 			}
 		case GO:
 			for _, dsn := range config.Destinations.Go {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()
-				counter++
-				// TODO move counter to global so reqeust.go can use it...
+			}
+		case PHP:
+			for _, dsn := range config.Destinations.Php {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case NODE:
+			for _, dsn := range config.Destinations.Node {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
 			}
 		default:
 			sentry.CaptureMessage("unsupported event platform: " + event.Platform)

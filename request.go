@@ -73,6 +73,7 @@ func (r Request) send() {
 			sentry.CaptureException(responseDataErr)
 			log.Fatal(responseDataErr)
 		}
+		counter++
 		fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 	} else {
 		fmt.Print("> event IGNORED \n")

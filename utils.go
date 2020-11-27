@@ -97,6 +97,8 @@ type Config struct {
 		Java       []string `yaml:"java"`
 		Ruby       []string `yaml:"ruby"`
 		Go         []string `yaml:"go"`
+		Php        []string `yaml:"php"`
+		Node       []string `yaml:"node"`
 	}
 }
 
@@ -135,7 +137,7 @@ func print(arg1 string, arg2 string) {
 	fmt.Println(arg1, arg2)
 }
 
-func undertake(body map[string]interface{}) {
+func undertakeOG(body map[string]interface{}) {
 	if body["tags"] == nil {
 		body["tags"] = make(map[string]interface{})
 	}

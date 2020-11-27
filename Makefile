@@ -2,4 +2,4 @@ all:
 	go build -o bin/main *.go && ./bin/main -n 10
 
 i:
-	go build -o bin/main *.go && ./bin/main -i -n 200
+	go build -o bin/main *.go && ./bin/main -i -n 20

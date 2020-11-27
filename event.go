@@ -72,6 +72,7 @@ func (event *Event) setDsn(dsn string) {
 	}
 }
 
+// TODO Do Not Repeat Yourself DRY
 func (event *Event) setDsnGCS() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.DSN = NewDSN(os.Getenv("DSN_JAVASCRIPT_SAAS"))
@@ -91,7 +92,7 @@ func (event *Event) setDsnGCS() {
 	}
 }
 
-// TODO Do Not Repeat Yourself
+// TODO Do Not Repeat Yourself DRY
 func (event *Event) setPlatform() {
 	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
 		event.Platform = JAVASCRIPT
@@ -103,6 +104,10 @@ func (event *Event) setPlatform() {
 		event.Platform = RUBY
 	} else if event.Kind == TRANSACTION && event.Transaction.Platform == GO {
 		event.Platform = GO
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PHP {
+		event.Platform = PHP
+	} else if event.Kind == TRANSACTION && event.Transaction.Platform == NODE {
+		event.Platform = NODE
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
 		event.Platform = JAVASCRIPT
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
@@ -113,6 +118,10 @@ func (event *Event) setPlatform() {
 		event.Platform = RUBY
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == GO {
 		event.Platform = GO
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PHP {
+		event.Platform = PHP
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == NODE {
+		event.Platform = NODE
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)
