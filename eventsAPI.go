@@ -47,5 +47,35 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		// TODO could sanitize/flag it here, and then not append it. organization.slug, plan.tier
 		events = append(events, event)
 	}
+	events = sanitize(events)
 	return events
+}
+
+func sanitize(events []Event) []Event {
+	for _, event := range events {
+		if hasOrgTag(event) {
+			fmt.Println("\n > > has org!!")
+		} else {
+
+		}
+	}
+	return events
+}
+
+func hasOrgTag(event Event) bool {
+	var tags [][]string
+	if event.Kind == ERROR || event.Kind == DEFAULT {
+		tags = event.Error.Tags
+	}
+	if event.Kind == TRANSACTION {
+		tags = event.Transaction.Tags
+	}
+
+	for _, tag := range tags {
+		if tag[0] == "organization" {
+			fmt.Println("\n> has org tag!")
+			return true
+		}
+	}
+	return false
 }
