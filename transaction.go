@@ -68,7 +68,9 @@ func (t *Transaction) release() {
 }
 
 func (t *Transaction) user() {
-	t.User = make(map[string]interface{})
+	if t.User == nil {
+		t.User = make(map[string]interface{})
+	}
 	user := t.User
 	user["email"] = createUser()
 }

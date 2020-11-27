@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/user"
 	"strings"
 	"time"
 
@@ -65,9 +66,9 @@ func initializeSentry() {
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-	if hostName, _ := os.Hostname(); hostName != "" {
+	if user, _ := user.Current(); user != nil {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetUser(sentry.User{Username: hostName, IPAddress: ip()})
+			scope.SetUser(sentry.User{Username: user.Username, IPAddress: ip()})
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
@@ -144,6 +145,10 @@ func undertakeOG(body map[string]interface{}) {
 	tags := body["tags"].(map[string]interface{})
 	tags["undertaker"] = "h4ckweek"
 }
+
+// func undertake(event Event) {
+// 	event.tagIt
+// }
 
 func updateTraceIds(events []Event) {
 	for _, TRACE_ID := range traceIds {

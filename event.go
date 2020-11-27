@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -126,4 +127,25 @@ func (event *Event) setPlatform() {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)
 	}
+}
+
+func (e Event) undertake() {
+	user, _ := user.Current() // .Name, .Username, .HomeDir
+	if e.Kind == ERROR || e.Kind == DEFAULT {
+		if e.Error.Tags == nil {
+			e.Error.Tags = make([][]string, 0)
+		}
+		tagItem := []string{"replay", user.Username}
+		e.Error.Tags = append(e.Error.Tags, tagItem)
+	}
+	if e.Kind == TRANSACTION {
+		if e.Transaction.Tags == nil {
+			e.Transaction.Tags = make([][]string, 0)
+		}
+		tagItem := []string{"replay", user.Username}
+		e.Transaction.Tags = append(e.Error.Tags, tagItem)
+	}
+	// could do the following, but then have to define same method in each
+	// e.Error.undertake()
+	// e.Transaction.undertake()
 }
