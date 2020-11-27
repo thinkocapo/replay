@@ -54,7 +54,7 @@ func getTraceIds(events []Event) {
 			}
 		}
 	}
-	fmt.Println("> getTraceids traceIds", traceIds)
+	// fmt.Println("> getTraceids traceIds", traceIds)
 }
 
 func initializeSentry() {
@@ -113,6 +113,9 @@ func parseEnv() {
 	}
 	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
 		msg = "no environment"
+	}
+	if SKIP := os.Getenv("SKIP"); SKIP == "" {
+		msg = "no skip list provided"
 	}
 	if msg != "" {
 		sentry.CaptureException(errors.New(msg))

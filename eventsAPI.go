@@ -11,14 +11,16 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-type EventsAPI struct {
-	// events []Event
-}
+type EventsAPI struct{}
 
 func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event {
 	var events []Event
 
 	for _, e := range eventMetadata {
+		if e.Project == os.Getenv("SKIP") {
+			continue
+		}
+
 		endpoint := "https://sentry.io/api/0/projects/" + org + "/" + e.Project + "/events/" + e.Id + "/json/"
 
 		request, _ := http.NewRequest("GET", endpoint, nil)
@@ -47,5 +49,36 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		// TODO could sanitize/flag it here, and then not append it. organization.slug, plan.tier
 		events = append(events, event)
 	}
+	events = sanitize(events)
+	fmt.Printf("> %v Events length %v\n", org, len(events))
 	return events
+}
+
+func sanitize(_events []Event) []Event {
+	var events []Event
+
+	for _, event := range _events {
+		if hasOrgTag(event) == false {
+			events = append(events, event)
+		}
+	}
+	return events
+}
+
+func hasOrgTag(event Event) bool {
+	var tags [][]string
+	if event.Kind == ERROR || event.Kind == DEFAULT {
+		tags = event.Error.Tags
+	}
+	if event.Kind == TRANSACTION {
+		tags = event.Transaction.Tags
+	}
+
+	for _, tag := range tags {
+		if tag[0] == "organization" {
+			fmt.Println("\n> has organization tag")
+			return true
+		}
+	}
+	return false
 }
