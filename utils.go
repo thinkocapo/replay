@@ -142,14 +142,6 @@ func print(arg1 string, arg2 string) {
 	fmt.Println(arg1, arg2)
 }
 
-func undertakeOG(body map[string]interface{}) {
-	if body["tags"] == nil {
-		body["tags"] = make(map[string]interface{})
-	}
-	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "h4ckweek"
-}
-
 func updateTraceIds(events []Event) {
 	for _, TRACE_ID := range traceIds {
 		var uuid4 = strings.ReplaceAll(uuid.New().String(), "-", "")
