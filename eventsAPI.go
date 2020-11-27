@@ -19,6 +19,11 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 	var events []Event
 
 	for _, e := range eventMetadata {
+		if e.Project == os.Getenv("SKIP") {
+			continue
+		} else {
+			fmt.Println("skipping...", e.Project)
+		}
 		endpoint := "https://sentry.io/api/0/projects/" + org + "/" + e.Project + "/events/" + e.Id + "/json/"
 
 		request, _ := http.NewRequest("GET", endpoint, nil)
@@ -51,12 +56,15 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 	return events
 }
 
-func sanitize(events []Event) []Event {
-	for _, event := range events {
-		if hasOrgTag(event) {
-			fmt.Println("\n > > has org!!")
-		} else {
+func sanitize(_events []Event) []Event {
+	var events []Event
 
+	for _, event := range _events {
+		if hasOrgTag(event) == false {
+			fmt.Println("\n > CLEAR")
+			events = append(events, event)
+		} else {
+			fmt.Println("\n > has org!!")
 		}
 	}
 	return events

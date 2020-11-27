@@ -114,6 +114,9 @@ func parseEnv() {
 	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
 		msg = "no environment"
 	}
+	if SKIP := os.Getenv("SKIP"); SKIP == "" {
+		msg = "no skip list provided"
+	}
 	if msg != "" {
 		sentry.CaptureException(errors.New(msg))
 		log.Fatal(msg)

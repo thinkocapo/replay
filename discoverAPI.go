@@ -51,7 +51,7 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	}
 
 	json.Unmarshal(body, &d)
-	// fmt.Println("> Discover.Data length:", len(d.Data))
+	fmt.Println("> Discover.Data length:", len(d.Data))
 
 	for _, e := range d.Data {
 		fmt.Println("> Project", e.Project)
