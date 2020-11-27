@@ -17,6 +17,7 @@ type Request struct {
 	Payload       []byte
 	StoreEndpoint string
 	Kind          string
+	Platform      string
 }
 
 func NewRequest(event Event) *Request {
@@ -37,6 +38,7 @@ func NewRequest(event Event) *Request {
 		fmt.Println(err)
 	}
 
+	r.Platform = event.getPlatform()
 	r.Payload = bodyBytes
 	r.StoreEndpoint = event.DSN.storeEndpoint()
 
@@ -47,7 +49,7 @@ func NewRequest(event Event) *Request {
 	return r
 }
 
-func (r Request) send() bool {
+func (r Request) send() {
 	time.Sleep(200 * time.Millisecond)
 	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
 	if errNewRequest != nil {
@@ -57,7 +59,7 @@ func (r Request) send() bool {
 
 	request.Header.Set("content-type", "application/json")
 
-	fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
+	// fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
 		var httpClient = &http.Client{}
@@ -71,9 +73,9 @@ func (r Request) send() bool {
 			sentry.CaptureException(responseDataErr)
 			log.Fatal(responseDataErr)
 		}
-		fmt.Printf("> Kind: %v | Response: %v \n", r.Kind, string(responseData))
+		counter++
+		fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 	} else {
 		fmt.Print("> event IGNORED \n")
 	}
-	return true
 }

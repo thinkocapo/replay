@@ -18,6 +18,11 @@ type DemoAutomation struct{}
 
 const JAVASCRIPT = "javascript"
 const PYTHON = "python"
+const JAVA = "java"
+const RUBY = "ruby"
+const GO = "go"
+const PHP = "php"
+const NODE = "node"
 
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
@@ -30,10 +35,10 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 		eventMetadata := discoverAPI.latestEventMetadata(org, *n)
 		_events := eventsAPI.getEvents(org, eventMetadata)
 
-		fmt.Printf("> %v Events length %v\n", org, len(_events))
+		fmt.Printf("\n> %v Events length %v\n", org, len(_events))
 		events = append(events, _events...)
 	}
-	fmt.Printf("\n> FINAL EVENTS length: %v \n", len(events))
+	fmt.Printf("\n> EVENTS from API: %v \n", len(events))
 	return events
 }
 

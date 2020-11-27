@@ -43,6 +43,8 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 			panic(errUnmarshal)
 		}
 		event.setPlatform()
+		event.undertake()
+		// TODO could sanitize/flag it here, and then not append it. organization.slug, plan.tier
 		events = append(events, event)
 	}
 	return events

@@ -1,5 +1,5 @@
 all:
-	go build -o bin/main *.go && ./bin/main -n 5
+	go build -o bin/main *.go && ./bin/main -n 50
 
 i:
-	go build -o bin/main *.go && ./bin/main -i -n 2
+	go build -o bin/main *.go && ./bin/main -i -n 20

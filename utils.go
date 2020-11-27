@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/user"
 	"strings"
 	"time"
 
@@ -65,9 +66,9 @@ func initializeSentry() {
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-	if hostName, _ := os.Hostname(); hostName != "" {
+	if user, _ := user.Current(); user != nil {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetUser(sentry.User{Username: hostName, IPAddress: ip()})
+			scope.SetUser(sentry.User{Username: user.Username, IPAddress: ip()})
 		})
 	}
 	defer sentry.Flush(2 * time.Second)
@@ -94,6 +95,11 @@ type Config struct {
 	Destinations struct {
 		Javascript []string `yaml:"javascript"`
 		Python     []string `yaml:"python"`
+		Java       []string `yaml:"java"`
+		Ruby       []string `yaml:"ruby"`
+		Go         []string `yaml:"go"`
+		Php        []string `yaml:"php"`
+		Node       []string `yaml:"node"`
 	}
 }
 
@@ -126,18 +132,14 @@ func parseYaml() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+	if len(config.Sources) == 0 {
+		sentry.CaptureException(errors.New("No sources defined"))
+		log.Fatal("No sources defined")
+	}
 }
 
 func print(arg1 string, arg2 string) {
 	fmt.Println(arg1, arg2)
-}
-
-func undertake(body map[string]interface{}) {
-	if body["tags"] == nil {
-		body["tags"] = make(map[string]interface{})
-	}
-	tags := body["tags"].(map[string]interface{})
-	tags["undertaker"] = "h4ckweek"
 }
 
 func updateTraceIds(events []Event) {
