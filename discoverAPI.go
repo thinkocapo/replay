@@ -27,9 +27,11 @@ type EventMetadata struct {
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
 // n of 200 may not work
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
+	fmt.Printf("\n> ORG %v\n", org)
+
 	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
-	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
-	query := "platform.name%3Ajavascript&project=1218870"
+	query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
+	// query := "platform.name%3Ajavascript&project=1218870"
 
 	// 0 project names specified
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
@@ -51,10 +53,10 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	}
 
 	json.Unmarshal(body, &d)
-	fmt.Println("> Discover.Data length:", len(d.Data))
+	fmt.Printf("> %v Discover.Data length: %v\n", org, len(d.Data))
 
 	for _, e := range d.Data {
-		fmt.Println("> Project", e.Project)
+		fmt.Printf("> %v %v\n", org, e.Project)
 	}
 	return d.Data
 }

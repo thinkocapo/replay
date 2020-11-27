@@ -54,7 +54,7 @@ func getTraceIds(events []Event) {
 			}
 		}
 	}
-	fmt.Println("> getTraceids traceIds", traceIds)
+	// fmt.Println("> getTraceids traceIds", traceIds)
 }
 
 func initializeSentry() {
