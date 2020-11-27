@@ -132,6 +132,10 @@ func parseYaml() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+	if len(config.Sources) == 0 {
+		sentry.CaptureException(errors.New("No sources defined"))
+		log.Fatal("No sources defined")
+	}
 }
 
 func print(arg1 string, arg2 string) {
