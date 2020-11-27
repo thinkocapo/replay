@@ -19,7 +19,7 @@ var (
 	counter       int
 )
 
-// v1.0.1
+// v1.0.2
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -27,7 +27,6 @@ func init() {
 	initializeSentry()
 	sentry.CaptureMessage("job started")
 
-	ip()
 	parseEnv()
 	parseYaml()
 
