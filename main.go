@@ -17,6 +17,7 @@ var (
 	gcsFilePrefix string
 	config        Config
 	n             *int
+	counter       int
 )
 
 // v1.0.1
