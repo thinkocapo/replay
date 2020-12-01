@@ -24,6 +24,16 @@ const GO = "go"
 const PHP = "php"
 const NODE = "node"
 
+// Get events from both Sentry and GCS
+func (d *DemoAutomation) getEvents() []Event {
+	var events []Event
+	events1 := d.getEventsFromSentry()
+	events2 := d.getEventsFromGCS(*filePrefix)
+	events = append(events, events1...)
+	events = append(events, events2...)
+	return events
+}
+
 // Download the events from Sentry
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
@@ -40,7 +50,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 	return events
 }
 
-// Get the events from Google Cloud Storage via ./bin/main -i <prefix> and filePrefix = os.Args[1]
+// Gets events from Google Cloud Storage
 func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()

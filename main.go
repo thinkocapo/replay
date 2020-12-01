@@ -38,8 +38,11 @@ func init() {
 
 func main() {
 	demoAutomation := DemoAutomation{}
+
+	// TODO append these 2 together, or combine in a single .getEvents() method
 	// events := demoAutomation.getEventsFromSentry()
-	events := demoAutomation.getEventsFromGCS(*filePrefix)
+	// events := demoAutomation.getEventsFromGCS(*filePrefix)
+	events := demoAutomation.getEvents()
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
