@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	all           *bool
-	ignore        *bool
-	traceIds      []string
-	gcsFilePrefix string
-	config        Config
-	n             *int
-	counter       int
+	all        *bool
+	ignore     *bool
+	traceIds   []string
+	filePrefix string
+	config     Config
+	n          *int
+	counter    int
 )
 
 // v1.0.2
@@ -37,7 +37,8 @@ func init() {
 
 func main() {
 	demoAutomation := DemoAutomation{}
-	events := demoAutomation.getEventsFromSentry()
+	// events := demoAutomation.getEventsFromSentry()
+	events := demoAutomation.getEventsFromGCS(filePrefix)
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {

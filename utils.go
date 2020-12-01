@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -139,6 +140,11 @@ func parseYaml() {
 		sentry.CaptureException(errors.New("No sources defined"))
 		log.Fatal("No sources defined")
 	}
+}
+
+func prettyPrint(v interface{}) string {
+	pp, _ := json.MarshalIndent(v, "", "  ")
+	return string(pp)
 }
 
 func print(arg1 string, arg2 string) {

@@ -40,8 +40,8 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 	return events
 }
 
-// Get the events from Google Cloud Storage via ./bin/main -i <prefix> and gcsFilePrefix = os.Args[1]
-func (d *DemoAutomation) getEventsFromGCS(gcsFilePrefix string) []Event {
+// Get the events from Google Cloud Storage via ./bin/main -i <prefix> and filePrefix = os.Args[1]
+func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -59,7 +59,7 @@ func (d *DemoAutomation) getEventsFromGCS(gcsFilePrefix string) []Event {
 
 	var fileNames []string
 
-	query := &storage.Query{Prefix: gcsFilePrefix}
+	query := &storage.Query{Prefix: filePrefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()
