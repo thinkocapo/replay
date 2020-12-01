@@ -92,6 +92,14 @@ func (event *Event) setDsnGCS() {
 		event.Platform = PHP
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == NODE {
 		event.Platform = NODE
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == CSHARP {
+		event.Platform = CSHARP
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == DART {
+		event.Platform = DART
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ELIXIR {
+		event.Platform = ELIXIR
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
+		event.Platform = PERL
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)
@@ -128,6 +136,14 @@ func (event *Event) setPlatform() {
 		event.Platform = PHP
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == NODE {
 		event.Platform = NODE
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == CSHARP {
+		event.Platform = CSHARP
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == DART {
+		event.Platform = DART
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ELIXIR {
+		event.Platform = ELIXIR
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
+		event.Platform = PERL
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("event.Kind and type not recognized " + event.Kind)

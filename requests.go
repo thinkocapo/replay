@@ -62,6 +62,30 @@ func (r *Requests) send() {
 				request := NewRequest(event)
 				request.send()
 			}
+		case CSHARP:
+			for _, dsn := range config.Destinations.Csharp {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case DART:
+			for _, dsn := range config.Destinations.Dart {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case ELIXIR:
+			for _, dsn := range config.Destinations.Elixir {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case PERL:
+			for _, dsn := range config.Destinations.Perl {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
 		default:
 			sentry.CaptureMessage("unsupported event platform: " + event.Platform)
 			fmt.Printf("\nunrecognized Platform %v\n", event.Platform)
