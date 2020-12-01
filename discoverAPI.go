@@ -30,7 +30,8 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	fmt.Printf("\n> ORG %v\n", org)
 
 	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
-	query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
+	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
+	query := "platform.name%3Acsharp+OR+platform.name%3Adart+OR+platform.name%3Aelixir+OR+platform.name%3Aperl"
 
 	// 0 project names specified
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)

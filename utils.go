@@ -101,6 +101,10 @@ type Config struct {
 		Go         []string `yaml:"go"`
 		Php        []string `yaml:"php"`
 		Node       []string `yaml:"node"`
+		Csharp     []string `yaml:"csharp"`
+		Dart       []string `yaml:"dart"`
+		Elixir     []string `yaml:"elixir"`
+		Perl       []string `yaml:"perl"`
 	}
 }
 
