@@ -29,11 +29,8 @@ type EventMetadata struct {
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	fmt.Printf("\n> ORG %v\n", org)
 
-	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython"
-	// query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
-	query := "platform.name%3Acsharp+OR+platform.name%3Adart+OR+platform.name%3Aelixir+OR+platform.name%3Aperl"
+	query := makeQuery([]string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL})
 
-	// 0 project names specified
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
@@ -59,6 +56,16 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 		fmt.Printf("> %v %v\n", org, e.Project)
 	}
 	return d.Data
+}
+
+func makeQuery(supportedPlatforms []string) string {
+	var result string
+	for _, platform := range supportedPlatforms {
+		result += "platform.name%3A" + platform + "+OR+"
+	}
+	// TODO slice off the final "+OR+"
+	fmt.Println("X X X X X X  result sliced... X X X X X  X", result[:len(result)-4])
+	return result[:len(result)-4]
 }
 
 // Consider chaining
