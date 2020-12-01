@@ -23,6 +23,10 @@ const RUBY = "ruby"
 const GO = "go"
 const PHP = "php"
 const NODE = "node"
+const DART = "dart"
+const CSHARP = "csharp"
+const ELIXIR = "elixir"
+const PERL = "perl"
 
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
