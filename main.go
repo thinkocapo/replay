@@ -39,8 +39,7 @@ func init() {
 func main() {
 	demoAutomation := DemoAutomation{}
 
-	// events := demoAutomation.getEvents()
-	events := demoAutomation.getEventsFromGCS(*filePrefix)
+	events := demoAutomation.getEvents()
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
