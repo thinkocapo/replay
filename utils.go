@@ -146,9 +146,9 @@ func parseYaml() {
 	}
 }
 
-func prettyPrint(v interface{}) string {
+func prettyPrint(v interface{}) {
 	pp, _ := json.MarshalIndent(v, "", "  ")
-	return string(pp)
+	fmt.Print(string(pp))
 }
 
 func print(arg1 string, arg2 string) {

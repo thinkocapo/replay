@@ -102,7 +102,7 @@ func (event *Event) setDsnGCS() {
 		event.Platform = PERL
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-		log.Fatal("event.Kind and type not recognized " + event.Kind)
+		log.Fatalf("setDsnGCS() event Kind and Platform not recognized: %v | %v", event.Kind, event.Platform)
 	}
 }
 
@@ -146,7 +146,7 @@ func (event *Event) setPlatform() {
 		event.Platform = PERL
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-		log.Fatal("event.Kind and type not recognized " + event.Kind)
+		log.Fatal("setPlatform() event.Kind and type not recognized " + event.Kind)
 	}
 }
 
