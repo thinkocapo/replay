@@ -76,6 +76,6 @@ func (r Request) send() {
 		counter++
 		fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 	} else {
-		fmt.Print("> event IGNORED \n")
+		fmt.Printf("> event IGNORED %v | %v  \n", r.Kind, r.Platform)
 	}
 }
