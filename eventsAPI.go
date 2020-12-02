@@ -46,23 +46,25 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		}
 		event.setPlatform()
 		event.undertake()
-		// TODO could sanitize/flag it here, and then not append it. organization.slug, plan.tier
 		events = append(events, event)
 	}
 	events = sanitize(events)
+	events = fingerprintCheck(events)
 	fmt.Printf("> %v Events length %v\n", org, len(events))
 	return events
 }
 
-func sanitize(_events []Event) []Event {
-	var events []Event
-
+func fingerprintCheck(_events []Event) []Event {
 	for _, event := range _events {
-		if hasOrgTag(event) == false {
-			events = append(events, event)
+		if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+			metadata := event.Error.Metadata
+			// stack.abs_path is different on each (due to static.js/testing being used), thereby creating too many unique issues
+			if metadata["type"] == "AssertionError" && metadata["value"] == "expected 'Error' to equal 'TypeError'" {
+				event.Error.Fingerprint = []string{"assertion-error-expected"}
+			}
 		}
 	}
-	return events
+	return _events
 }
 
 func hasOrgTag(event Event) bool {
@@ -81,4 +83,14 @@ func hasOrgTag(event Event) bool {
 		}
 	}
 	return false
+}
+
+func sanitize(_events []Event) []Event {
+	var events []Event
+	for _, event := range _events {
+		if hasOrgTag(event) == false {
+			events = append(events, event)
+		}
+	}
+	return events
 }

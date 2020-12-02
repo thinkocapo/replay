@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -100,6 +101,10 @@ type Config struct {
 		Go         []string `yaml:"go"`
 		Php        []string `yaml:"php"`
 		Node       []string `yaml:"node"`
+		Csharp     []string `yaml:"csharp"`
+		Dart       []string `yaml:"dart"`
+		Elixir     []string `yaml:"elixir"`
+		Perl       []string `yaml:"perl"`
 	}
 }
 
@@ -139,6 +144,11 @@ func parseYaml() {
 		sentry.CaptureException(errors.New("No sources defined"))
 		log.Fatal("No sources defined")
 	}
+}
+
+func prettyPrint(v interface{}) {
+	pp, _ := json.MarshalIndent(v, "", "  ")
+	fmt.Print(string(pp))
 }
 
 func print(arg1 string, arg2 string) {

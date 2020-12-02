@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	all           *bool
-	ignore        *bool
-	traceIds      []string
-	gcsFilePrefix string
-	config        Config
-	n             *int
-	counter       int
+	all        *bool
+	ignore     *bool
+	traceIds   []string
+	filePrefix *string
+	config     Config
+	n          *int
+	counter    int
 )
 
 // v1.0.2
@@ -32,12 +32,14 @@ func init() {
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
+	filePrefix = flag.String("prefix", "err", "file prefix")
 	flag.Parse()
 }
 
 func main() {
 	demoAutomation := DemoAutomation{}
-	events := demoAutomation.getEventsFromSentry()
+
+	events := demoAutomation.getEvents()
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
