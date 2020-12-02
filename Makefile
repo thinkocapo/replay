@@ -1,5 +1,5 @@
 all:
-	go build -o bin/main *.go && ./bin/main -n 20 err
+	go build -o bin/main *.go && ./bin/main -n 5 err
 
 i:
-	go build -o bin/main *.go && ./bin/main -i -n 20 err
+	go build -o bin/main *.go && ./bin/main -i -n 5 err

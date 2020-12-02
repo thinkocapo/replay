@@ -50,16 +50,17 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		events = append(events, event)
 	}
 	events = sanitize(events)
+	events = fingerprint(events)
 	fmt.Printf("> %v Events length %v\n", org, len(events))
 	return events
 }
 
-func sanitize(_events []Event) []Event {
+func fingerprint(_events []Event) []Event {
 	var events []Event
-
 	for _, event := range _events {
-		if hasOrgTag(event) == false {
-			events = append(events, event)
+		// if "title": "AssertionError: expected 'Error' to equal 'TypeError'"
+		if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+			fmt.Println("> checking fingerprint...")
 		}
 	}
 	return events
@@ -81,4 +82,14 @@ func hasOrgTag(event Event) bool {
 		}
 	}
 	return false
+}
+
+func sanitize(_events []Event) []Event {
+	var events []Event
+	for _, event := range _events {
+		if hasOrgTag(event) == false {
+			events = append(events, event)
+		}
+	}
+	return events
 }

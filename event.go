@@ -166,7 +166,4 @@ func (e Event) undertake() {
 		tagItem := []string{"replay", user.Username}
 		e.Transaction.Tags = append(e.Transaction.Tags, tagItem)
 	}
-	// could do the following, but then have to define same method in each
-	// e.Error.undertake()
-	// e.Transaction.undertake()
 }
