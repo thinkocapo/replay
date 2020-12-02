@@ -86,6 +86,12 @@ func (r *Requests) send() {
 				request := NewRequest(event)
 				request.send()
 			}
+		case RUST:
+			for _, dsn := range config.Destinations.Rust {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
 		default:
 			sentry.CaptureMessage("unsupported event platform: " + event.Platform)
 			fmt.Printf("\nunrecognized Platform %v\n", event.Platform)

@@ -27,6 +27,7 @@ const DART = "dart"
 const CSHARP = "csharp"
 const ELIXIR = "elixir"
 const PERL = "perl"
+const RUST = "rust"
 
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
