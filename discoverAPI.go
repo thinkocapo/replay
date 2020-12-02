@@ -29,11 +29,8 @@ type EventMetadata struct {
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 	fmt.Printf("\n> ORG %v\n", org)
 
-	// query := makeQuery([]string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL})
-	query := "platform.name%3Ajavascript+OR+platform.name%3Apython+OR+platform.name%3Ajava+OR+platform.name%3Aruby+OR+platform.name%3Ago+OR+platform.name%3Anode+OR+platform.name%3Aphp"
-	fmt.Println("> query ", query)
+	query := makeQuery([]string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL})
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
-	fmt.Println("> endpoint ", endpoint)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")

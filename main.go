@@ -39,7 +39,7 @@ func init() {
 func main() {
 	demoAutomation := DemoAutomation{}
 
-	events := demoAutomation.getEventsFromSentry()
+	events := demoAutomation.getEvents()
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
