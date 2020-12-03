@@ -27,12 +27,13 @@ const DART = "dart"
 const CSHARP = "csharp"
 const ELIXIR = "elixir"
 const PERL = "perl"
+const RUST = "native"
 
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
 	var events []Event
 	events1 := d.getEventsFromSentry()
-	events2 := d.getEventsFromGCS(*filePrefix)
+	events2 := d.getEventsFromGCS()
 	events = append(events, events1...)
 	events = append(events, events2...)
 	return events
@@ -55,7 +56,7 @@ func (d *DemoAutomation) getEventsFromSentry() []Event {
 }
 
 // Gets events from Google Cloud Storage
-func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
+func (d *DemoAutomation) getEventsFromGCS() []Event {
 	// Initialize/Connect the Client
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -73,7 +74,7 @@ func (d *DemoAutomation) getEventsFromGCS(filePrefix string) []Event {
 
 	var fileNames []string
 
-	query := &storage.Query{Prefix: filePrefix}
+	query := &storage.Query{Prefix: *filePrefix}
 	it := bucketHandle.Objects(ctx, query)
 	for {
 		obj, err := it.Next()

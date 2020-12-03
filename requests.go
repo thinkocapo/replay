@@ -16,8 +16,6 @@ type Requests struct {
 // Doing each destination one-by-one, gives each org a rest before its API is called again, so don't insert a short Sleep Timeout yet
 func (r *Requests) send() {
 	for _, event := range r.events {
-		// fmt.Println("\nEVENT PLATFORM", event.Platform)
-
 		// CONSIDER check if Destinations array is empty, or do during an init somewhere
 		switch event.Platform {
 		case JAVASCRIPT:
@@ -82,6 +80,12 @@ func (r *Requests) send() {
 			}
 		case PERL:
 			for _, dsn := range config.Destinations.Perl {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case RUST:
+			for _, dsn := range config.Destinations.Rust {
 				event.setDsn(dsn)
 				request := NewRequest(event)
 				request.send()

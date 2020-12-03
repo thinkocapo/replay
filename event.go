@@ -100,6 +100,8 @@ func (event *Event) setDsnGCS() {
 		event.Platform = ELIXIR
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
 		event.Platform = PERL
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUST {
+		event.Platform = RUST
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatalf("setDsnGCS() event Kind and Platform not recognized: %v | %v", event.Kind, event.Platform)
@@ -144,6 +146,8 @@ func (event *Event) setPlatform() {
 		event.Platform = ELIXIR
 	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
 		event.Platform = PERL
+	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUST {
+		event.Platform = RUST
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatal("setPlatform() event.Kind and type not recognized " + event.Kind)

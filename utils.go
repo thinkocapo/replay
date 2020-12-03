@@ -105,6 +105,7 @@ type Config struct {
 		Dart       []string `yaml:"dart"`
 		Elixir     []string `yaml:"elixir"`
 		Perl       []string `yaml:"perl"`
+		Rust       []string `yaml:"rust"`
 	}
 }
 
