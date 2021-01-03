@@ -50,7 +50,7 @@ func NewRequest(event Event) *Request {
 }
 
 func (r Request) send() {
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(300 * time.Millisecond)
 	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
 	if errNewRequest != nil {
 		sentry.CaptureException(errNewRequest)
