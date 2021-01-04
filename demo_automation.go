@@ -109,6 +109,7 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 
 		// TODO may be broken, now that setDsn changed.
 		event.setDsnGCS()
+		event.undertake()
 		events = append(events, event)
 	}
 	return events
