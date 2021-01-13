@@ -103,7 +103,7 @@ func (event *Event) setDsnGCS() {
 		event.Platform = RUST
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-		log.Fatalf("setDsnGCS() event Kind and Platform not recognized: %v | %v", event.Kind, event.Platform)
+		log.Fatalf("setDsnGCS() event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
 	}
 }
 
@@ -149,7 +149,7 @@ func (event *Event) setPlatform() {
 		event.Platform = RUST
 	} else {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-		log.Fatal("setPlatform() event.Kind and type not recognized " + event.Kind)
+		log.Fatal("setPlatform() event.Kind and type not recognized " + event.Kind + " " + event.Error.Platform)
 	}
 }
 
@@ -158,6 +158,7 @@ func (e Event) undertake() {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
 		}
+		// TODO need to replace the 'demo-automation' element in the array if it exists already, or else you're adding duplicate elements
 		tagItem := []string{"demo-automation", "replay"}
 		e.Error.Tags = append(e.Error.Tags, tagItem)
 	}

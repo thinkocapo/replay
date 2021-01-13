@@ -32,14 +32,14 @@ func init() {
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
-	filePrefix = flag.String("prefix", "err", "file prefix")
+	filePrefix = flag.String("prefix", "error", "file prefix")
 	flag.Parse()
 }
 
 func main() {
 	demoAutomation := DemoAutomation{}
 
-	events := demoAutomation.getEvents()
+	events := demoAutomation.getEventsFromGCS()
 
 	for _, event := range events {
 		if event.Kind == ERROR || event.Kind == DEFAULT {
