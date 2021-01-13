@@ -53,3 +53,4 @@ sales*
 *.yml
 
 events/
+events-errors/

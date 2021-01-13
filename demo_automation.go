@@ -79,7 +79,10 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 	for {
 		obj, err := it.Next()
 		if err == iterator.Done {
-			sentry.CaptureMessage(fmt.Sprintf("finished retrieving %v file names", len(fileNames)))
+			sentry.ConfigureScope(func(scope *sentry.Scope) {
+				scope.SetTag("files", fmt.Sprint(len(fileNames)))
+			})
+			sentry.CaptureMessage(fmt.Sprintf("finished retrieving files"))
 			break
 		}
 		if err != nil {
@@ -107,7 +110,7 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 			panic(err)
 		}
 
-		// TODO may be broken, now that setDsn changed.
+		// event.setPlatform()
 		event.setDsnGCS()
 		event.undertake()
 		events = append(events, event)
