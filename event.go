@@ -158,6 +158,7 @@ func (e Event) undertake() {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
 		}
+		// TODO need to replace the 'demo-automation' element in the array if it exists already, or else you're adding duplicate elements
 		tagItem := []string{"demo-automation", "replay"}
 		e.Error.Tags = append(e.Error.Tags, tagItem)
 	}
