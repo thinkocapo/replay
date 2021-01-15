@@ -158,15 +158,15 @@ func (e Event) undertake() {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
 		}
-		// TODO need to replace the 'demo-automation' element in the array if it exists already, or else you're adding duplicate elements
-		tagItem := []string{"demo-automation", "replay"}
+		// EVAL if []Tags already has 'replay', then it gets duplicated in the array, but doesn't error in Sentry
+		tagItem := []string{"replay", "replay"}
 		e.Error.Tags = append(e.Error.Tags, tagItem)
 	}
 	if e.Kind == TRANSACTION {
 		if e.Transaction.Tags == nil {
 			e.Transaction.Tags = make([][]string, 0)
 		}
-		tagItem := []string{"demo-automation", "replay"}
+		tagItem := []string{"replay", "replay"}
 		e.Transaction.Tags = append(e.Transaction.Tags, tagItem)
 	}
 }
