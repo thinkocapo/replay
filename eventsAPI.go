@@ -48,9 +48,8 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		event.undertake()
 		events = append(events, event)
 	}
-	events = sanitize(events)
+	events = sanitizeOrg(events)
 	events = fingerprintCheck(events)
-	events = mechanismCheck(events)
 	fmt.Printf("> %v Events length %v\n", org, len(events))
 	return events
 }
@@ -62,21 +61,6 @@ func fingerprintCheck(_events []Event) []Event {
 			// stack.abs_path is different on each (due to static.js/testing being used), thereby creating too many unique issues
 			if metadata["type"] == "AssertionError" && metadata["value"] == "expected 'Error' to equal 'TypeError'" {
 				event.Error.Fingerprint = []string{"assertion-error-expected"}
-			}
-		}
-	}
-	return _events
-}
-func mechanismCheck(_events []Event) []Event {
-	for _, event := range _events {
-		if event.Kind == ERROR || event.Kind == DEFAULT {
-			exception := event.Error.Exception
-			values := Exception.Values
-			for value, _ := range values {
-				mechanism := value.Mechanism
-				if mechanism.Type == "minidump" {
-					// remove event, somehow...
-				}
 			}
 		}
 	}
@@ -101,7 +85,7 @@ func hasOrgTag(event Event) bool {
 	return false
 }
 
-func sanitize(_events []Event) []Event {
+func sanitizeOrg(_events []Event) []Event {
 	var events []Event
 	for _, event := range _events {
 		if hasOrgTag(event) == false {
