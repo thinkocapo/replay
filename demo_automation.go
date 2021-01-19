@@ -129,7 +129,6 @@ func removeMechanism(_events []Event) []Event {
 					mechanism := value.(map[string]interface{})["mechanism"]
 					if mechanism != nil {
 						mechanismType := mechanism.(map[string]interface{})["type"]
-						fmt.Println("mechanismType", mechanismType)
 						if mechanismType == "minidump" {
 							delete(value.(map[string]interface{}), "mechanism")
 						}
