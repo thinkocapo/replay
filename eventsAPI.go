@@ -48,7 +48,7 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 		event.undertake()
 		events = append(events, event)
 	}
-	events = sanitize(events)
+	events = sanitizeOrg(events)
 	events = fingerprintCheck(events)
 	fmt.Printf("> %v Events length %v\n", org, len(events))
 	return events
@@ -85,7 +85,7 @@ func hasOrgTag(event Event) bool {
 	return false
 }
 
-func sanitize(_events []Event) []Event {
+func sanitizeOrg(_events []Event) []Event {
 	var events []Event
 	for _, event := range _events {
 		if hasOrgTag(event) == false {
