@@ -114,8 +114,31 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 		event.setDsnGCS()
 		event.undertake()
 		events = append(events, event)
+		events = removeMechanism(events)
 	}
 	return events
+}
+
+func removeMechanism(_events []Event) []Event {
+	for _, event := range _events {
+		if event.Kind == ERROR || event.Kind == DEFAULT {
+			exception := event.Error.Exception
+			values := exception["values"]
+			if values != nil {
+				for _, value := range values.([]interface{}) {
+					mechanism := value.(map[string]interface{})["mechanism"]
+					if mechanism != nil {
+						mechanismType := mechanism.(map[string]interface{})["type"]
+						fmt.Println("mechanismType", mechanismType)
+						if mechanismType == "minidump" {
+							delete(value.(map[string]interface{}), "mechanism")
+						}
+					}
+				}
+			}
+		}
+	}
+	return _events
 }
 
 func printObj(obj *storage.ObjectAttrs) {
