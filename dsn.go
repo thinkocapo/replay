@@ -54,7 +54,7 @@ func NewDSN(rawurl string) *DSN {
 	// if len(key) < 31 || len(key) > 32 {
 	// 	log.Fatal("bad key length")
 	// }
-	if len(projectId) != 7 {
+	if len(projectId) < 6 {
 		sentry.CaptureException(errors.New("bad project Id in dsn"))
 		log.Fatal("bad project Id in dsn")
 	}
