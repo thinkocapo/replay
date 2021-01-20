@@ -18,6 +18,13 @@ type DSN struct {
 }
 
 func NewDSN(rawurl string) *DSN {
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag("dsn", rawurl)
+	})
+
+	if strings.Contains(rawurl, "http") != true || strings.Contains(rawurl, "@") != true {
+		sentry.CaptureException(errors.New("bad DSN key"))
+	}
 	// still need support for http vs. https 7: vs 8:
 	key := strings.Split(rawurl, "@")[0][7:]
 
@@ -48,7 +55,7 @@ func NewDSN(rawurl string) *DSN {
 	// 	log.Fatal("bad key length")
 	// }
 	if len(projectId) != 7 {
-		sentry.CaptureException(errors.New("bad project Id in dsn" + projectId))
+		sentry.CaptureException(errors.New("bad project Id in dsn"))
 		log.Fatal("bad project Id in dsn")
 	}
 	if projectId == "" {
