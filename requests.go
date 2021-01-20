@@ -87,6 +87,18 @@ func (r *Requests) send() {
 				request := NewRequest(event)
 				request.send()
 			}
+		case COCOA:
+			for _, dsn := range config.Destinations.Cocoa {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
+		case ANDROID:
+			for _, dsn := range config.Destinations.Android {
+				event.setDsn(dsn)
+				request := NewRequest(event)
+				request.send()
+			}
 		default:
 			sentry.CaptureMessage("unsupported event platform: " + event.Platform)
 			fmt.Printf("\nunrecognized Platform %v\n", event.Platform)

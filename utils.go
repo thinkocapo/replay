@@ -109,6 +109,8 @@ type Config struct {
 		Elixir     []string `yaml:"elixir"`
 		Perl       []string `yaml:"perl"`
 		Rust       []string `yaml:"rust"`
+		Cocoa      []string `yaml:"cocoa"`
+		Android    []string `yaml:"android"`
 	}
 }
 

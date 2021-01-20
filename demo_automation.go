@@ -28,6 +28,8 @@ const CSHARP = "csharp"
 const ELIXIR = "elixir"
 const PERL = "perl"
 const RUST = "native"
+const COCOA = "cocoa"
+const ANDROID = "android"
 
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
