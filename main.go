@@ -33,7 +33,7 @@ func init() {
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
 
-	defaultPrefix := "error-"
+	defaultPrefix := "error"
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
 }
