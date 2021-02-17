@@ -58,10 +58,11 @@ func getTraceIds(events []Event) {
 	// fmt.Println("> getTraceids traceIds", traceIds)
 }
 
+// Capture errors if they occur during Replay's execution
 func initializeSentry() {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:         os.Getenv("SENTRY"),
-		Environment: os.Getenv("ENVIRONMENT"),
+		Dsn:         config.SentryJobMonitor,
+		Environment: config.Environment,
 		Release:     time.Now().Month().String(),
 	})
 	if err != nil {
@@ -95,8 +96,10 @@ func ip() string {
 }
 
 type Config struct {
-	Sources      []string
-	Destinations struct {
+	SentryJobMonitor string
+	Environment      string
+	Sources          []string
+	Destinations     struct {
 		Javascript []string `yaml:"javascript"`
 		Python     []string `yaml:"python"`
 		Java       []string `yaml:"java"`
@@ -147,8 +150,25 @@ func parseYaml() {
 		panic(err)
 	}
 	if len(config.Sources) == 0 {
-		sentry.CaptureException(errors.New("No sources defined"))
-		log.Fatal("No sources defined")
+		msg = "No sources defined"
+	}
+	var msg string
+	// only if reading from DiscoverAPI EventsAPI, see demo_automation.go
+	// if config.SentryAuthToken == "" {
+	// 	msg = "no auth token"
+	// }
+	// if config.Skip == "" {
+	// 	msg = "no skip list provided"
+	// }
+	if config.SentryJobMonitor == "" {
+		msg = "no sentry"
+	}
+	if config.Environment == "" {
+		msg = "no environment"
+	}
+	if msg != "" {
+		sentry.CaptureException(errors.New(msg))
+		log.Fatal(msg)
 	}
 }
 
