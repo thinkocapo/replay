@@ -19,7 +19,6 @@ var (
 	counter    int
 )
 
-// v1.0.3
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -27,8 +26,7 @@ func init() {
 	initializeSentry()
 	sentry.CaptureMessage("job started")
 
-	parseEnv()
-	parseYaml()
+	parseYamlConfig()
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")

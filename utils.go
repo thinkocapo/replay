@@ -58,10 +58,11 @@ func getTraceIds(events []Event) {
 	// fmt.Println("> getTraceids traceIds", traceIds)
 }
 
+// Capture errors if they occur during Replay's execution
 func initializeSentry() {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:         os.Getenv("SENTRY"),
-		Environment: os.Getenv("ENVIRONMENT"),
+		Dsn:         config.SentryJobMonitor,
+		Environment: config.Environment,
 		Release:     time.Now().Month().String(),
 	})
 	if err != nil {
@@ -95,8 +96,10 @@ func ip() string {
 }
 
 type Config struct {
-	Sources      []string
-	Destinations struct {
+	SentryJobMonitor string
+	Environment      string
+	Sources          []string
+	Destinations     struct {
 		Javascript []string `yaml:"javascript"`
 		Python     []string `yaml:"python"`
 		Java       []string `yaml:"java"`
@@ -114,27 +117,7 @@ type Config struct {
 	}
 }
 
-func parseEnv() {
-	var msg string
-	if SENTRY_AUTH_TOKEN := os.Getenv("SENTRY_AUTH_TOKEN"); SENTRY_AUTH_TOKEN == "" {
-		msg = "no auth token"
-	}
-	if SENTRY := os.Getenv("SENTRY"); SENTRY == "" {
-		msg = "no sentry"
-	}
-	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
-		msg = "no environment"
-	}
-	if SKIP := os.Getenv("SKIP"); SKIP == "" {
-		msg = "no skip list provided"
-	}
-	if msg != "" {
-		sentry.CaptureException(errors.New(msg))
-		log.Fatal(msg)
-	}
-}
-
-func parseYaml() {
+func parseYamlConfig() {
 	filename := "config.yaml"
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -146,9 +129,26 @@ func parseYaml() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+	var msg string
 	if len(config.Sources) == 0 {
-		sentry.CaptureException(errors.New("No sources defined"))
-		log.Fatal("No sources defined")
+		msg = "No sources defined"
+	}
+	// only if reading from DiscoverAPI EventsAPI, see demo_automation.go
+	// if config.SentryAuthToken == "" {
+	// 	msg = "no auth token"
+	// }
+	// if config.Skip == "" {
+	// 	msg = "no skip list provided"
+	// }
+	if config.SentryJobMonitor == "" {
+		msg = "no sentry"
+	}
+	if config.Environment == "" {
+		msg = "no environment"
+	}
+	if msg != "" {
+		sentry.CaptureException(errors.New(msg))
+		log.Fatal(msg)
 	}
 }
 

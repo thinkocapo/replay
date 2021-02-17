@@ -1,0 +1,38 @@
+sources:
+  - <ORG_SLUG_1>
+  - <ORG_SLUG_2>
+  - <ORG_SLUG_3>
+
+destinations:
+  javascript:
+    - <DSN_1>
+    - <DSN_2>
+    - <DSN_3>
+  python:
+    - <DSN_1>
+    - <DSN_2>
+    - <DSN_3>
+  java:
+    - <DSN>
+  ruby:
+    - <DSN>
+  go:
+    - <DSN>
+  node:
+    - <DSN>
+  php:
+    - <DSN>
+  dart:
+    - <DSN>
+  csharp:
+    - <DSN>
+  elixir:
+    - <DONT_FORGET_ELIXIR>
+  perl:
+    - <DSN>
+  rust:
+    - <DSN>
+  cocoa:
+    - <DSN>
+  android:
+    - <DSN>
