@@ -31,6 +31,9 @@ const RUST = "native"
 const COCOA = "cocoa"
 const ANDROID = "android"
 
+// platforms := []string{"tst"}
+// const platforms = []string{"test", "test2"}
+
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
 	var events []Event
