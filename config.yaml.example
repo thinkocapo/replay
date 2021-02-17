@@ -1,7 +1,7 @@
 environment:
   test
 sentryjobmonitor:
-  - <DSN>
+  - <DSN_JOB_MONITOR>
 sources:
   - <ORG_SLUG_1>
   - <ORG_SLUG_2>
