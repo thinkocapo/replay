@@ -115,8 +115,7 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 			panic(err)
 		}
 
-		// event.setPlatform()
-		event.setDsnGCS()
+		event.setPlatform()
 		event.undertake()
 		events = append(events, event)
 		events = removeMechanism(events)
