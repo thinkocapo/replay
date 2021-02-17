@@ -20,6 +20,21 @@ var (
 	platforms  []string
 )
 
+const JAVASCRIPT = "javascript"
+const PYTHON = "python"
+const JAVA = "java"
+const RUBY = "ruby"
+const GO = "go"
+const PHP = "php"
+const NODE = "node"
+const DART = "dart"
+const CSHARP = "csharp"
+const ELIXIR = "elixir"
+const PERL = "perl"
+const RUST = "rust"
+const COCOA = "cocoa"
+const ANDROID = "android"
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
