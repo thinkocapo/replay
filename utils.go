@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -99,22 +98,7 @@ type Config struct {
 	SentryJobMonitor string
 	Environment      string
 	Sources          []string
-	Destinations     struct {
-		Javascript []string `yaml:"javascript"`
-		Python     []string `yaml:"python"`
-		Java       []string `yaml:"java"`
-		Ruby       []string `yaml:"ruby"`
-		Go         []string `yaml:"go"`
-		Php        []string `yaml:"php"`
-		Node       []string `yaml:"node"`
-		Csharp     []string `yaml:"csharp"`
-		Dart       []string `yaml:"dart"`
-		Elixir     []string `yaml:"elixir"`
-		Perl       []string `yaml:"perl"`
-		Rust       []string `yaml:"rust"`
-		Cocoa      []string `yaml:"cocoa"`
-		Android    []string `yaml:"android"`
-	}
+	Destinations     map[string][]string
 }
 
 func parseYamlConfig() {
@@ -141,7 +125,7 @@ func parseYamlConfig() {
 	// 	msg = "no skip list provided"
 	// }
 	if config.SentryJobMonitor == "" {
-		msg = "no sentry"
+		msg = "no sentry job monitor dsn set"
 	}
 	if config.Environment == "" {
 		msg = "no environment"

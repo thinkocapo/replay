@@ -16,21 +16,6 @@ import (
 
 type DemoAutomation struct{}
 
-const JAVASCRIPT = "javascript"
-const PYTHON = "python"
-const JAVA = "java"
-const RUBY = "ruby"
-const GO = "go"
-const PHP = "php"
-const NODE = "node"
-const DART = "dart"
-const CSHARP = "csharp"
-const ELIXIR = "elixir"
-const PERL = "perl"
-const RUST = "native"
-const COCOA = "cocoa"
-const ANDROID = "android"
-
 // Get events from both Sentry and GCS
 func (d *DemoAutomation) getEvents() []Event {
 	var events []Event
@@ -112,8 +97,7 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 			panic(err)
 		}
 
-		// event.setPlatform()
-		event.setDsnGCS()
+		event.setPlatform()
 		event.undertake()
 		events = append(events, event)
 		events = removeMechanism(events)

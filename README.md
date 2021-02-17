@@ -18,7 +18,7 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
     Obtain the Google Application Credentials file, and put the file path to it in your config.yaml's `GOOGLE_APPLICATION_CREDENTIALS`.
 
 ## Run
-1. `go build -o bin/main *.go && ./bin/main`
+1. `go build -o bin/main *.go`
 2. `./bin/main`
 2. Look for your events in your projects on Sentry.io.
 
@@ -33,5 +33,7 @@ go build -o bin/main *.go && ./bin/main
 ```
 
 [Sentry Developer Documentation](https://develop.sentry.dev/sdk/store)
+
+For some JSON files you have to manually change the platform. For instance, java errors and android errors both have `platform:java` so change the android one to `platform:android`. And other sdk's simply report a value of `platform:other` which isn't helpful for Replay to know what kind of error it is. This is a flawed design. Ideally, should decide based on the `Sdk.name` value.
 
 This project was originally called Undertaker because it featured a proxy middleman that captured events on their way to Sentry. Today, we take the event JSON's from Sentry.io and place them in Cloud Storage.

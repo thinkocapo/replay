@@ -17,7 +17,23 @@ var (
 	config     Config
 	n          *int
 	counter    int
+	platforms  []string
 )
+
+const JAVASCRIPT = "javascript"
+const PYTHON = "python"
+const JAVA = "java"
+const RUBY = "ruby"
+const GO = "go"
+const PHP = "php"
+const NODE = "node"
+const DART = "dart"
+const CSHARP = "csharp"
+const ELIXIR = "elixir"
+const PERL = "perl"
+const RUST = "rust"
+const COCOA = "cocoa"
+const ANDROID = "android"
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -34,6 +50,8 @@ func init() {
 	defaultPrefix := "error"
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
+
+	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID}
 }
 
 func main() {
