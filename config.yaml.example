@@ -1,16 +1,17 @@
 sources:
-  - sentry-sdks
-  - sentry-test
-  # - testorg-az
-  # - cramer
-  # - meredith
-  # - bruno-garcia
-  # - empower-plant
+  - <ORG_SLUG_1>
+  - <ORG_SLUG_2>
+  - <ORG_SLUG_3>
+
 destinations:
   javascript:
-    - <DSN>
+    - <DSN_1>
+    - <DSN_2>
+    - <DSN_3>
   python:
-    - <DSN>
+    - <DSN_1>
+    - <DSN_2>
+    - <DSN_3>
   java:
     - <DSN>
   ruby:
@@ -26,4 +27,12 @@ destinations:
   csharp:
     - <DSN>
   elixir:
+    - <DONT_FORGET_ELIXIR>
+  perl:
+    - <DSN>
+  rust:
+    - <DSN>
+  cocoa:
+    - <DSN>
+  android:
     - <DSN>
