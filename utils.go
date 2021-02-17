@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -141,7 +140,7 @@ func parseYamlConfig() {
 	// 	msg = "no skip list provided"
 	// }
 	if config.SentryJobMonitor == "" {
-		msg = "no sentry"
+		msg = "no sentry job monitor dsn set"
 	}
 	if config.Environment == "" {
 		msg = "no environment"

@@ -18,7 +18,7 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
     Obtain the Google Application Credentials file, and put the file path to it in your config.yaml's `GOOGLE_APPLICATION_CREDENTIALS`.
 
 ## Run
-1. `go build -o bin/main *.go && ./bin/main`
+1. `go build -o bin/main *.go`
 2. `./bin/main`
 2. Look for your events in your projects on Sentry.io.
 
