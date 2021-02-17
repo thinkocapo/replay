@@ -117,27 +117,7 @@ type Config struct {
 	}
 }
 
-func parseEnv() {
-	var msg string
-	if SENTRY_AUTH_TOKEN := os.Getenv("SENTRY_AUTH_TOKEN"); SENTRY_AUTH_TOKEN == "" {
-		msg = "no auth token"
-	}
-	if SENTRY := os.Getenv("SENTRY"); SENTRY == "" {
-		msg = "no sentry"
-	}
-	if ENVIRONMENT := os.Getenv("ENVIRONMENT"); ENVIRONMENT == "" {
-		msg = "no environment"
-	}
-	if SKIP := os.Getenv("SKIP"); SKIP == "" {
-		msg = "no skip list provided"
-	}
-	if msg != "" {
-		sentry.CaptureException(errors.New(msg))
-		log.Fatal(msg)
-	}
-}
-
-func parseYaml() {
+func parseYamlConfig() {
 	filename := "config.yaml"
 	file, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -149,10 +129,10 @@ func parseYaml() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+	var msg string
 	if len(config.Sources) == 0 {
 		msg = "No sources defined"
 	}
-	var msg string
 	// only if reading from DiscoverAPI EventsAPI, see demo_automation.go
 	// if config.SentryAuthToken == "" {
 	// 	msg = "no auth token"
