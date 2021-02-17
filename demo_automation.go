@@ -41,7 +41,7 @@ func (d *DemoAutomation) getEvents() []Event {
 	return events
 }
 
-// Download the events from Sentry
+// Download the events from Sentry. You may have to be a team member on the org you're downloading events from (SENTRY_AUTH_TOKEN)
 func (d *DemoAutomation) getEventsFromSentry() []Event {
 	var events []Event
 

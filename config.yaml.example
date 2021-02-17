@@ -1,0 +1,29 @@
+sources:
+  - sentry-sdks
+  - sentry-test
+  # - testorg-az
+  # - cramer
+  # - meredith
+  # - bruno-garcia
+  # - empower-plant
+destinations:
+  javascript:
+    - <DSN>
+  python:
+    - <DSN>
+  java:
+    - <DSN>
+  ruby:
+    - <DSN>
+  go:
+    - <DSN>
+  node:
+    - <DSN>
+  php:
+    - <DSN>
+  dart:
+    - <DSN>
+  csharp:
+    - <DSN>
+  elixir:
+    - <DSN>
