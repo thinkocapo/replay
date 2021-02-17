@@ -27,9 +27,6 @@ type EventMetadata struct {
 // Returns event metadata (e.g. Id, Project) but not the entire Event itself, which gets queried separately.
 // n of 200 may not work
 func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
-	fmt.Printf("\n> ORG %v\n", org)
-
-	// query := makeQuery([]string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID})
 	query := makeQuery(platforms)
 	endpoint := fmt.Sprintf("https://sentry.io/api/0/organizations/%v/eventsv2/?statsPeriod=24h&field=event.type&field=project&field=platform&per_page=%v&query=%v", org, strconv.Itoa(n), query)
 
@@ -63,11 +60,11 @@ func makeQuery(supportedPlatforms []string) string {
 	for _, platform := range supportedPlatforms {
 		result += "platform.name%3A" + platform + "+OR+"
 	}
-	// slice the final "+OR+" off
+	// slices the final "+OR+" off
 	return result[:len(result)-4]
 }
 
-// Consider chaining
+// EVAL chaining
 // func (d DiscoverAPI) execute() {
-// //
+//
 // }
