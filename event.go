@@ -75,22 +75,6 @@ func (event *Event) setDsn(dsn string) {
 	}
 }
 
-// func (event *Event) setDsnGCS() {
-// 	for _, platform := range platforms {
-// 		if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == platform {
-// 			event.Platform = platform
-// 			break
-// 		} else if event.Kind == TRANSACTION && event.Transaction.Platform == platform {
-// 			event.Platform = platform
-// 			break
-// 		}
-// 	}
-// 	if event.Platform == "" {
-// 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
-// 		log.Fatalf("setDsnGCS() event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
-// 	}
-// }
-
 func (event *Event) setPlatform() {
 	for _, platform := range platforms {
 		if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == platform {
