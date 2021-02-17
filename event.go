@@ -60,6 +60,10 @@ func (event *Event) getPlatform() string {
 	if event.Kind == DEFAULT {
 		platform = event.Error.Platform
 	}
+	if platform == "" {
+		sentry.CaptureException(errors.New("no event platform set"))
+		log.Fatalf("no event platform set")
+	}
 	return platform
 }
 
@@ -71,44 +75,57 @@ func (event *Event) setDsn(dsn string) {
 	}
 }
 
-// TODO Do Not Repeat Yourself DRY
 func (event *Event) setDsnGCS() {
-	if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
-		event.Platform = JAVASCRIPT
-	} else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
-		event.Platform = PYTHON
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
-		event.Platform = JAVASCRIPT
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
-		event.Platform = PYTHON
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVA {
-		event.Platform = JAVA
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUBY {
-		event.Platform = RUBY
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == GO {
-		event.Platform = GO
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PHP {
-		event.Platform = PHP
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == NODE {
-		event.Platform = NODE
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == CSHARP {
-		event.Platform = CSHARP
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == DART {
-		event.Platform = DART
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ELIXIR {
-		event.Platform = ELIXIR
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
-		event.Platform = PERL
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUST {
-		event.Platform = RUST
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == COCOA {
-		event.Platform = COCOA
-	} else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ANDROID {
-		event.Platform = ANDROID
-	} else {
+	for _, platform := range platforms {
+		if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == platform {
+			event.Platform = platform
+			break
+		} else if event.Kind == TRANSACTION && event.Transaction.Platform == platform {
+			event.Platform = platform
+			break
+		}
+	}
+	if event.Platform == "" {
 		sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
 		log.Fatalf("setDsnGCS() event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
 	}
+
+	// if event.Kind == TRANSACTION && event.Transaction.Platform == JAVASCRIPT {
+	// 	event.Platform = JAVASCRIPT
+	// } else if event.Kind == TRANSACTION && event.Transaction.Platform == PYTHON {
+	// 	event.Platform = PYTHON
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVASCRIPT {
+	// 	event.Platform = JAVASCRIPT
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PYTHON {
+	// 	event.Platform = PYTHON
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == JAVA {
+	// 	event.Platform = JAVA
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUBY {
+	// 	event.Platform = RUBY
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == GO {
+	// 	event.Platform = GO
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PHP {
+	// 	event.Platform = PHP
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == NODE {
+	// 	event.Platform = NODE
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == CSHARP {
+	// 	event.Platform = CSHARP
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == DART {
+	// 	event.Platform = DART
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ELIXIR {
+	// 	event.Platform = ELIXIR
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == PERL {
+	// 	event.Platform = PERL
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == RUST {
+	// 	event.Platform = RUST
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == COCOA {
+	// 	event.Platform = COCOA
+	// } else if (event.Kind == ERROR || event.Kind == DEFAULT) && event.Error.Platform == ANDROID {
+	// 	event.Platform = ANDROID
+	// } else {
+	// 	sentry.CaptureException(errors.New("event.Kind and Type condition not found" + event.Kind))
+	// 	log.Fatalf("setDsnGCS() event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
+	// }
 }
 
 // TODO Do Not Repeat Yourself DRY
