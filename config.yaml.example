@@ -1,8 +1,11 @@
+environment:
+  test
+sentryjobmonitor:
+  - <DSN>
 sources:
   - <ORG_SLUG_1>
   - <ORG_SLUG_2>
   - <ORG_SLUG_3>
-
 destinations:
   javascript:
     - <DSN_1>
