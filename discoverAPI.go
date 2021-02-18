@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/getsentry/sentry-go"
@@ -32,7 +31,7 @@ func (d DiscoverAPI) latestEventMetadata(org string, n int) []EventMetadata {
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 	request.Header.Set("content-type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
+	request.Header.Set("Authorization", fmt.Sprint("Bearer ", config.SentryAuthToken))
 
 	var httpClient = &http.Client{}
 	response, err := httpClient.Do(request)
