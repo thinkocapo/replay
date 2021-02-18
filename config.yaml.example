@@ -45,3 +45,5 @@ destinations:
     - <DSN>
   android:
     - <DSN>
+  flutter:
+    - <DSN>
