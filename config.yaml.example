@@ -1,9 +1,9 @@
 environment:
   test
 sentryjobmonitor:
-  - <DSN_JOB_MONITOR>
+  <DSN_JOB_MONITOR>
 bucket:
-  <bucket_name>
+  <bucket>
 googleapplicationcredentials:
   <path_to_googleapplicationcredentials>
 sentryauthtoken:
@@ -38,7 +38,7 @@ destinations:
   elixir:
     - <DONT_FORGET_ELIXIR>
   perl:
-    - <DSN>
+    - <DSN_PERL_4_LIFE>
   rust:
     - <DSN>
   cocoa:
