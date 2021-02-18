@@ -2,10 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
-
 	"github.com/getsentry/sentry-go"
-	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -34,15 +31,13 @@ const PERL = "perl"
 const RUST = "rust"
 const COCOA = "cocoa"
 const ANDROID = "android"
+const FLUTTER = "flutter"
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
+	parseYamlConfig()
+
 	initializeSentry()
 	sentry.CaptureMessage("job started")
-
-	parseYamlConfig()
 
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
@@ -51,7 +46,7 @@ func init() {
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
 
-	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID}
+	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER}
 }
 
 func main() {

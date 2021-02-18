@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/getsentry/sentry-go"
 )
 
 type EventsAPI struct{}
@@ -17,7 +15,7 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 	var events []Event
 
 	for _, e := range eventMetadata {
-		if e.Project == os.Getenv("SKIP") {
+		if e.Project == config.Skip {
 			continue
 		}
 
@@ -25,7 +23,7 @@ func (e EventsAPI) getEvents(org string, eventMetadata []EventMetadata) []Event 
 
 		request, _ := http.NewRequest("GET", endpoint, nil)
 		request.Header.Set("content-type", "application/json")
-		request.Header.Set("Authorization", fmt.Sprint("Bearer ", os.Getenv("SENTRY_AUTH_TOKEN")))
+		request.Header.Set("Authorization", fmt.Sprint("Bearer ", config.SentryAuthToken))
 
 		var httpClient = &http.Client{}
 		response, err := httpClient.Do(request)
