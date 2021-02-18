@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -56,7 +55,7 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 	defer cancel()
 
 	// Get the bucket and its file names
-	bucketName := os.Getenv("BUCKET")
+	bucketName := config.Bucket
 	bucketHandle := client.Bucket(bucketName)
 
 	var fileNames []string
