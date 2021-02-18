@@ -34,6 +34,7 @@ const PERL = "perl"
 const RUST = "rust"
 const COCOA = "cocoa"
 const ANDROID = "android"
+const FLUTTER = "flutter"
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -51,7 +52,7 @@ func init() {
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
 
-	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID}
+	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER}
 }
 
 func main() {
