@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -95,10 +96,14 @@ func ip() string {
 }
 
 type Config struct {
-	SentryJobMonitor string
-	Environment      string
-	Sources          []string
-	Destinations     map[string][]string
+	Environment                  string
+	SentryJobMonitor             string
+	Bucket                       string
+	GoogleApplicationCredentials string
+	SentryAuthToken              string
+	Sources                      []string
+	Destinations                 map[string][]string
+	Skip                         string
 }
 
 func parseYamlConfig() {
@@ -113,23 +118,31 @@ func parseYamlConfig() {
 		sentry.CaptureException(err)
 		panic(err)
 	}
+
 	var msg string
+
+	// Must use job monitor if powering via DemoAutomation (scheduled job) in GCP
+	if config.Environment == "production" && config.SentryJobMonitor == "" {
+		msg = "no sentry job monitor dsn set"
+	}
+	if config.Bucket == "" {
+		msg = "no bucket set"
+	}
+	if config.GoogleApplicationCredentials == "" {
+		msg = "no app credentials set"
+	} else {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", config.GoogleApplicationCredentials)
+	}
 	if len(config.Sources) == 0 {
 		msg = "No sources defined"
 	}
-	// only if reading from DiscoverAPI EventsAPI, see demo_automation.go
+	// AuthToken is only if using DiscoverAPI EventsAPI in demo_automation.go, which is default disabled.
 	// if config.SentryAuthToken == "" {
 	// 	msg = "no auth token"
 	// }
 	// if config.Skip == "" {
 	// 	msg = "no skip list provided"
 	// }
-	if config.SentryJobMonitor == "" {
-		msg = "no sentry job monitor dsn set"
-	}
-	if config.Environment == "" {
-		msg = "no environment"
-	}
 	if msg != "" {
 		sentry.CaptureException(errors.New(msg))
 		log.Fatal(msg)
