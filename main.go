@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -42,9 +43,10 @@ func init() {
 	ignore = flag.Bool("i", false, "ignore sending the event to Sentry.io")
 	n = flag.Int("n", 25, "default number of events to read from a source")
 
-	defaultPrefix := "error"
+	defaultPrefix := "error1"
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
+	fmt.Println("filePrefix", *filePrefix)
 
 	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER}
 }

@@ -129,9 +129,15 @@ func (t *Transaction) timestamps() {
 			spanDifference := spanEndTimestamp.Sub(spanStartTimestamp)
 			spanDifference = spanDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
+			// PROBLEM - is same rate, ideally
+			// calculating based on distance from start of trace to start of span,
+			// how about calculate newSpanStarTimestamp based on the rate multiplier, instead of the calculated 'spanToParentDifference'
 			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
 			spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
 
+			// TODO
+			// this timestamp is probably after the Trace's start, no?
+			// use a traceUnixTimestampString,Decimal, declared earlier.
 			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
 			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)

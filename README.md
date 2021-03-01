@@ -25,7 +25,7 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
 ## Notes
 The `-i` flag is for ignoring the http call to Sentry in `./bin/main -i`. Recommend using this during development, as you don't want to send malformed data or call bad URL's on Sentry.
 
-You can pass a `prefix` for the files you want to read from Cloud Storage
+You can pass a `prefix` for the files you want to read from Cloud Storage `./bin/main --prefix=transaction`
 
 Build and run quickly:
 ```
@@ -37,3 +37,6 @@ go build -o bin/main *.go && ./bin/main
 For some JSON files you have to manually change the platform. For instance, java errors and android errors both have `platform:java` so change the android one to `platform:android`. And other sdk's simply report a value of `platform:other` which isn't helpful for Replay to know what kind of error it is. This is a flawed design. Ideally, should decide based on the `Sdk.name` value.
 
 This project was originally called Undertaker because it featured a proxy middleman that captured events on their way to Sentry. Today, we take the event JSON's from Sentry.io and place them in Cloud Storage.
+
+
+`panic: invalid character '/' looking for beginning of value`, remove the comments at beginning of your JSON file, and re-upload to Cloud Storage.
