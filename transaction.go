@@ -93,13 +93,26 @@ func (t *Transaction) timestamps() {
 		// TRACE PARENT
 		parentDifference := parentEndTimestamp.Sub(parentStartTimestamp)
 		rand.Seed(time.Now().UnixNano())
+
+		// TODO2 "could" experiment with trying to find one "50% lower...", similar to what's in sentry-demos/tracing
+		// "if hour 1 - 12, apply ~10%, if hour 12-24, apply ~30%"
+		// TODO1
+		/*
+			1. confirm parentDifference before and after using the rate
+				looks like it's always ADDING 5 TO 20%, so for 12-24 try SUBTRACTING 20-40%
+			2. try setting 30% rate diff...
+			3. apply it based on hour 1-12 and 12-24
+			4. need hundreds of transactions??
+		*/
 		percentage := 0.01 + rand.Float64()*(0.20-0.01)
+		fmt.Println("percentage", percentage)
 		rate := decimal.NewFromFloat(percentage)
+		fmt.Println("parentDifference BEFORE", parentDifference)
 		parentDifference = parentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+		fmt.Println("parentDifference AFTER", parentDifference)
 
 		unixTimestampString := fmt.Sprint(time.Now().UnixNano())
 		newParentStartTimestamp, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-
 		newParentEndTimestamp := newParentStartTimestamp.Add(parentDifference)
 
 		if !newParentEndTimestamp.Sub(newParentStartTimestamp).Equal(parentDifference) {
@@ -133,19 +146,34 @@ func (t *Transaction) timestamps() {
 			// calculating based on distance from start of trace to start of span,
 			// how about calculate newSpanStarTimestamp based on the rate multiplier, instead of the calculated 'spanToParentDifference'
 			spanToParentDifference := spanStartTimestamp.Sub(parentStartTimestamp)
-			spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+			// spanToParentDifference = spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1)))
+
+			endSpanToParentDifference := parentEndTimestamp.Sub(spanEndTimestamp)
 
 			// TODO
 			// this timestamp is probably after the Trace's start, no?
 			// use a traceUnixTimestampString,Decimal, declared earlier.
-			unixTimestampString := fmt.Sprint(time.Now().UnixNano())
-			unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
-			newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
-			newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
+			// unixTimestampString := fmt.Sprint(time.Now().UnixNano())
+			// unixTimestampDecimal, _ := decimal.NewFromString(unixTimestampString[:10] + "." + unixTimestampString[10:])
+			// newSpanStartTimestamp := unixTimestampDecimal.Add(spanToParentDifference)
+			// newSpanEndTimestamp := newSpanStartTimestamp.Add(spanDifference)
 
-			if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
-				fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
-			}
+			// GOAL (PSEUDO)
+			// newSpanStartTimestamp := originalNewTimestamp + (spanStartTimestamp - parentStartTimestamp)
+			// newSpanEndTimestamp := originalNewTimestamp + (spanEndTimestamp - parentEndTimestamp)
+
+			// didn't work...
+			// newSpanStartTimestamp := newParentStartTimestamp.Add(spanToParentDifference)
+			// newSpanEndTimestamp := newParentEndTimestamp.Sub(endSpanToParentDifference)
+
+			//.Mul(rate.Add(decimal.NewFromFloat(1)))
+			newSpanStartTimestamp := newParentStartTimestamp.Add(spanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1))))
+			newSpanEndTimestamp := newParentEndTimestamp.Sub(endSpanToParentDifference.Mul(rate.Add(decimal.NewFromFloat(1))))
+
+			// TESTING commenting this out, may not apply anymore.
+			// if !newSpanEndTimestamp.Sub(newSpanStartTimestamp).Equal(spanDifference) {
+			// 	fmt.Print("\nFALSE - span BOTH", newSpanEndTimestamp.Sub(newSpanStartTimestamp))
+			// }
 
 			span["start_timestamp"], _ = newSpanStartTimestamp.Round(7).Float64()
 			span["timestamp"], _ = newSpanEndTimestamp.Round(7).Float64()
