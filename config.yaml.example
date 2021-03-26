@@ -47,3 +47,5 @@ destinations:
     - <DSN>
   flutter:
     - <DSN>
+  cordova:
+    - <DSN>

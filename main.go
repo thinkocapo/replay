@@ -32,6 +32,7 @@ const RUST = "rust"
 const COCOA = "cocoa"
 const ANDROID = "android"
 const FLUTTER = "flutter"
+const CORDOVA = "cordova"
 
 func init() {
 	parseYamlConfig()
@@ -45,8 +46,7 @@ func init() {
 	defaultPrefix := "error"
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
-
-	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER}
+	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER, CORDOVA}
 }
 
 func main() {

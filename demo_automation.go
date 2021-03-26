@@ -95,7 +95,6 @@ func (d *DemoAutomation) getEventsFromGCS() []Event {
 			sentry.CaptureException(err)
 			panic(err)
 		}
-
 		event.setPlatform()
 		event.undertake()
 		events = append(events, event)
