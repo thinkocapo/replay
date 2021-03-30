@@ -49,3 +49,5 @@ destinations:
     - <DSN>
   cordova:
     - <DSN>
+  native:
+    - <DSN>
