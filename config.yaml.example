@@ -51,3 +51,5 @@ destinations:
     - <DSN>
   native:
     - <DSN>
+  react-native:
+    - <DSN>
