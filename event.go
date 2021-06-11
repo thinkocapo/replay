@@ -104,7 +104,8 @@ func (e Event) undertake() {
 				}
 			}
 			if demoAutomation == false {
-				e.Error.Tags = append(e.Error.Tags, tagItem)
+				tag := []string{"demo-automation", "replay"}
+				e.Error.Tags = append(e.Error.Tags, tag)
 			}
 		}
 	}
