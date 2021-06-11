@@ -1,5 +1,6 @@
 # Replay
-Replay is an event traffic replay service. It was formerly presented as [The Undertaker](https://www.youtube.com/watch?v=4QEYJXjC4Jk) at Hackweek 2020.
+Replay is an event traffic replay service. It was formerly presented as [The Undertaker](https://www.youtube.com/watch?v=4QEYJXjC4Jk) at Hackweek 2020.  
+![Replay](Replay.png)
 
 ## Overview  
 `main.go` grabs a bunch of sentry events in JSON form from Cloud Storage, updates them, and sends them to your DSN keys at Sentry.io.
