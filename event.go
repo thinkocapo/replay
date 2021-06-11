@@ -91,21 +91,26 @@ func (event *Event) setPlatform() {
 	}
 }
 
-// Undertaker adds the replay tag
+// Undertaker adds the demo-automation tag
 func (e Event) undertake() {
 	if e.Kind == ERROR || e.Kind == DEFAULT {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
+		} else {
+			demoAutomation := false
+			for _, tag := range e.Error.Tags {
+				if tag[0] == "demo-automation" {
+					demoAutomation = true
+				}
+			}
+			if demoAutomation == false {
+				e.Error.Tags = append(e.Error.Tags, tagItem)
+			}
 		}
-		// TODO if []Tags already has 'replay', then it gets duplicated in the array, but doesn't error in Sentry
-		// tagItem := []string{"replay", "replay"}
-		// e.Error.Tags = append(e.Error.Tags, tagItem)
 	}
 	if e.Kind == TRANSACTION {
 		if e.Transaction.Tags == nil {
 			e.Transaction.Tags = make([][]string, 0)
 		}
-		// tagItem := []string{"replay", "replay"}
-		// e.Transaction.Tags = append(e.Transaction.Tags, tagItem)
 	}
 }
