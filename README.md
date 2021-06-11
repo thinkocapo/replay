@@ -20,10 +20,11 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
 ## Run
 1. `go build -o bin/main *.go`
 2. `./bin/main`
+3. `./bin/main -i` to ignore sending the event to Sentry
 2. Look for your events in your projects on Sentry.io.
 
 ## Notes
-The `-i` flag is for ignoring the http call to Sentry in `./bin/main -i`. Recommend using this during development, as you don't want to send malformed data or call bad URL's on Sentry.
+The `-i` ignore flag is for using during development, as you don't want to send malformed data or call bad URL's on Sentry.
 
 You can pass a `prefix` for the files you want to read from Cloud Storage
 
