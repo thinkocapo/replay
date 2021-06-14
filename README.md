@@ -24,6 +24,14 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
 3. `./bin/main -i` to ignore sending the event to Sentry
 2. Look for your events in your projects on Sentry.io.
 
+## Adding Events to the Database
+1. Obtain the JSON for the event, remove the comments at the top.
+2. Create a file for the JSON in `/events-errors` under the right platform sub directory, so you have a local copy.
+3. Update the JSON's 'platform' value if need be.
+4. Upload a copy of this file to Cloud Storage (where Replay reads it from)
+5. If the platform type is new, then update `config.yaml.example` with the new platform type.
+6. If the platform type is new, then add the DSN for the platform type in `config.yaml`.
+
 ## Notes
 The `-i` ignore flag is for using during development, as you don't want to send malformed data or call bad URL's on Sentry.
 
