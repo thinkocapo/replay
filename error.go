@@ -45,8 +45,9 @@ type Error struct {
 	Version         string                 `json:"version"`
 	Extra           map[string]interface{} `json:"extra"`
 	Modules         map[string]interface{} `json:"modules"`
-	Threads         map[string]interface{} `json:"threads"`
-	Debug_meta      map[string]interface{} `json:"debug_meta"`
+	// Threads and DebugMeta were added for cocoa support
+	Threads    map[string]interface{} `json:"threads"`
+	Debug_meta map[string]interface{} `json:"debug_meta"`
 }
 
 const ERROR = "error"
