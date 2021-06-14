@@ -35,6 +35,7 @@ const FLUTTER = "flutter"
 const CORDOVA = "cordova"
 const NATIVE = "native"
 const REACTNATIVE = "react-native"
+const UNITY = "unity"
 
 func init() {
 	parseYamlConfig()
@@ -48,7 +49,7 @@ func init() {
 	defaultPrefix := "error"
 	filePrefix = flag.String("prefix", defaultPrefix, "file prefix")
 	flag.Parse()
-	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER, CORDOVA, NATIVE, REACTNATIVE}
+	platforms = []string{JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL, RUST, COCOA, ANDROID, FLUTTER, CORDOVA, NATIVE, REACTNATIVE, UNITY}
 }
 
 func main() {
