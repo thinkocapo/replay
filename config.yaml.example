@@ -53,3 +53,5 @@ destinations:
     - <DSN>
   react-native:
     - <DSN>
+  unity:
+    - <DSN>
