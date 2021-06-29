@@ -87,7 +87,7 @@ func (event *Event) setPlatform() {
 	}
 	if event.Platform == "" {
 		sentry.CaptureException(errors.New("event.Kind and Platform condition not found" + event.Kind))
-		log.Fatalf("event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
+		// log.Fatalf("event Kind: %v and Platform: %v not recognized", event.Kind, event.Platform)
 	}
 }
 

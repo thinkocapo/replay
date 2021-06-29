@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/getsentry/sentry-go"
 )
 
 type Request struct {
@@ -51,13 +51,37 @@ func NewRequest(event Event) *Request {
 
 func (r Request) send() {
 	time.Sleep(300 * time.Millisecond)
-	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(r.Payload)) // &buf
+	var payload []byte
+	size := len(r.Payload)
+
+	HUNDRED_KILOBYTES := 100000
+	if size > HUNDRED_KILOBYTES {
+		fmt.Println("***** TOO BIG *****")
+		var buf bytes.Buffer
+		gw := gzip.NewWriter(&buf)
+		_, err := gw.Write(r.Payload)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = gw.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		payload = buf.Bytes()
+	} else {
+		payload = r.Payload
+	}
+
+	request, errNewRequest := http.NewRequest("POST", r.StoreEndpoint, bytes.NewReader(payload)) // &buf
 	if errNewRequest != nil {
 		sentry.CaptureException(errNewRequest)
 		log.Fatalln(errNewRequest)
 	}
 
 	request.Header.Set("content-type", "application/json")
+	if size > HUNDRED_KILOBYTES {
+		request.Header.Set("Content-Encoding", "gzip")
+	}
 
 	// fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
