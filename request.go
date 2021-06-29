@@ -63,6 +63,10 @@ func (r Request) send() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		err = gw.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
 		payload = buf.Bytes()
 	} else {
 		payload = r.Payload
