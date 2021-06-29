@@ -47,13 +47,3 @@ go build -o bin/main *.go && ./bin/main
 For some JSON files you have to manually change the platform. For instance, java errors and android errors both have `platform:java` so change the android one to `platform:android`. And other sdk's simply report a value of `platform:other` which isn't helpful for Replay to know what kind of error it is. This is a flawed design. Ideally, should decide based on the `Sdk.name` value.
 
 This project was originally called Undertaker because it featured a proxy middleman that captured events on their way to Sentry. Today, we take the event JSON's from Sentry.io and place them in Cloud Storage.
-
-
-
-Accept-Encoding: gzip
-`{"detail":"failed to read request body","causes":["failed to base64 decode payload","Invalid byte 31, offset 0."]}`
-
-Content-Encoding: gzip
-codified response...
-
-{"detail":"failed to read request body","causes":["failed to read request payload","deflate decompression error"]} 
