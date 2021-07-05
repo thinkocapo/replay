@@ -11,7 +11,7 @@ type Requests struct {
 }
 
 // TODO in each case met, check if len(config.Destinations.Platform) != 0
-// Doing each destination one-by-one, gives each org a rest before its API is called again, so don't insert a short Sleep Timeout yet
+// Looping through each destination (DSN) sequentially gives the DSN/org's API a brief rest. the sleep timesouts are in request.go
 func (r *Requests) send() {
 	var found bool
 	for _, event := range r.events {

@@ -51,7 +51,7 @@ func NewRequest(event Event) *Request {
 }
 
 func (r Request) send() {
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	var payload []byte
 	size := len(r.Payload)
 
@@ -86,16 +86,15 @@ func (r Request) send() {
 	// fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
-		var httpClient = &http.Client{}
 
 		// Randomize how many times the request is made
-		rand.Seed(time.Now().UnixNano())
-		x := rand.Intn(3)
-		for i := 0; i <= x; i++ {
-
+		n := rand.Intn(3)
+		for i := 0; i <= n; i++ {
+			// fmt.Printf("> %v | %v", n, i)
 			time.Sleep(200 * time.Millisecond)
 
-			fmt.Printf("> %v | %v", x, i)
+			// This is needed because we're sending the request multiple times
+			request.Body = ioutil.NopCloser(bytes.NewReader(payload))
 
 			response, requestErr := httpClient.Do(request)
 			if requestErr != nil {
@@ -103,7 +102,6 @@ func (r Request) send() {
 				log.Fatal(requestErr)
 			}
 
-			// defer response.Body.Close()
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				sentry.CaptureException(responseDataErr)
@@ -113,19 +111,6 @@ func (r Request) send() {
 			fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 			response.Body.Close()
 		}
-
-		// response, requestErr := httpClient.Do(request)
-		// if requestErr != nil {
-		// 	sentry.CaptureException(requestErr)
-		// 	log.Fatal(requestErr)
-		// }
-		// responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		// if responseDataErr != nil {
-		// 	sentry.CaptureException(responseDataErr)
-		// 	log.Fatal(responseDataErr)
-		// }
-		// counter++
-		// fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 	} else {
 		fmt.Printf("> event IGNORED %v | %v  \n", r.Kind, r.Platform)
 	}
