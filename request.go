@@ -50,7 +50,7 @@ func NewRequest(event Event) *Request {
 }
 
 func (r Request) send() {
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	var payload []byte
 	size := len(r.Payload)
 
