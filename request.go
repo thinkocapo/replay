@@ -103,7 +103,7 @@ func (r Request) send() {
 				log.Fatal(requestErr)
 			}
 
-			defer response.Body.Close()
+			// defer response.Body.Close()
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				sentry.CaptureException(responseDataErr)
@@ -111,6 +111,7 @@ func (r Request) send() {
 			}
 			counter++
 			fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
+			response.Body.Close()
 		}
 
 		// response, requestErr := httpClient.Do(request)
