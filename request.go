@@ -88,12 +88,11 @@ func (r Request) send() {
 	if *ignore == false {
 		var httpClient = &http.Client{}
 
-		// Burst event volume
+		// Randomize how many times the request is made
 		rand.Seed(time.Now().UnixNano())
 		x := rand.Intn(3)
-		fmt.Println("> X", x)
-
 		for i := 0; i <= x; i++ {
+
 			time.Sleep(200 * time.Millisecond)
 
 			fmt.Printf("> %v | %v", x, i)
@@ -103,6 +102,8 @@ func (r Request) send() {
 				sentry.CaptureException(requestErr)
 				log.Fatal(requestErr)
 			}
+
+			defer response.Body.Close()
 			responseData, responseDataErr := ioutil.ReadAll(response.Body)
 			if responseDataErr != nil {
 				sentry.CaptureException(responseDataErr)
