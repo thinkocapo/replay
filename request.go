@@ -50,7 +50,7 @@ func NewRequest(event Event) *Request {
 }
 
 func (r Request) send() {
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	var payload []byte
 	size := len(r.Payload)
 
@@ -86,7 +86,6 @@ func (r Request) send() {
 	// fmt.Printf("\n> storeEndpoint %v\n", r.StoreEndpoint)
 
 	if *ignore == false {
-		var httpClient = &http.Client{}
 		response, requestErr := httpClient.Do(request)
 		if requestErr != nil {
 			sentry.CaptureException(requestErr)

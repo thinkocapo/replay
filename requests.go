@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/getsentry/sentry-go"
+	"math/rand"
+	"time"
 )
 
 type Requests struct {
@@ -20,9 +21,14 @@ func (r *Requests) send() {
 			if platform == event.Platform {
 				found = true
 				for _, dsn := range config.Destinations[platform] {
-					event.setDsn(dsn)
-					request := NewRequest(event)
-					request.send()
+
+					// Randomize how many times the request is sent, for burst volume
+					for i := 0; i <= rand.Intn(3); i++ {
+						time.Sleep(200 * time.Millisecond)
+						event.setDsn(dsn)
+						request := NewRequest(event)
+						request.send()
+					}
 				}
 				break
 			}

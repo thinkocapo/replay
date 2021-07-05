@@ -4,6 +4,9 @@ import (
 	"flag"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/mattn/go-sqlite3"
+	"math/rand"
+	"net/http"
+	"time"
 )
 
 var (
@@ -15,6 +18,7 @@ var (
 	n          *int
 	counter    int
 	platforms  []string
+	httpClient *http.Client
 )
 
 const JAVASCRIPT = "javascript"
@@ -54,6 +58,11 @@ func init() {
 		JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL,
 		RUST, COCOA, ANDROID, FLUTTER, CORDOVA, NATIVE, REACTNATIVE, UNITY, ELECTRON,
 	}
+
+	httpClient = &http.Client{}
+
+	// For randomizing the burst of events sent in requests.go
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
