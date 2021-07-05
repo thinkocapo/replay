@@ -9,6 +9,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -56,7 +57,6 @@ func (r Request) send() {
 
 	HUNDRED_KILOBYTES := 100000
 	if size > HUNDRED_KILOBYTES {
-		fmt.Println("***** TOO BIG *****")
 		var buf bytes.Buffer
 		gw := gzip.NewWriter(&buf)
 		_, err := gw.Write(r.Payload)
@@ -87,18 +87,43 @@ func (r Request) send() {
 
 	if *ignore == false {
 		var httpClient = &http.Client{}
-		response, requestErr := httpClient.Do(request)
-		if requestErr != nil {
-			sentry.CaptureException(requestErr)
-			log.Fatal(requestErr)
+
+		// Burst event volume
+		rand.Seed(time.Now().UnixNano())
+		x := rand.Intn(3)
+		fmt.Println("> X", x)
+
+		for i := 0; i <= x; i++ {
+			time.Sleep(200 * time.Millisecond)
+
+			fmt.Printf("> %v | %v", x, i)
+
+			response, requestErr := httpClient.Do(request)
+			if requestErr != nil {
+				sentry.CaptureException(requestErr)
+				log.Fatal(requestErr)
+			}
+			responseData, responseDataErr := ioutil.ReadAll(response.Body)
+			if responseDataErr != nil {
+				sentry.CaptureException(responseDataErr)
+				log.Fatal(responseDataErr)
+			}
+			counter++
+			fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 		}
-		responseData, responseDataErr := ioutil.ReadAll(response.Body)
-		if responseDataErr != nil {
-			sentry.CaptureException(responseDataErr)
-			log.Fatal(responseDataErr)
-		}
-		counter++
-		fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
+
+		// response, requestErr := httpClient.Do(request)
+		// if requestErr != nil {
+		// 	sentry.CaptureException(requestErr)
+		// 	log.Fatal(requestErr)
+		// }
+		// responseData, responseDataErr := ioutil.ReadAll(response.Body)
+		// if responseDataErr != nil {
+		// 	sentry.CaptureException(responseDataErr)
+		// 	log.Fatal(responseDataErr)
+		// }
+		// counter++
+		// fmt.Printf("> Kind: %v | %v | Response: %v \n", r.Kind, r.Platform, string(responseData))
 	} else {
 		fmt.Printf("> event IGNORED %v | %v  \n", r.Kind, r.Platform)
 	}
