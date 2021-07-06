@@ -18,14 +18,16 @@ func (r *Requests) send() {
 	for _, event := range r.events {
 		for _, platform := range platforms {
 			found = false
+
 			if platform == event.Platform {
 				found = true
-				for _, dsn := range config.Destinations[platform] {
 
+				for _, dsn := range config.Destinations[platform] {
 					// Randomize how many times the request is sent, for burst volume
-					for i := 0; i <= rand.Intn(3); i++ {
+					for i := 0; i <= rand.Intn(4); i++ {
 						time.Sleep(200 * time.Millisecond)
 						event.setDsn(dsn)
+						event.Error.eventId() // can't send same eventId twice
 						request := NewRequest(event)
 						request.send()
 					}

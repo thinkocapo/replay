@@ -56,7 +56,6 @@ func (r Request) send() {
 
 	HUNDRED_KILOBYTES := 100000
 	if size > HUNDRED_KILOBYTES {
-		fmt.Println("***** TOO BIG *****")
 		var buf bytes.Buffer
 		gw := gzip.NewWriter(&buf)
 		_, err := gw.Write(r.Payload)
