@@ -73,9 +73,9 @@ func initializeSentry() {
 			scope.SetUser(sentry.User{Username: user.Username, IPAddress: ip()})
 		})
 	}
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("se", "replay")
-	})
+	// sentry.ConfigureScope(func(scope *sentry.Scope) {
+	// 	scope.SetTag("se", "replay")
+	// })
 	defer sentry.Flush(2 * time.Second)
 }
 

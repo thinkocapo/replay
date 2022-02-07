@@ -96,18 +96,22 @@ func (e Event) undertake() {
 	if e.Kind == ERROR || e.Kind == DEFAULT {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
-		} else {
-			demoAutomation := false
-			for _, tag := range e.Error.Tags {
-				if tag[0] == "demo-automation" {
-					demoAutomation = true
-				}
-			}
-			if demoAutomation == false {
-				tag := []string{"demo-automation", "replay"}
-				e.Error.Tags = append(e.Error.Tags, tag)
-			}
 		}
+		// else {
+		// 	demoAutomation := false
+		// 	for _, tag := range e.Error.Tags {
+		// 		if tag[0] == "se" {
+		// 			demoAutomation = true
+		// 		}
+		// 	}
+		// 	if demoAutomation == false {
+		// 		tag := []string{"demo-automation", "replay"}
+		// 		e.Error.Tags = append(e.Error.Tags, tag)
+		// 	}
+
+		// }
+		tag := []string{"se", "replay"}
+		e.Error.Tags = append(e.Error.Tags, tag)
 	}
 	if e.Kind == TRANSACTION {
 		if e.Transaction.Tags == nil {
