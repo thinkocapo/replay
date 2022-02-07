@@ -74,7 +74,7 @@ func initializeSentry() {
 		})
 	}
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("demo-automation", "replay")
+		scope.SetTag("se", "replay")
 	})
 	defer sentry.Flush(2 * time.Second)
 }

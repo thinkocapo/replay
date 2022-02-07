@@ -42,6 +42,8 @@ Build and run quickly:
 go build -o bin/main *.go && ./bin/main
 ```
 
+You can tell these events apart from other demo automated events in Sentry by the 'se' (solutions engineer) tag. It's set un utils.go as se:replay.
+
 [Sentry Developer Documentation](https://develop.sentry.dev/sdk/store)
 
 For some JSON files you have to manually change the platform. For instance, java errors and android errors both have `platform:java` so change the android one to `platform:android`. And other sdk's simply report a value of `platform:other` which isn't helpful for Replay to know what kind of error it is. This is a flawed design. Ideally, should decide based on the `Sdk.name` value.
