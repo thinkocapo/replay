@@ -97,21 +97,20 @@ func (e Event) undertake() {
 		if e.Error.Tags == nil {
 			e.Error.Tags = make([][]string, 0)
 		}
-		// else {
-		// 	demoAutomation := false
-		// 	for _, tag := range e.Error.Tags {
-		// 		if tag[0] == "se" {
-		// 			demoAutomation = true
-		// 		}
-		// 	}
-		// 	if demoAutomation == false {
-		// 		tag := []string{"demo-automation", "replay"}
-		// 		e.Error.Tags = append(e.Error.Tags, tag)
-		// 	}
-
-		// }
-		tag := []string{"se", "replay"}
-		e.Error.Tags = append(e.Error.Tags, tag)
+		// Some of the event files in CloudStorage have a tag:value of 'demo-automation:replay'
+		// which has been deprecated in favor of 'se:replay'
+		// TODO update files in CloudStorage to not have demo-automation tag, so can simplify the below code
+		demoAutomation := false
+		for _, tag := range e.Error.Tags {
+			if tag[0] == "demo-automation" {
+				tag[0] = "se" // and value is already "replay"
+				demoAutomation = true
+			}
+		}
+		if demoAutomation == false {
+			tag := []string{"se", "replay"}
+			e.Error.Tags = append(e.Error.Tags, tag)
+		}
 	}
 	if e.Kind == TRANSACTION {
 		if e.Transaction.Tags == nil {
