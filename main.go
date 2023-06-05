@@ -41,6 +41,7 @@ const NATIVE = "native"
 const REACTNATIVE = "react-native"
 const UNITY = "unity"
 const ELECTRON = "electron"
+const MAUI = "maui"
 
 func init() {
 	parseYamlConfig()
@@ -56,7 +57,7 @@ func init() {
 	flag.Parse()
 	platforms = []string{
 		JAVASCRIPT, PYTHON, JAVA, RUBY, GO, NODE, PHP, CSHARP, DART, ELIXIR, PERL,
-		RUST, COCOA, ANDROID, FLUTTER, CORDOVA, NATIVE, REACTNATIVE, UNITY, ELECTRON,
+		RUST, COCOA, ANDROID, FLUTTER, CORDOVA, NATIVE, REACTNATIVE, UNITY, ELECTRON, MAUI,
 	}
 
 	httpClient = &http.Client{}

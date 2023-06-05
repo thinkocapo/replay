@@ -26,6 +26,7 @@ require (
 	github.com/lyft/protoc-gen-star v0.4.15 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mediocregopher/mediocre-go-lib v0.0.0-20181029021733-cb65787f37ed // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/sftp v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect

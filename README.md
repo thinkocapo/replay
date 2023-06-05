@@ -18,6 +18,8 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
 
     Obtain the Google Application Credentials file, and put the file path to it in your config.yaml's `GOOGLE_APPLICATION_CREDENTIALS`.
 
+    go version go1.20.4 darwin/amd64
+
 ## Run
 1. `go build -o bin/main *.go`
 2. `./bin/main`
@@ -31,6 +33,7 @@ Replay is an event traffic replay service. It was formerly presented as [The Und
 4. Upload a copy of this file to Cloud Storage (where Replay reads it from)
 5. If the platform type is new, then update `config.yaml.example` with the new platform type.
 6. If the platform type is new, then add the DSN for the platform type in `config.yaml`.
+7. If the platform type is new, add it as a const in main.go and to the `platforms = []string` array in main.go.
 
 ## Notes
 The `-i` ignore flag is for using during development, as you don't want to send malformed data or call bad URL's on Sentry.
@@ -47,5 +50,7 @@ You can tell these events apart from other demo automated events in Sentry by th
 [Sentry Developer Documentation](https://develop.sentry.dev/sdk/store)
 
 For some JSON files you have to manually change the platform. For instance, java errors and android errors both have `platform:java` so change the android one to `platform:android`. And other sdk's simply report a value of `platform:other` which isn't helpful for Replay to know what kind of error it is. This is a flawed design. Ideally, should decide based on the `Sdk.name` value.
+
+.NET Core events are platform:csharp and Maui events are platform:csharp. So to send events to a 'maui' Project in Sentry, update the maui event json to platform:maui (and the config.yaml with a maui section too).
 
 This project was originally called Undertaker because it featured a proxy middleman that captured events on their way to Sentry. Today, we take the event JSON's from Sentry.io and place them in Cloud Storage.
